@@ -46,6 +46,12 @@ it.
 
 ## The company
 
+**You can visit them.** [northwind-outfitters.vercel.app](https://northwind-outfitters.vercel.app)
+is a working storefront: the catalog, the warranty terms, a fake order
+history, and a support form that runs the real triage service on whatever you
+type into it. Everything below is easier to hold once you have looked at the
+price tag on a jacket you are about to complain about.
+
 Northwind Outfitters sells outdoor gear. Technical shells, packs, insulated
 bottles, tents. Roughly $180M a year, about 78% of it direct to consumer
 through the website and the rest through twelve retail stores in the mountain

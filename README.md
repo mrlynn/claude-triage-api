@@ -6,6 +6,10 @@ Claude API — written to be **read and taught from**, not just run.
 Four routes, four capabilities, one coherent domain. Each route introduces
 exactly one new idea and builds on the one before it.
 
+**Northwind Outfitters is a real, visitable storefront:
+[northwind-outfitters.vercel.app](https://northwind-outfitters.vercel.app).** File a support ticket there and
+your own words go through the triage service in this repo.
+
 **Start with [the scenario](curriculum/scenario.md).** The domain is a real
 company with a real problem: 4,100 support tickets a week, manual triage as the
 bottleneck, two failed automation attempts, and an incident where a child's

@@ -112,6 +112,11 @@ const config: Config = {
         { type: "doc", docId: "architecture", position: "left", label: "Architecture" },
         { to: "/playground", position: "left", label: "Playground" },
         {
+          href: "https://northwind-outfitters.vercel.app",
+          position: "right",
+          label: "Northwind store",
+        },
+        {
           href: GITHUB_REPO_URL,
           label: "GitHub",
           position: "right",
@@ -127,6 +132,7 @@ const config: Config = {
             { label: "The scenario", to: "/docs/scenario" },
             { label: "Northwind brand", to: "/brand" },
             { label: "The inbound queue", to: "/playground/queue" },
+            { label: "Visit the storefront", href: "https://northwind-outfitters.vercel.app" },
             { label: "Setup", to: "/docs/setup" },
             { label: "Concept map", to: "/docs/concept-map" },
             { label: "Lab 1", to: "/docs/labs/lab-1-first-call" },

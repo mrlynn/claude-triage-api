@@ -108,6 +108,30 @@ function Labs() {
   );
 }
 
+function Storefront() {
+  return (
+    <section className={styles.section}>
+      <div className="container">
+        <Heading as="h2">The scenario is a real place</Heading>
+        <p className={styles.sectionLead}>
+          Northwind Outfitters is invented, and you can still walk into it.
+          Browse the gear, read the warranty you are about to make a claim
+          against, then file a support ticket and watch your own words get
+          classified by the same schema Lab 2 has you edit.
+        </p>
+        <div className={styles.heroButtons} style={{ justifyContent: "flex-start" }}>
+          <Link className="button button--primary button--lg" to="https://northwind-outfitters.vercel.app">
+            Visit Northwind Outfitters
+          </Link>
+          <Link className="button button--secondary button--lg" to="/playground/queue">
+            See the support queue
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function Home(): ReactNode {
   return (
     <Layout
@@ -117,6 +141,7 @@ export default function Home(): ReactNode {
       <Hero />
       <main>
         <Routes />
+        <Storefront />
         <Labs />
       </main>
     </Layout>

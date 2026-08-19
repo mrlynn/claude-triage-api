@@ -5,6 +5,13 @@ import Heading from "@theme/Heading";
 
 const TOOLS = [
   {
+    to: "https://northwind-outfitters.vercel.app/support",
+    title: "The Northwind storefront",
+    blurb:
+      "A working shop. Browse the gear, file a complaint about it, and watch your own words get classified live.",
+    lab: "Scenario",
+  },
+  {
     to: "/brand",
     title: "Northwind brand",
     blurb:

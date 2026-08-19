@@ -217,6 +217,19 @@ export default function SupportForm() {
               {outcome.latency_ms}ms &middot; ${outcome.cost_usd.toFixed(4)} &middot;{" "}
               {outcome.cache_hit ? "cache hit" : "cache cold"}
             </p>
+
+            <p className="mt-3 text-xs leading-relaxed text-pine/65">
+              {outcome.cache_hit
+                ? "That cache hit is the policy handbook being read from cache instead of paid for again. It is most of the input on every request."
+                : "First call, so the handbook was written to cache. The next one costs about a fifth as much."}{" "}
+              <a
+                href="https://claude-triage-labs.vercel.app/playground/queue"
+                className="underline underline-offset-2"
+              >
+                See where a ticket like yours lands in the queue
+              </a>
+              .
+            </p>
           </div>
         )}
       </div>

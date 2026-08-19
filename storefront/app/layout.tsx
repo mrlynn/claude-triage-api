@@ -80,12 +80,26 @@ export default function RootLayout({
             </p>
             <p>
               Northwind Outfitters does not exist. It is the scenario behind a
-              workshop on building with the Claude API.{" "}
+              workshop on building with the Claude API &mdash; read{" "}
+              <a
+                href="https://claude-triage-labs.vercel.app/docs/scenario"
+                className="underline underline-offset-2"
+              >
+                who they are and why
+              </a>
+              , take{" "}
+              <a
+                href="https://claude-triage-labs.vercel.app/docs/labs/lab-1-first-call"
+                className="underline underline-offset-2"
+              >
+                the labs
+              </a>
+              , or read the{" "}
               <a
                 href="https://github.com/mrlynn/claude-triage-api"
                 className="underline underline-offset-2"
               >
-                Source
+                source
               </a>
               .
             </p>
