@@ -1,0 +1,18 @@
+node_modules/
+.env
+.env.local
+dist/
+*.log
+.DS_Store
+scratch/
+
+# Docusaurus site
+website/node_modules/
+website/build/
+website/.docusaurus/
+website/docs/
+.vercel
+.env*
+
+# .env* above would swallow the template the setup doc tells people to copy.
+!.env.example
