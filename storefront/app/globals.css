@@ -12,3 +12,70 @@ html {
   background: var(--color-bone);
   color: var(--color-pine);
 }
+
+/* Flow diagram (components/FlowDiagram.tsx) */
+@keyframes nw-flow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+@keyframes nw-pulse {
+  from {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  to {
+    transform: scale(2.1);
+    opacity: 0;
+  }
+}
+
+@keyframes nw-pop {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  65% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.nw-edge-active {
+  animation: nw-flow 0.5s linear infinite;
+}
+
+.nw-edge-ambient {
+  animation: nw-flow 2.8s linear infinite;
+}
+
+.nw-node-pulse,
+.nw-pop {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.nw-node-pulse {
+  animation: nw-pulse 1.2s ease-out infinite;
+}
+
+.nw-pop {
+  animation: nw-pop 0.45s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nw-edge-active,
+  .nw-edge-ambient,
+  .nw-node-pulse,
+  .nw-pop {
+    animation: none;
+  }
+  .nw-packet {
+    display: none;
+  }
+}

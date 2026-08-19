@@ -7,6 +7,7 @@ import Pipeline, {
   type Stage,
   type StageId,
 } from "@/components/Pipeline";
+import FlowDiagram from "@/components/FlowDiagram";
 
 /**
  * The closed loop.
@@ -201,11 +202,18 @@ export default function SupportForm() {
           and timed as it happens &mdash; click <em>why</em> on any of them.
         </p>
 
-        {state === "idle" && !outcome && (
-          <div className="mt-4 rounded-lg border border-dashed border-pine/25 p-8 text-center text-sm text-pine/45">
-            Submit a ticket and the pipeline runs here, stage by stage.
-          </div>
-        )}
+        <div className="mt-4 rounded-lg border border-pine/20 bg-white/40 p-4">
+          <FlowDiagram
+            stages={stages}
+            state={state}
+            category={outcome?.triage.category}
+          />
+          {state === "idle" && (
+            <p className="mt-1 text-center text-xs text-pine/45">
+              Submit a ticket and watch it travel this path for real.
+            </p>
+          )}
+        </div>
 
         {(state === "sending" || state === "done" || state === "error") && (
           <div className="mt-4 rounded-lg border border-pine/20 bg-white/40 p-4">
