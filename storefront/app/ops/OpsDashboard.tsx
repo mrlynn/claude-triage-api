@@ -15,6 +15,7 @@ import {
 } from "@/lib/opsData";
 import {
   ChartFrame,
+  PlotScroll,
   Badge,
   LineChart,
   StackedBars,
@@ -123,17 +124,19 @@ export default function OpsDashboard() {
           subtitle="The number this programme exists to move. Shaded bands mark each rollout phase."
           footnote="It does not go to zero, and it should not. Safety reports and anything below the confidence threshold route to a person by rule."
         >
-          <LineChart
-            points={MONTHS.map((m) => ({
-              label: m.short,
-              value: m.humanTriageRate,
-              band: PHASE_LABEL[m.phase],
-            }))}
-            bands={phaseBands}
-            format={pct}
-            yMax={1.12}
-            ticks={[0, 0.5, 1]}
-          />
+          <PlotScroll>
+            <LineChart
+              points={MONTHS.map((m) => ({
+                label: m.short,
+                value: m.humanTriageRate,
+                band: PHASE_LABEL[m.phase],
+              }))}
+              bands={phaseBands}
+              format={pct}
+              yMax={1.12}
+              ticks={[0, 0.5, 1]}
+            />
+          </PlotScroll>
         </ChartFrame>
 
         <ChartFrame
@@ -146,18 +149,20 @@ export default function OpsDashboard() {
           ]}
           footnote="This is the chart to show a CFO. Peak season used to mean seasonal hires and a 41-hour response time; the load that reaches a person is now roughly flat against volume."
         >
-          <StackedBars
-            points={MONTHS.map((m) => ({
-              label: m.short,
-              values: [
-                Math.round(m.volume * (1 - m.humanTriageRate)),
-                Math.round(m.volume * m.humanTriageRate),
-              ] as [number, number],
-            }))}
-            colors={[PALETTE.categorical[0], PALETTE.categorical[2]]}
-            seriesLabels={["Routed automatically", "Handled by an agent"]}
-            formatTotal={k}
-          />
+          <PlotScroll>
+            <StackedBars
+              points={MONTHS.map((m) => ({
+                label: m.short,
+                values: [
+                  Math.round(m.volume * (1 - m.humanTriageRate)),
+                  Math.round(m.volume * m.humanTriageRate),
+                ] as [number, number],
+              }))}
+              colors={[PALETTE.categorical[0], PALETTE.categorical[2]]}
+              seriesLabels={["Routed automatically", "Handled by an agent"]}
+              formatTotal={k}
+            />
+          </PlotScroll>
         </ChartFrame>
 
         <ChartFrame
@@ -166,14 +171,16 @@ export default function OpsDashboard() {
           subtitle="Hours. The November and December rise is peak volume, not regression."
           footnote="Triage overhead was the removable part of this number. What remains is the time to actually resolve things."
         >
-          <LineChart
-            points={MONTHS.map((m) => ({ label: m.short, value: m.ttfrHours, band: PHASE_LABEL[m.phase] }))}
-            bands={phaseBands}
-            format={(v) => `${v.toFixed(0)}h`}
-            color={PALETTE.categorical[1]}
-            yMax={18}
-            ticks={[0, 5, 10, 15]}
-          />
+          <PlotScroll>
+            <LineChart
+              points={MONTHS.map((m) => ({ label: m.short, value: m.ttfrHours, band: PHASE_LABEL[m.phase] }))}
+              bands={phaseBands}
+              format={(v) => `${v.toFixed(0)}h`}
+              color={PALETTE.categorical[1]}
+              yMax={18}
+              ticks={[0, 5, 10, 15]}
+            />
+          </PlotScroll>
         </ChartFrame>
 
         <ChartFrame
@@ -182,16 +189,18 @@ export default function OpsDashboard() {
           subtitle="Hours, against the one-hour ceiling in handbook clause 5.4."
           footnote="The October 2025 incident sat for three days. This is the metric that exists because of it, and the only one with zero tolerance."
         >
-          <LineChart
-            points={MONTHS.map((m) => ({ label: m.short, value: m.safetyQueueHours, band: PHASE_LABEL[m.phase] }))}
-            bands={phaseBands}
-            format={(v) => `${v.toFixed(0)}h`}
-            color={PALETTE.status.critical}
-            target={1}
-            targetLabel="1h ceiling (clause 5.4)"
-            yMax={30}
-            ticks={[0, 10, 20, 30]}
-          />
+          <PlotScroll>
+            <LineChart
+              points={MONTHS.map((m) => ({ label: m.short, value: m.safetyQueueHours, band: PHASE_LABEL[m.phase] }))}
+              bands={phaseBands}
+              format={(v) => `${v.toFixed(0)}h`}
+              color={PALETTE.status.critical}
+              target={1}
+              targetLabel="1h ceiling (clause 5.4)"
+              yMax={30}
+              ticks={[0, 10, 20, 30]}
+            />
+          </PlotScroll>
         </ChartFrame>
       </section>
 
@@ -232,7 +241,7 @@ export default function OpsDashboard() {
             />
           </ChartFrame>
 
-          <div className="grid gap-5">
+          <div className="grid min-w-0 gap-5">
             <ChartFrame
               title="Unit economics"
               badge={<Badge kind="measured" />}

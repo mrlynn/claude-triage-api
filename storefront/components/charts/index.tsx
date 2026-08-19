@@ -23,6 +23,20 @@ function fmtPct(v: number) {
   return `${Math.round(v * 100)}%`;
 }
 
+/**
+ * Wraps a plot so it keeps a readable minimum width on small screens and
+ * scrolls inside its own box rather than squashing. A 560-unit viewBox scaled
+ * into a 375px viewport renders 9px axis labels at about 6px, which is not
+ * readable — better to let the reader pan than to ship type nobody can see.
+ */
+export function PlotScroll({ children }: { children: ReactNode }) {
+  return (
+    <div className="-mx-1 overflow-x-auto px-1">
+      <div className="min-w-[26rem]">{children}</div>
+    </div>
+  );
+}
+
 export function ChartFrame({
   title,
   subtitle,
@@ -39,7 +53,7 @@ export function ChartFrame({
   footnote?: string;
 }) {
   return (
-    <figure className="m-0 rounded-lg border border-pine/15 bg-white/55 p-4">
+    <figure className="m-0 min-w-0 rounded-lg border border-pine/15 bg-white/55 p-4">
       <figcaption className="mb-3">
         <div className="flex flex-wrap items-baseline gap-2">
           <h3 className="text-sm font-bold">{title}</h3>
@@ -170,7 +184,7 @@ export function LineChart({
               stroke={PALETTE.grid}
               strokeWidth="1"
             />
-            <text x={PAD.left - 6} y={y(t) + 3} textAnchor="end" fontSize="9" fill={PALETTE.muted}>
+            <text x={PAD.left - 6} y={y(t) + 3} textAnchor="end" fontSize="11" fill={PALETTE.muted}>
               {format(t)}
             </text>
           </g>
@@ -192,7 +206,7 @@ export function LineChart({
                 x={PAD.left + 4}
                 y={y(target) - 5}
                 textAnchor="start"
-                fontSize="9"
+                fontSize="11"
                 fontWeight="600"
                 fill={PALETTE.status.warning}
               >
@@ -247,7 +261,7 @@ export function LineChart({
               x={x(i)}
               y={height - 8}
               textAnchor="middle"
-              fontSize="9"
+              fontSize="11"
               fill={PALETTE.muted}
             >
               {p.label}
@@ -332,7 +346,7 @@ export function StackedBars({
         })}
         {points.map((p, i) =>
           i % 2 === 0 ? (
-            <text key={`l-${p.label}`} x={x(i) + bw / 2} y={height - 8} textAnchor="middle" fontSize="9" fill={PALETTE.muted}>
+            <text key={`l-${p.label}`} x={x(i) + bw / 2} y={height - 8} textAnchor="middle" fontSize="11" fill={PALETTE.muted}>
               {p.label}
             </text>
           ) : null,

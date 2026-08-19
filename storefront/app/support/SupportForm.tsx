@@ -135,8 +135,8 @@ export default function SupportForm() {
   }
 
   return (
-    <div className="grid gap-10 lg:grid-cols-2">
-      <form onSubmit={submit}>
+    <div className="grid min-w-0 gap-10 lg:grid-cols-2">
+      <form onSubmit={submit} className="min-w-0">
         {(product || orderId) && (
           <div className="mb-4 rounded-md border border-pine/20 bg-white/50 px-4 py-3 text-sm">
             <span className="text-pine/60">Regarding </span>
@@ -194,7 +194,7 @@ export default function SupportForm() {
         )}
       </form>
 
-      <div>
+      <div className="min-w-0">
         <h2 className="text-sm font-semibold">What our system did with it</h2>
         <p className="mt-1 text-xs text-pine/60">
           Normally you would never see any of this. Every step below is real

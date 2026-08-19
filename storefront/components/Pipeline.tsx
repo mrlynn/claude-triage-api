@@ -118,13 +118,13 @@ function Detail({ detail }: { detail: Record<string, unknown> }) {
   const rest = Object.entries(detail).filter(([k]) => k !== "why");
 
   return (
-    <div className="mt-2 rounded-md border border-pine/15 bg-white/60 p-3 text-xs">
+    <div className="mt-2 min-w-0 rounded-md border border-pine/15 bg-white/60 p-3 text-xs">
       {why && <p className="leading-relaxed text-pine/80">{why}</p>}
       {rest.length > 0 && (
         <dl className={`space-y-1 ${why ? "mt-2.5 border-t border-pine/10 pt-2.5" : ""}`}>
           {rest.map(([k, v]) => (
-            <div key={k} className="flex gap-3">
-              <dt className="w-40 shrink-0 font-mono text-[11px] text-pine/50">{k}</dt>
+            <div key={k} className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+              <dt className="font-mono text-[11px] text-pine/50 sm:w-40 sm:shrink-0">{k}</dt>
               <dd className="min-w-0 break-words font-mono text-[11px] text-pine/80">
                 {Array.isArray(v)
                   ? v
@@ -159,7 +159,7 @@ export default function Pipeline({
   );
 
   return (
-    <div>
+    <div className="min-w-0">
       <ol className="space-y-1">
         {STAGE_ORDER.map((id) => {
           const stage = stages[id];
