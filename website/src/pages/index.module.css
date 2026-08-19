@@ -1,0 +1,136 @@
+.hero {
+  padding: 5rem 0 4rem;
+  text-align: center;
+  background: linear-gradient(
+    180deg,
+    var(--ifm-background-surface-color) 0%,
+    var(--ifm-background-color) 100%
+  );
+  border-bottom: 1px solid var(--ifm-toc-border-color);
+}
+
+.heroTitle {
+  font-size: clamp(2rem, 6vw, 3.25rem);
+  letter-spacing: -0.02em;
+  margin-bottom: 0.75rem;
+}
+
+.heroTagline {
+  max-width: 44rem;
+  margin: 0 auto 2rem;
+  font-size: 1.125rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.heroButtons {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.section {
+  padding: 3.5rem 0;
+}
+
+.sectionAlt {
+  padding: 3.5rem 0;
+  background: var(--ifm-background-surface-color);
+  border-top: 1px solid var(--ifm-toc-border-color);
+}
+
+.sectionLead {
+  color: var(--ifm-color-emphasis-700);
+  max-width: 42rem;
+  margin-bottom: 2rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  border: 1px solid var(--ifm-toc-border-color);
+  border-radius: var(--ifm-global-radius);
+  padding: 1.25rem;
+  background: var(--ifm-background-color);
+}
+
+.cardPath {
+  font-size: 0.8rem;
+  display: inline-block;
+  margin-bottom: 0.6rem;
+}
+
+.cardCapability {
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+.cardIdea {
+  margin: 0;
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.labList {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--ifm-toc-border-color);
+  border-radius: var(--ifm-global-radius);
+  overflow: hidden;
+  background: var(--ifm-background-color);
+}
+
+.labRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1.25rem;
+  border-bottom: 1px solid var(--ifm-toc-border-color);
+  color: var(--ifm-font-color-base);
+  text-decoration: none;
+  transition: background 120ms ease;
+}
+
+.labRow:last-child {
+  border-bottom: none;
+}
+
+.labRow:hover {
+  background: var(--ifm-hover-overlay);
+  text-decoration: none;
+  color: var(--ifm-color-primary);
+}
+
+.labNumber {
+  flex: 0 0 1.75rem;
+  height: 1.75rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ifm-color-primary);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.labTitle {
+  flex: 1 1 auto;
+}
+
+.labTime {
+  flex: 0 0 auto;
+  font-size: 0.85rem;
+  color: var(--ifm-color-emphasis-600);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 640px) {
+  .labTime {
+    display: none;
+  }
+}

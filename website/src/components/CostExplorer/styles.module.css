@@ -1,0 +1,245 @@
+.wrap {
+  display: grid;
+  grid-template-columns: minmax(16rem, 22rem) 1fr;
+  gap: 1.5rem;
+  border: 1px solid var(--ifm-toc-border-color);
+  border-radius: var(--ifm-global-radius);
+  padding: 1.25rem;
+  background: var(--ifm-background-surface-color);
+}
+
+@media (max-width: 900px) {
+  .wrap {
+    grid-template-columns: 1fr;
+  }
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.field {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.field legend {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ifm-color-emphasis-600);
+  margin-bottom: 0.5rem;
+  padding: 0;
+}
+
+.hint {
+  font-size: 0.8rem;
+  color: var(--ifm-color-emphasis-600);
+  margin: 0.5rem 0 0;
+}
+
+.segmented {
+  display: flex;
+  border: 1px solid var(--ifm-toc-border-color);
+  border-radius: var(--ifm-global-radius);
+  overflow: hidden;
+}
+
+.seg,
+.segActive {
+  flex: 1;
+  padding: 0.45rem 0.4rem;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.72rem;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: var(--ifm-font-color-base);
+}
+
+.segActive {
+  background: var(--ifm-color-primary);
+  color: #fff;
+}
+
+.seg:hover {
+  background: var(--ifm-hover-overlay);
+}
+
+.slider {
+  width: 100%;
+  accent-color: var(--ifm-color-primary);
+}
+
+.presets {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.chip,
+.chipActive {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.75rem;
+  border-radius: var(--ifm-global-radius);
+  border: 1px solid var(--ifm-toc-border-color);
+  background: transparent;
+  color: var(--ifm-font-color-base);
+  cursor: pointer;
+}
+
+.chipActive {
+  border-color: var(--ifm-color-primary);
+  background: var(--ifm-color-primary);
+  color: #fff;
+}
+
+.chipNote {
+  font-size: 0.65rem;
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.toggle input {
+  accent-color: var(--ifm-color-primary);
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.readout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.headline {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.headlineLabel {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ifm-color-emphasis-600);
+  margin-bottom: 0.2rem;
+}
+
+.headlineValue,
+.headlineValueGood,
+.headlineValueBad,
+.headlineAlt {
+  font-size: clamp(1.1rem, 2.4vw, 1.6rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.headlineValueGood {
+  color: var(--ifm-color-success);
+}
+
+.headlineValueBad {
+  color: var(--ifm-color-danger);
+}
+
+.headlineAlt {
+  color: var(--ifm-color-emphasis-600);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.budgetTrack {
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--ifm-color-emphasis-200);
+  overflow: hidden;
+}
+
+.budgetFill,
+.budgetFillBad {
+  height: 100%;
+  background: var(--ifm-color-success);
+  transition: width 160ms ease;
+}
+
+.budgetFillBad {
+  background: var(--ifm-color-danger);
+}
+
+.budgetNote {
+  font-size: 0.85rem;
+  margin: 0.5rem 0 0;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.breakdownHeader {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ifm-color-emphasis-600);
+  margin-bottom: 0.4rem;
+}
+
+.bar {
+  display: flex;
+  height: 1.5rem;
+  border-radius: var(--ifm-global-radius);
+  overflow: hidden;
+  background: var(--ifm-color-emphasis-200);
+}
+
+.barSegment {
+  transition: width 160ms ease;
+}
+
+.legend {
+  list-style: none;
+  padding: 0;
+  margin: 0.6rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.1rem;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.swatch {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.insight {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border-left: 3px solid var(--ifm-color-primary);
+  background: var(--ifm-background-color);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--ifm-color-emphasis-800);
+}

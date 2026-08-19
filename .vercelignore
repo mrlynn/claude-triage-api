@@ -1,0 +1,16 @@
+# Only the docs site deploys. Keep the API service, its fixtures, and every
+# secret out of the upload — but curriculum/ and docs/ must stay, because the
+# sync script reads them at build time.
+#
+# Leading slashes matter: a bare "src" would also match website/src.
+/src
+/scripts
+/evals
+/data
+/node_modules
+/scratch
+.env
+.env.local
+website/node_modules
+website/build
+website/.docusaurus
