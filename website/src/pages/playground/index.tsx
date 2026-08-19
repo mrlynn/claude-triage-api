@@ -19,6 +19,13 @@ const TOOLS = [
     lab: "Scenario",
   },
   {
+    to: "https://northwind-outfitters.vercel.app/ops",
+    title: "Priya's operations dashboard",
+    blurb:
+      "The KPIs a support director reports upward, across a staged rollout. Simulated history, clearly badged, with the real unit economics alongside.",
+    lab: "Scenario",
+  },
+  {
     to: "/playground/queue",
     title: "The inbound queue",
     blurb:

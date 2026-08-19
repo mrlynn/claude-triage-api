@@ -56,6 +56,9 @@ export default function RootLayout({
               <Link href="/orders" className="hover:text-spruce">
                 Your orders
               </Link>
+              <Link href="/ops" className="hover:text-spruce" title="Internal operations dashboard">
+                Ops
+              </Link>
               <Link
                 href="/support"
                 className="rounded-md bg-pine px-3 py-1.5 text-bone hover:bg-spruce"

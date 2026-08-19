@@ -135,6 +135,7 @@ const config: Config = {
             { label: "The scenario", to: "/docs/scenario" },
             { label: "Northwind brand", to: "/brand" },
             { label: "The inbound queue", to: "/playground/queue" },
+            { label: "Ops dashboard", href: "https://northwind-outfitters.vercel.app/ops" },
             { label: "Visit the storefront", href: "https://northwind-outfitters.vercel.app" },
             { label: "Setup", to: "/docs/setup" },
             { label: "Concept map", to: "/docs/concept-map" },

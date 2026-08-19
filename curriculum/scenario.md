@@ -234,6 +234,10 @@ the labs measure what they measure.
 - **Agent-hours on triage.** The number she wants to move to zero so those
   hours go to actually resolving things.
 
+Her dashboard is at [northwind-outfitters.vercel.app/ops](https://northwind-outfitters.vercel.app/ops). The
+twelve-month history there is invented and labelled as such; the unit
+economics, the eval accuracy and the category mix are real.
+
 Notice what is not on the list. Nobody is measured on model accuracy. Accuracy
 is a proxy, and the eval set in this repo exists to keep that proxy honest, not
 because 91.7% is the goal.
