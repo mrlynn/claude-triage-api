@@ -125,6 +125,7 @@ const config: Config = {
           title: "Course",
           items: [
             { label: "The scenario", to: "/docs/scenario" },
+            { label: "Northwind brand", to: "/brand" },
             { label: "Setup", to: "/docs/setup" },
             { label: "Concept map", to: "/docs/concept-map" },
             { label: "Lab 1", to: "/docs/labs/lab-1-first-call" },

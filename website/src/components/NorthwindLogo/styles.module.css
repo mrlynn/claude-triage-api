@@ -1,0 +1,41 @@
+.lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7em;
+}
+
+.type {
+  line-height: 1;
+}
+
+.wordmark {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--nw-wordmark, #1F3D33);
+  line-height: 1;
+}
+
+.subword {
+  font-weight: 600;
+  letter-spacing: 0.34em;
+  color: var(--nw-subword, #5C9A86);
+  margin-top: 0.42em;
+  line-height: 1;
+}
+
+.tagline {
+  margin-top: 0.7em;
+  font-size: 0.78rem;
+  font-style: italic;
+  color: var(--ifm-color-emphasis-600);
+  letter-spacing: 0;
+}
+
+/* On dark grounds the pine wordmark disappears, so lift both tones. */
+[data-theme="dark"] .wordmark {
+  --nw-wordmark: #EAF2EE;
+}
+
+[data-theme="dark"] .subword {
+  --nw-subword: #7FBBA6;
+}

@@ -5,6 +5,13 @@ import Heading from "@theme/Heading";
 
 const TOOLS = [
   {
+    to: "/brand",
+    title: "Northwind brand",
+    blurb:
+      "The mark, lockup, and palette for the company the labs are built around. Includes the 18px test that killed three other concepts.",
+    lab: "Scenario",
+  },
+  {
     to: "/playground/cost",
     title: "Cost explorer",
     blurb:

@@ -11,7 +11,15 @@
  * Runs automatically before start and build. Never edit website/docs by hand.
  * It is generated, and it is gitignored.
  */
-import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from "node:fs";
+import {
+  readFileSync,
+  writeFileSync,
+  mkdirSync,
+  rmSync,
+  existsSync,
+  readdirSync,
+  copyFileSync,
+} from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve, relative } from "node:path";
 
@@ -81,6 +89,12 @@ function rewriteLink(href, sourceFile) {
   const route = routeBySource.get(repoPath);
   if (route) return route + suffix;
 
+  // Brand images are copied into static/, so serve them locally instead of
+  // sending an <img> at a GitHub HTML page.
+  if (repoPath.startsWith("assets/brand/") && repoPath.endsWith(".svg")) {
+    return `/img/brand/${repoPath.split("/").pop()}${suffix}`;
+  }
+
   // Anything else in the repo: source, fixtures, config. Send it to GitHub.
   // Directories need tree/ rather than blob/, so switch on whether the last
   // segment looks like a filename.
@@ -127,6 +141,15 @@ function transform(page) {
   ].join("\n");
 
   return frontmatter + body;
+}
+
+// Brand assets are canonical in assets/brand/ so they render on GitHub too.
+// Copy them where the site can serve them.
+const brandSrc = join(repoRoot, "assets", "brand");
+const brandOut = join(websiteDir, "static", "img", "brand");
+mkdirSync(brandOut, { recursive: true });
+for (const file of readdirSync(brandSrc)) {
+  if (file.endsWith(".svg")) copyFileSync(join(brandSrc, file), join(brandOut, file));
 }
 
 rmSync(outDir, { recursive: true, force: true });

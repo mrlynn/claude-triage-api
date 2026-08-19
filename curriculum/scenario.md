@@ -1,5 +1,7 @@
 # The scenario: Northwind Outfitters
 
+![Northwind Outfitters](../assets/brand/northwind-mark.svg)
+
 Every design decision in this repo came from somewhere. This is the somewhere.
 
 ## Why this matters
