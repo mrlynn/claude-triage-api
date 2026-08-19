@@ -1,6 +1,7 @@
 import type { Config } from "@docusaurus/types";
 import type * as Preset from "@docusaurus/preset-classic";
 import { themes as prismThemes } from "prism-react-renderer";
+import { readFileSync } from "node:fs";
 
 const GITHUB_ORG = process.env.DOCS_GITHUB_ORG ?? "mrlynn";
 const GITHUB_REPO = process.env.DOCS_GITHUB_REPO ?? "claude-triage-api";
@@ -17,6 +18,18 @@ const GITHUB_REPO_URL = `https://github.com/${GITHUB_ORG}/${GITHUB_REPO}`;
  * automatically and neither target needs a hand-edited config. Override
  * either one explicitly with DOCS_SITE_URL / DOCS_BASE_URL.
  */
+/**
+ * docs/ is generated, so a naive editUrl sends people to a path that does not
+ * exist in the repo. sync-docs.mjs writes this manifest mapping each generated
+ * page back to its canonical source.
+ */
+let DOC_SOURCES: Record<string, string> = {};
+try {
+  DOC_SOURCES = JSON.parse(readFileSync("./docs-manifest.json", "utf8"));
+} catch {
+  // Sync has not run yet. Edit links fall back to the repo root.
+}
+
 const ON_VERCEL = process.env.VERCEL === "1";
 
 const VERCEL_URL =
@@ -68,7 +81,12 @@ const config: Config = {
         docs: {
           sidebarPath: "./sidebars.ts",
           routeBasePath: "docs",
-          editUrl: `${GITHUB_REPO_URL}/tree/main/`,
+          editUrl: ({ docPath }) => {
+            const source = DOC_SOURCES[docPath];
+            return source
+              ? `${GITHUB_REPO_URL}/edit/main/${source}`
+              : GITHUB_REPO_URL;
+          },
         },
         blog: false,
         theme: { customCss: "./src/css/custom.css" },

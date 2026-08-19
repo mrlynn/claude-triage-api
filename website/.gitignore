@@ -2,3 +2,4 @@ docs/
 build/
 .docusaurus/
 node_modules/
+docs-manifest.json

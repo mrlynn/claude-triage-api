@@ -138,4 +138,16 @@ for (const page of PAGES) {
   writeFileSync(target, transform(page));
 }
 
+// Map generated doc path -> canonical repo source, so the site's "Edit this
+// page" link points at the file you can actually edit rather than at the
+// generated copy, which is gitignored and 404s on GitHub.
+writeFileSync(
+  join(websiteDir, "docs-manifest.json"),
+  `${JSON.stringify(
+    Object.fromEntries(PAGES.map((p) => [`${p.out}.md`, p.source])),
+    null,
+    2,
+  )}\n`,
+);
+
 console.log(`synced ${PAGES.length} pages into website/docs`);
