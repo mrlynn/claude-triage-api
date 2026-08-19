@@ -88,6 +88,22 @@ Look at `SSE_HEADERS` in [`src/lib/sse.ts`](../../src/lib/sse.ts).
 also there? Name one other layer between your service and the browser that can
 buffer a stream.
 
+```quiz
+[
+  {
+    "question": "Your streaming endpoint fails upstream halfway through generating. What does the client see?",
+    "options": [
+      "A 502, because the request failed",
+      "HTTP 200 with a half-written response, unless you emit an error event in-band",
+      "The connection drops and fetch throws"
+    ],
+    "answer": 1,
+    "explain": "By the time generation starts, the status line is already sent. A mid-stream failure cannot be expressed as a non-2xx response, so it has to be delivered as an in-band event the client explicitly handles.",
+    "note": "A client that only checks `res.ok` will show a truncated customer reply as if it were complete."
+  }
+]
+```
+
 ## Step 5 — errors after 200
 
 Simulate an upstream failure mid-stream. Easiest reproduction: start the server

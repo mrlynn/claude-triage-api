@@ -81,6 +81,33 @@ Restore everything.
 > HTTP 200 and a correct answer. The only symptom is a bill roughly 10× what
 > you budgeted. `cache_read_input_tokens` is your only detector — alert on it.
 
+```quiz
+[
+  {
+    "question": "Someone adds `Today is ${new Date().toISOString()}` to the top of the cached system block. What breaks?",
+    "options": [
+      "The request errors with an invalid cache_control",
+      "Nothing \u2014 the date is small compared with the handbook",
+      "Every request misses the cache, silently, at roughly 10x the intended cost"
+    ],
+    "answer": 2,
+    "explain": "Caching is a prefix match. Any byte change anywhere in the prefix invalidates everything after it. The request still succeeds and the answer is still correct \u2014 the only symptom is the bill.",
+    "note": "`cache_read_input_tokens` staying at zero is the one detector you have. Alert on it."
+  },
+  {
+    "question": "You cache a 3,400-token prefix for a tenant that sends one ticket a day. What happens to cost?",
+    "options": [
+      "It drops ~90%, as caching always does",
+      "It rises about 25%, because you pay the write premium and never get a read",
+      "It stays the same"
+    ],
+    "answer": 1,
+    "explain": "Cache writes cost ~1.25x and reads ~0.1x, against 1.0x uncached. With the default 5-minute TTL, one request per day means every single call pays the write premium and the entry expires unused.",
+    "note": "Caching wins from the first reuse inside the TTL window \u2014 the question is whether you get one."
+  }
+]
+```
+
 ## Step 3 — the 1024-token floor
 
 ```bash

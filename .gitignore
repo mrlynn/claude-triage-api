@@ -16,3 +16,7 @@ website/docs/
 
 # .env* above would swallow the template the setup doc tells people to copy.
 !.env.example
+
+# Vendor agent skills, auto-installed by the Vercel MongoDB integration.
+# Regenerable, third-party, and 288K of noise in a repo people will browse.
+storefront/.agents/

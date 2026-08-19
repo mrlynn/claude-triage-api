@@ -3,6 +3,16 @@
 12 questions. Sections weighted 30% / 40% / 30%. Open book — the goal is to
 test judgment, not recall.
 
+**There is an auto-scored version at
+[/assessment](https://claude-triage-labs.vercel.app/assessment).** Sections 1
+and 2 are marked automatically with an explanation on every answer. Section 3
+is not machine-marked, because turning a design-judgment question into four
+options tests recall of one opinion rather than reasoning — those are written
+out and self-assessed against a rubric that appears once an answer is
+committed. Everything stays in the browser.
+
+The version below is the paper form, for sessions where that is easier.
+
 Instructor notes on grading are in
 [`01-instructor-guide.md`](01-instructor-guide.md).
 

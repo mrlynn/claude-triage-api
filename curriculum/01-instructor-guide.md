@@ -168,6 +168,22 @@ Have 2–3 spare keys on hand. Someone's will not work.
 
 ---
 
+## Knowledge checks
+
+Ten checks sit inline in the labs, at the point the idea is taught rather than
+collected at the end. They are authored as ` ```quiz ` JSON blocks in the
+markdown and rendered as components by a remark plugin, so the source stays
+plain markdown and still reads on GitHub.
+
+Two things about how they behave, both worth knowing before you point a room
+at them. The explanation shows on every answer, right or wrong, because a
+check that only explains failures teaches the people who guessed correctly
+nothing. And there is no retry or score — these are checks on understanding,
+not an exam, and the exam is a separate page.
+
+Use them as pacing. If half the room is still reading when the rest have
+answered, that is your signal to move.
+
 ## Discussion prompts that work
 
 Use these when a group finishes early or the room goes quiet:
@@ -187,7 +203,10 @@ Use these when a group finishes early or the room goes quiet:
 
 ## Grading the assessment
 
-[`assessment.md`](assessment.md) has 12 questions. Suggested weighting:
+[`assessment.md`](assessment.md) has 12 questions, and there is an auto-scored
+version at [/assessment](https://claude-triage-labs.vercel.app/assessment)
+that marks sections 1 and 2 and walks learners through self-assessing section
+3. Suggested weighting:
 
 | Section | Questions | Weight |
 |---|---|---|

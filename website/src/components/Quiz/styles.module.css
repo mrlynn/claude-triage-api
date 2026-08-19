@@ -1,0 +1,146 @@
+.wrap {
+  margin: 1.75rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.item {
+  border: 1px solid var(--ifm-color-primary);
+  border-left-width: 3px;
+  border-radius: var(--ifm-global-radius);
+  background: var(--ifm-background-surface-color);
+  padding: 1rem 1.15rem 1.15rem;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.55rem;
+}
+
+.badge {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ifm-color-primary);
+}
+
+.counter {
+  font-size: 0.68rem;
+  color: var(--ifm-color-emphasis-600);
+  font-variant-numeric: tabular-nums;
+}
+
+.question {
+  margin: 0 0 0.85rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.option,
+.optionCorrect,
+.optionWrong,
+.optionMuted {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--ifm-global-radius);
+  border: 1px solid var(--ifm-toc-border-color);
+  background: var(--ifm-background-color);
+  color: var(--ifm-font-color-base);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.option:hover {
+  border-color: var(--ifm-color-primary);
+  background: var(--ifm-hover-overlay);
+}
+
+.optionCorrect {
+  border-color: var(--ifm-color-success);
+  background: var(--ifm-color-success-contrast-background);
+  color: var(--ifm-color-success-contrast-foreground);
+  cursor: default;
+}
+
+.optionWrong {
+  border-color: var(--ifm-color-danger);
+  background: var(--ifm-color-danger-contrast-background);
+  color: var(--ifm-color-danger-contrast-foreground);
+  cursor: default;
+}
+
+.optionMuted {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.marker {
+  flex: 0 0 1.25rem;
+  height: 1.25rem;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+  background: var(--ifm-color-emphasis-200);
+  font-size: 0.7rem;
+  font-weight: 700;
+  margin-top: 0.05rem;
+}
+
+.optionCorrect .marker {
+  background: var(--ifm-color-success);
+  color: #fff;
+}
+
+.optionWrong .marker {
+  background: var(--ifm-color-danger);
+  color: #fff;
+}
+
+.explainRight,
+.explainWrong {
+  margin-top: 0.85rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--ifm-global-radius);
+  background: var(--ifm-background-color);
+  border-left: 3px solid var(--ifm-color-success);
+}
+
+.explainWrong {
+  border-left-color: var(--ifm-color-warning);
+}
+
+.verdict {
+  margin: 0 0 0.3rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.explainText {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--ifm-color-emphasis-800);
+}
+
+.note {
+  margin: 0.5rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--ifm-color-emphasis-600);
+}

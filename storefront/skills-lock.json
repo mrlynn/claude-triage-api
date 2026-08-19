@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "skills": {
+    "mongodb-query-optimizer": {
+      "source": "mongodb/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/mongodb-query-optimizer/SKILL.md",
+      "computedHash": "129464c93c61bcd2d4352afc7cc99eeb9485d109c5ae7e6ff614481b5693bd55"
+    },
+    "mongodb-schema-design": {
+      "source": "mongodb/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/mongodb-schema-design/SKILL.md",
+      "computedHash": "627fd7407c033de8364bd44a599adff29cbb863a71ebea88a2f8fe7170baa7cb"
+    },
+    "mongodb-search-and-ai": {
+      "source": "mongodb/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/mongodb-search-and-ai/SKILL.md",
+      "computedHash": "91ae39c66b490f9b011505cf0b4bc7b5338b69b7e96f357258b268bf5d68913e"
+    }
+  }
+}

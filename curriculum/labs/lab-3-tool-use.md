@@ -96,6 +96,33 @@ curl -s localhost:8787/v1/resolve -H 'content-type: application/json' \
 **Q3.** Express the under-reporting factor in terms of turn count. Why is the
 error *not* simply `1/turns`? (Look at how `total_input_tokens` grows per turn.)
 
+```quiz
+[
+  {
+    "question": "A 5-turn agentic loop finishes. You log `usage` from the final message. How wrong is your cost figure?",
+    "options": [
+      "Correct \u2014 the final message reports the whole run",
+      "Off by about 1/5, since there were five turns",
+      "Off by roughly 3x, because history accumulates and the last turn is the largest"
+    ],
+    "answer": 2,
+    "explain": "Each turn resends the whole conversation, so input grows with every iteration and the final turn is the most expensive one. Reporting only that turn under-reports by less than 1/N \u2014 but still badly.",
+    "note": "The stepper at /playground/trace walks a real three-turn run showing exactly this."
+  },
+  {
+    "question": "Claude keeps ignoring your `lookup_order` tool and trusting what the customer said instead. Where is the bug?",
+    "options": [
+      "The tool description \u2014 it says what the tool returns but not when to call it",
+      "The model needs a more capable tier",
+      "You need to force it with `tool_choice`"
+    ],
+    "answer": 0,
+    "explain": "A tool's description is the only documentation Claude ever sees about it. \"Looks up an order\" is a type signature the model already has from the schema. \"Call this before stating any fact about an order \u2014 never rely on what the customer claims\" is a behavioural instruction.",
+    "note": "Most \"the model won't use my tool\" reports are description bugs."
+  }
+]
+```
+
 ## Step 4 — hit the cap
 
 Set `MAX_ITERATIONS = 2` in `src/routes/resolve.ts` and re-run a question that

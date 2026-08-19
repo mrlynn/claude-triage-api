@@ -46,6 +46,12 @@ it.
 
 ## The company
 
+**You can visit them.** [northwind-outfitters.vercel.app](https://northwind-outfitters.vercel.app)
+is a working storefront: the catalog, the warranty terms, a fake order
+history, and a support form that runs the real triage service on whatever you
+type into it. Everything below is easier to hold once you have looked at the
+price tag on a jacket you are about to complain about.
+
 Northwind Outfitters sells outdoor gear. Technical shells, packs, insulated
 bottles, tents. Roughly $180M a year, about 78% of it direct to consumer
 through the website and the rest through twelve retail stores in the mountain
@@ -227,6 +233,10 @@ the labs measure what they measure.
 - **Safety time-to-queue.** Target is one hour and the tolerance is zero.
 - **Agent-hours on triage.** The number she wants to move to zero so those
   hours go to actually resolving things.
+
+Her dashboard is at [northwind-outfitters.vercel.app/ops](https://northwind-outfitters.vercel.app/ops). The
+twelve-month history there is invented and labelled as such; the unit
+economics, the eval accuracy and the category mix are real.
 
 Notice what is not on the list. Nobody is measured on model accuracy. Accuracy
 is a proxy, and the eval set in this repo exists to keep that proxy honest, not

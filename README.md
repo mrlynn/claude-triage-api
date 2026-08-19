@@ -1,10 +1,23 @@
 # Claude Triage API
 
 A reference implementation of a customer-support triage service built on the
-Claude API — written to be **read and taught from**, not just run.
+Claude API, plus the course that teaches it — written to be **read and taught
+from**, not just run.
 
 Four routes, four capabilities, one coherent domain. Each route introduces
 exactly one new idea and builds on the one before it.
+
+## Three things live here
+
+| | What it is | Where |
+|---|---|---|
+| **The service** | `src/` — the Claude API reference implementation the whole course is about. Runs locally; not deployed. | this repo |
+| **The course** | `website/` — Docusaurus site: scenario, setup, six labs with inline knowledge checks, solutions, instructor guide, auto-scored assessment, and four interactive playgrounds. | [claude-triage-labs.vercel.app](https://claude-triage-labs.vercel.app) |
+| **The scenario, made real** | `storefront/` — Next.js shop for the fictional company. Browse the gear, file a support ticket, watch your own words get classified live. Includes Priya's ops dashboard. | [northwind-outfitters.vercel.app](https://northwind-outfitters.vercel.app) |
+
+The storefront calls Claude for real, so it is rate-limited and spend-capped
+(MongoDB Atlas, five per IP per ten minutes, a global daily ceiling, and it
+fails closed rather than running uncapped).
 
 **Start with [the scenario](curriculum/scenario.md).** The domain is a real
 company with a real problem: 4,100 support tickets a week, manual triage as the
@@ -224,22 +237,44 @@ the set is [Lab 6](curriculum/labs/lab-6-evals.md) Q7.
 ## Layout
 
 ```
-src/
-  config.ts          model id, per-route effort, max_tokens, pricing
-  anthropic.ts       the single shared client
-  schemas.ts         Zod schemas — output contract AND API types
-  prompts.ts         system prompt assembly with cache breakpoints
-  routes/            one file per capability
-  tools/             tool definitions + the fake back office
-  lib/               usage accounting, error mapping, SSE
+src/                   THE SERVICE
+  config.ts            model id, per-route effort, max_tokens, pricing
+  anthropic.ts         the single shared client
+  schemas.ts           Zod schemas — output contract AND API types
+  prompts.ts           system prompt assembly with cache breakpoints
+  routes/              one file per capability
+  tools/               tool definitions + the fake back office
+  lib/                 usage accounting, error mapping, SSE
 data/
-  policies.md        the ~1,400-word handbook that gets cached
-  orders.json        fake OMS
-  customers.json     fake CRM
-evals/               gold set + harness (deterministic + LLM judge)
-curriculum/          labs, instructor guide, concept map, assessment
-docs/architecture.md the design decisions and why
+  policies.md          the ~1,400-word handbook that gets cached
+  inbound-queue.json   20 tickets, actually triaged, used by the queue demo
+  orders.json          fake OMS
+  customers.json       fake CRM
+evals/                 gold set + harness (deterministic + LLM judge)
+scripts/               smoke test, queue triage, policy sync
+assets/brand/          the Northwind mark
+
+curriculum/            THE COURSE (canonical markdown)
+  scenario.md          who Northwind is and why any of this exists
+  setup.md             prerequisites and the two-terminal workflow
+  labs/, solutions/    six labs with inline knowledge checks
+docs/architecture.md   the design decisions and why
+
+website/               THE COURSE SITE (Docusaurus)
+  scripts/sync-docs    generates docs/ from the markdown above
+  plugins/             remark plugin turning ```quiz fences into components
+  src/components/      cost explorer, trace stepper, cache inspector, queue
+
+storefront/            THE SCENARIO, MADE REAL (Next.js)
+  app/support/         the live triage form with the pipeline visualiser
+  app/ops/             Priya's dashboard
+  lib/pipeline.ts      one generator, two consumers: SSE and plain JSON
+  lib/ratelimit.ts     MongoDB spend ceiling, fails closed
 ```
+
+Nothing under `website/docs/` is hand-written — it is generated from
+`curriculum/` and `docs/` by `website/scripts/sync-docs.mjs`, which also
+rewrites relative links so the markdown stays readable on GitHub.
 
 ---
 

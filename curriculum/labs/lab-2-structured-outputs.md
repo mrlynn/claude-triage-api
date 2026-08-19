@@ -26,7 +26,9 @@ Get that field wrong and you ship the 2024 classifier again.
 > **See what the fields are for.** The
 > [inbound queue](https://claude-triage-labs.vercel.app/playground/queue) runs
 > this schema over twenty tickets and sorts a real support queue with the
-> result. Every classification there came from the code you are about to edit.
+> result, and the [Northwind storefront](https://northwind-outfitters.vercel.app/support) runs it live on
+> anything you type. Every classification in both came from the code you are
+> about to edit.
 
 ## Objectives
 
@@ -87,6 +89,33 @@ field is usable?
 > Schema sent to the model. It is the highest-leverage per-field control you
 > have. A schema with bare types gets you well-formed output; a schema with
 > good descriptions gets you *correct* output.
+
+```quiz
+[
+  {
+    "question": "Constrained output guarantees which of these?",
+    "options": [
+      "That the answer is correct",
+      "That the answer has the right shape",
+      "Both \u2014 that is the point of a schema"
+    ],
+    "answer": 1,
+    "explain": "The API enforces the shape. Nothing enforces the content. A schema will happily give you a well-formed classification that is completely wrong, which is exactly why the eval set in Lab 6 exists.",
+    "note": "Northwind's cancelled 2024 classifier produced perfectly-shaped output too."
+  },
+  {
+    "question": "You delete the `.describe()` text from the `confidence` field. What happens?",
+    "options": [
+      "Nothing \u2014 descriptions are documentation for humans",
+      "Scores cluster near the top and stop separating right answers from wrong ones",
+      "The API rejects the schema"
+    ],
+    "answer": 1,
+    "explain": "`.describe()` text is compiled into the JSON Schema sent to the model. It is the highest-leverage per-field control you have. Without the calibration instruction the model reports high confidence on everything, and the gap between confidence-on-passes and confidence-on-failures collapses.",
+    "note": "That gap, not the absolute value, is what makes threshold routing possible."
+  }
+]
+```
 
 ## Step 3 — design an enum that fails safely
 
