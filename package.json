@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit",
     "eval": "tsx evals/run-eval.ts",
     "smoke": "tsx scripts/smoke.ts",
-    "triage:queue": "tsx scripts/triage-queue.ts"
+    "triage:queue": "tsx scripts/triage-queue.ts",
+    "sync:storefront": "node scripts/sync-storefront-policy.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.118.0",

@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@theme {
+  --color-pine: #1f3d33;
+  --color-spruce: #5c9a86;
+  --color-bone: #f2ede4;
+  --color-ember: #d9642a;
+  --color-slate-nw: #8a9a93;
+}
+
+html {
+  background: var(--color-bone);
+  color: var(--color-pine);
+}
