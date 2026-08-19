@@ -23,6 +23,11 @@ Get that field wrong and you ship the 2024 classifier again.
 
 ---
 
+> **See what the fields are for.** The
+> [inbound queue](https://claude-triage-labs.vercel.app/playground/queue) runs
+> this schema over twenty tickets and sorts a real support queue with the
+> result. Every classification there came from the code you are about to edit.
+
 ## Objectives
 
 - Constrain output with `output_config.format` and validate with `messages.parse()`

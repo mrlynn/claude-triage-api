@@ -12,6 +12,13 @@ const TOOLS = [
     lab: "Scenario",
   },
   {
+    to: "/playground/queue",
+    title: "The inbound queue",
+    blurb:
+      "Twenty real tickets, before and after triage. Try to spot the safety report before you flip the toggle.",
+    lab: "Scenario",
+  },
+  {
     to: "/playground/cost",
     title: "Cost explorer",
     blurb:

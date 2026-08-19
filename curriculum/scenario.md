@@ -14,6 +14,11 @@ car, the customer whose fourth message finally says "I've had it" — those arri
 in the same inbox as "do you ship to Canada," written in the same tone, often
 with the same subject line. Somebody has to notice.
 
+You can try this yourself. The
+[inbound queue](https://claude-triage-labs.vercel.app/playground/queue) shows
+twenty real tickets as an agent sees them, unsorted. One is a parent reporting
+that their child got sick. See how long it takes you to find it.
+
 Right now that somebody is a human reading 4,100 messages a week, and in
 December it is a seasonal hire on their fifth day who has not read the policy
 handbook. This is not a story about saving 90 seconds per ticket. It is a story

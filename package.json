@@ -12,7 +12,8 @@
     "start": "tsx src/server.ts",
     "typecheck": "tsc --noEmit",
     "eval": "tsx evals/run-eval.ts",
-    "smoke": "tsx scripts/smoke.ts"
+    "smoke": "tsx scripts/smoke.ts",
+    "triage:queue": "tsx scripts/triage-queue.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.118.0",
