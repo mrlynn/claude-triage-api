@@ -109,6 +109,33 @@ Now break each one and observe the effect:
 terms of what an autoregressive model can and cannot do once it has emitted a
 verdict token.
 
+```quiz
+[
+  {
+    "question": "In your judge's schema, should `evidence` come before or after `verdict`?",
+    "options": [
+      "Before \u2014 so the quotes exist in context when the verdict token is generated",
+      "After \u2014 collect the verdict first, then justify it",
+      "It makes no difference, they are both in the same object"
+    ],
+    "answer": 0,
+    "explain": "Generation is left-to-right and each token is conditioned on what came before. Evidence first means the verdict is conditioned on the quotes. Verdict first means the \"evidence\" is generated to justify a conclusion already committed to \u2014 that is rationalisation, and it inflates pass rates.",
+    "note": "Field order in a schema is a design decision, not a formatting one."
+  },
+  {
+    "question": "Your eval drops from 92% to 58% after you tighten a prompt. What do you check first?",
+    "options": [
+      "The model \u2014 try a more capable tier",
+      "The prompt change \u2014 revert and bisect",
+      "The gold labels \u2014 a spec can have bugs like any other code"
+    ],
+    "answer": 2,
+    "explain": "This repo's first eval run scored 58%, and five of the six failures were mislabelled cases rather than wrong answers. In mature systems a meaningful share of \"failures\" are label bugs.",
+    "note": "Check the label before you check the model."
+  }
+]
+```
+
 ## Step 5 — validate the judge itself
 
 A judge is a model, so it needs its own eval.

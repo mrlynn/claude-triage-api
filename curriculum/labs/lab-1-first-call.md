@@ -97,6 +97,22 @@ for (const block of response.content) {
 > `content[0]` is frequently *not* the text block. Code that indexes position 0
 > works in testing and breaks the moment reasoning kicks in.
 
+```quiz
+[
+  {
+    "question": "Why can't you write `response.content[0].text`?",
+    "options": [
+      "The SDK returns text on a different property",
+      "`content` is an array of blocks that may be text, thinking, or tool_use — you have to narrow by `.type`",
+      "You need to await it first"
+    ],
+    "answer": 1,
+    "explain": "`content` is a discriminated union. On Opus 5 adaptive thinking is on by default, so index 0 is frequently a `thinking` block — code that indexes position 0 works in testing and breaks the moment reasoning kicks in.",
+    "note": "TypeScript will stop you. In JavaScript it fails silently at runtime instead."
+  }
+]
+```
+
 ## Step 3 — read the meter
 
 ```ts
@@ -136,6 +152,22 @@ The request succeeded; the output is just wrong.
 
 **Q2.** A teammate proposes catching this by checking whether the response ends
 in a period. Why is that a bad detector, and what's the correct one?
+
+```quiz
+[
+  {
+    "question": "Your response comes back with `stop_reason: \"max_tokens\"`. What happened?",
+    "options": [
+      "The request failed and you should retry it",
+      "The model finished early because it had nothing more to say",
+      "The output was cut off mid-generation \u2014 the call succeeded, the answer is just truncated"
+    ],
+    "answer": 2,
+    "explain": "`max_tokens` is an enforced ceiling the model cannot see. Hitting it truncates the output mid-thought. There is no error: HTTP 200, a valid response object, and a sentence that stops halfway.",
+    "note": "In a support context that is a reply to a customer that ends partway through a refund amount."
+  }
+]
+```
 
 ## Step 5 — handle errors like the service does
 

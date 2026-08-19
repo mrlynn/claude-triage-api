@@ -2,6 +2,7 @@ import type { Config } from "@docusaurus/types";
 import type * as Preset from "@docusaurus/preset-classic";
 import { themes as prismThemes } from "prism-react-renderer";
 import { readFileSync } from "node:fs";
+import remarkQuiz from "./plugins/remark-quiz.mjs";
 
 const GITHUB_ORG = process.env.DOCS_GITHUB_ORG ?? "mrlynn";
 const GITHUB_REPO = process.env.DOCS_GITHUB_REPO ?? "claude-triage-api";
@@ -80,6 +81,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: "./sidebars.ts",
+          remarkPlugins: [remarkQuiz],
           routeBasePath: "docs",
           editUrl: ({ docPath }) => {
             const source = DOC_SOURCES[docPath];
@@ -111,6 +113,7 @@ const config: Config = {
         },
         { type: "doc", docId: "architecture", position: "left", label: "Architecture" },
         { to: "/playground", position: "left", label: "Playground" },
+        { to: "/assessment", position: "left", label: "Assessment" },
         {
           href: "https://northwind-outfitters.vercel.app",
           position: "right",
@@ -136,7 +139,7 @@ const config: Config = {
             { label: "Setup", to: "/docs/setup" },
             { label: "Concept map", to: "/docs/concept-map" },
             { label: "Lab 1", to: "/docs/labs/lab-1-first-call" },
-            { label: "Assessment", to: "/docs/assessment" },
+            { label: "Assessment", to: "/assessment" },
             { label: "Playground", to: "/playground" },
           ],
         },
