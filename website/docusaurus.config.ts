@@ -54,7 +54,9 @@ const BASE_URL =
 const config: Config = {
   title: "Claude Triage API",
   tagline: "A teaching-grade reference API for the Claude API",
-  favicon: "img/favicon.ico",
+  // Northwind mark — same asset as /brand. SVG for crisp tabs; ico kept as
+  // a same-mark fallback for older agents that still request /img/favicon.ico.
+  favicon: "img/brand/northwind-mark.svg",
 
   url: SITE_URL,
   baseUrl: BASE_URL,
