@@ -14,6 +14,8 @@ flowchart LR
     Draft --> Estimate["POST /v1/estimate<br/>token counting"]
 ```
 
+---
+
 ## Three things live here
 
 | | What it is | Where |
@@ -22,15 +24,6 @@ flowchart LR
 | **The course** | `website/` — Docusaurus site: scenario, setup, ten labs with inline knowledge checks, solutions, instructor guide, auto-scored assessment, and seven interactive playgrounds. | [claude-triage-labs.vercel.app](https://claude-triage-labs.vercel.app) |
 | **The Python track** | `python/` — the same service on FastAPI, plus [what is actually different](python/labs/deltas.md). Four differences, all of them found by porting rather than recalled. | this repo |
 | **The scenario, made real** | `storefront/` — Next.js shop for the fictional company. Browse the gear, file a support ticket, watch your own words get classified live, then try to break the classifier. Escalated tickets land in a reviewer queue you can read without a credential; Priya's ops dashboard sits on top. | [northwind-outfitters.vercel.app](https://northwind-outfitters.vercel.app) |
-
-Both public sites deploy from this one GitHub repo on Vercel (two projects, different
-Root Directories). See [`website/README.md`](website/README.md#vercel) for the
-exact dashboard settings — Ignored Build Step is configured in-repo via
-`ignoreCommand`, so leave that dropdown on **Automatic**.
-
-The storefront calls Claude for real, so it is rate-limited and spend-capped
-(MongoDB Atlas, five per IP per ten minutes, a global daily ceiling, and it
-fails closed rather than running uncapped).
 
 **Start with [the scenario](curriculum/scenario.md).** The domain is a real
 company with a real problem: 4,100 support tickets a week, manual triage as the
@@ -51,6 +44,52 @@ Cross-cutting, demonstrated throughout: **prompt caching** (a ~1,400-word
 policy handbook cached across every request), **usage and cost accounting**,
 **typed error handling**, and an **eval harness** with both deterministic
 scoring and an LLM judge.
+
+---
+
+## The course
+
+This repo doubles as a hands-on course for developers building on the Claude
+API. Read [`curriculum/scenario.md`](curriculum/scenario.md) for the domain,
+follow [`curriculum/setup.md`](curriculum/setup.md) to get running, then
+[`curriculum/00-concept-map.md`](curriculum/00-concept-map.md) for the
+technical map.
+
+**Day 1 is the course.** Labs 0-6 are the enablement asset: the four
+capabilities, one domain, about four hours. Someone who does only Day 1 has
+learned the Claude API and has a working service to show for it.
+
+| Lab | Topic | Time |
+|---|---|---|
+| [0](curriculum/labs/lab-0-scoreboard.md) | Build the scoreboard first | 20 min |
+| [1](curriculum/labs/lab-1-first-call.md) | Your first call, and reading `usage` | 20 min |
+| [2](curriculum/labs/lab-2-structured-outputs.md) | Structured outputs and schema design | 35 min |
+| [3](curriculum/labs/lab-3-tool-use.md) | Tool use and the agentic loop | 45 min |
+| [4](curriculum/labs/lab-4-streaming.md) | Streaming and SSE | 30 min |
+| [5](curriculum/labs/lab-5-prompt-caching.md) | Prompt caching and cost | 35 min |
+| [6](curriculum/labs/lab-6-evals.md) | Eval design and LLM-as-judge | 45 min |
+
+**Day 2 is optional, and it is for people who are going to ship.** Three more
+hours on the decisions that only arrive once something is real: which model,
+what happens when the input is hostile, and what separates a demo from a
+service. Skip it without loss if you are here to learn the API.
+
+| Lab | Topic | Time |
+|---|---|---|
+| [7](curriculum/labs/lab-7-choosing-a-model.md) | Choosing a model | 45 min |
+| [8](curriculum/labs/lab-8-trust-boundary.md) | The trust boundary | 50 min |
+| [9](curriculum/labs/lab-9-shipping-it.md) | Shipping it: batch, limits, MCP | 60 min |
+
+Optional throughout: a [Python track](python/labs/deltas.md) covering the four
+things that genuinely differ between the SDKs. The labs are TypeScript and
+nothing later asks for Python.
+
+Instructors: [`curriculum/01-instructor-guide.md`](curriculum/01-instructor-guide.md)
+has timing, the failure modes learners hit, and what to do when a lab goes
+sideways. Solutions are in [`curriculum/solutions/`](curriculum/solutions/).
+Facilitators: [`curriculum/02-run-of-show.md`](curriculum/02-run-of-show.md) is
+minute-by-minute, and [`docs/facilitator/keys.md`](docs/facilitator/keys.md)
+covers workspaces, keys, and measured per-learner cost.
 
 ---
 
@@ -224,7 +263,100 @@ honest. One case is 8% of the score, which is itself a lesson — see
 
 ## Measured behavior
 
-From an actual run against `claude-opus-5` (your numbers will vary slightly):
+Everything below came out of an actual run against `claude-opus-5`; your
+numbers will vary. The first three contradicted what we expected going in,
+which is why they lead.
+
+**Batch is half price and cost 23% more.** The Batches API bills at half rate,
+which makes it the obvious tool for a weekly queue nobody reads in real time.
+Measured on the twenty-ticket sample:
+
+| mode | wall clock | cost | cache hits |
+|---|---|---|---|
+| serial | 91s | **$0.1645** | 20/20 |
+| concurrent (8) | 60s | $0.1751 | 20/20 |
+| Batches API | 163–224s | $0.2018 | **11/20** |
+
+A cache read is **0.1×** the input rate; the batch discount is **0.5×**. On a
+request dominated by a ~3,400-token cached handbook, losing the first to gain
+the second is a net loss and it is not close. Synchronous requests arrive in
+sequence so the prefix stays warm; a batch is fanned out on the provider's
+schedule and a warm prefix becomes a matter of luck.
+
+**Two discounts on the same tokens compete — they do not compose.** That is the
+transferable part, and it is easy to miss because both are real, both are
+documented, and each is correct in isolation.
+
+The scale caveat matters and is stated in
+[Lab 9](curriculum/labs/lab-9-shipping-it.md) Q3: at 400,000 tickets the prefix
+stays hot for hours and the result probably flips back. `triage:queue:batch`
+reports the hit rate so you can run a pilot instead of extrapolating. Note also
+that concurrency 8 cut wall clock by a third and nudged cost *up* — parallelism
+buys the clock, never the price.
+
+**Escalation actually escalates.** `requires_human` used to be a field the
+schema produced and nothing acted on. The storefront's pipeline now has a
+`persist` stage that writes flagged tickets to a reviewer queue at `/queue`,
+and `/ops` carries its first figure read from a database rather than from a
+constants file.
+
+Three properties, each enforced rather than documented: the stored message is
+**redacted** before it is written, documents **expire after 30 days** via a TTL
+index, and a storage failure **degrades the queue, not the answer** — the
+customer still gets their classification. Tickets that did not need a human are
+never stored at all, because storage is a consequence of escalation rather than
+of submission.
+
+**Trust boundary** — `npm run eval:redteam` contains 11/11 attacks and leaves
+3/3 benign controls intact, across five consecutive runs.
+
+The result worth reporting is not the green gate. Of the nine failures the gate
+produced while it was being written, **eight were mis-specified assertions
+rather than model failures** — one was literally inverted, and two failed the
+model for classifying a site-bug report as `other`, which is correct. The case
+notes in [`data/injections.jsonl`](data/injections.jsonl) record each one on
+purpose: this is the same "check the label before the model" lesson the eval
+set teaches, arriving in a context where it is much easier to mistake a broken
+test for a broken defence.
+
+The one real vulnerability was `inj-10`, which buries its instruction after
+blank lines and a separator and asks not to be mentioned. It defeated escaping
+and delimiting, because it never touches the structure. The fix was prompt
+hardening, and the honest claim about it is narrow: **five clean runs against a
+case that flipped beforehand, at no measurable accuracy cost** (11/12 and 12/12
+against a 10/12 baseline, inside the ordinary 10–12 band). That establishes a
+preference for the hardened prompt. It does not establish a rate, and the
+attack family is not covered.
+
+Rank the defences by kind. Escaping `<` and comparing `$900 > $200` hold by
+construction. Prompt instructions hold by probability. Never let a probability
+be the only thing between an attacker and money.
+
+**Model tiering** — measured across four runs of `npm run eval:models`:
+
+| model | accuracy | $/mo @ 4,100/wk | calibration gap |
+|---|---|---|---|
+| `claude-opus-5` | 10–12 / 12 | ~$137 | 0.35–0.41 |
+| `claude-sonnet-5` | 7–9 / 12 | ~$70–98 | 0.20–0.30 |
+| `claude-haiku-4-5` | 6–8 / 12 | ~$67–74 | −0.06 to +0.13 |
+
+Three findings, none of which the accuracy column alone would give you.
+
+Every tier lands **30–60× under Priya's $4,000 budget**, so cost is not a
+binding constraint at this volume and the usual "move down a tier to save
+money" reflex buys ~$65/month at the price of three to five cases in twelve.
+
+The cheap tiers do not fail randomly. They fail where two handbook rules
+interact — `eval-10` (delivered-not-received) nearly every run, and `eval-04`,
+the safety case, on Haiku in three runs of four.
+
+And the calibration gap degrades faster than accuracy does. Haiku's hovers
+around zero, meaning its confidence score carries almost no information about
+whether it is right — it returns the wrong answer on `eval-04` at **0.95
+confidence**. Any control built on that score (threshold routing, escalation,
+auto-resolve) silently stops working while continuing to report numbers. That
+is why `/v1/triage?tier=auto` routes on *input* signals rather than trusting the
+cheap tier to know when it is unsure.
 
 **Prompt caching** — two identical-prefix calls to `/v1/triage`:
 
@@ -375,130 +507,16 @@ rewrites relative links so the markdown stays readable on GitHub.
 
 ---
 
-## Curriculum
+## Deploying
 
-This repo doubles as a hands-on course. Read
-[`curriculum/scenario.md`](curriculum/scenario.md) for the domain, follow
-[`curriculum/setup.md`](curriculum/setup.md) to get running, then
-[`curriculum/00-concept-map.md`](curriculum/00-concept-map.md) for the technical
-map.
+Both public sites deploy from this one GitHub repo on Vercel (two projects, different
+Root Directories). See [`website/README.md`](website/README.md#vercel) for the
+exact dashboard settings — Ignored Build Step is configured in-repo via
+`ignoreCommand`, so leave that dropdown on **Automatic**.
 
-| Lab | Topic | Time |
-|---|---|---|
-| [0](curriculum/labs/lab-0-scoreboard.md) | Build the scoreboard first | 20 min |
-| [1](curriculum/labs/lab-1-first-call.md) | Your first call, and reading `usage` | 20 min |
-| [2](curriculum/labs/lab-2-structured-outputs.md) | Structured outputs and schema design | 35 min |
-| [3](curriculum/labs/lab-3-tool-use.md) | Tool use and the agentic loop | 45 min |
-| [4](curriculum/labs/lab-4-streaming.md) | Streaming and SSE | 30 min |
-| [5](curriculum/labs/lab-5-prompt-caching.md) | Prompt caching and cost | 35 min |
-| [6](curriculum/labs/lab-6-evals.md) | Eval design and LLM-as-judge | 45 min |
-| [7](curriculum/labs/lab-7-choosing-a-model.md) | Choosing a model | 45 min |
-| [8](curriculum/labs/lab-8-trust-boundary.md) | The trust boundary | 50 min |
-| [9](curriculum/labs/lab-9-shipping-it.md) | Shipping it: batch, limits, MCP | 60 min |
-
-Facilitators: [`curriculum/02-run-of-show.md`](curriculum/02-run-of-show.md) is
-minute-by-minute for a two-day delivery, and
-[`docs/facilitator/keys.md`](docs/facilitator/keys.md) covers workspaces, keys,
-and measured per-learner cost. `npm run workshop` manages the environment —
-note that **API keys cannot be created programmatically**, so the flow is
-provision-workspaces → issue-keys-by-hand → automated teardown.
-
-Instructors: [`curriculum/01-instructor-guide.md`](curriculum/01-instructor-guide.md)
-has timing, the failure modes learners hit, and what to do when a lab goes
-sideways. Solutions are in [`curriculum/solutions/`](curriculum/solutions/).
-
----
-
-**Batch is half price and cost 23% more.** The Batches API bills at half rate,
-which makes it the obvious tool for a weekly queue nobody reads in real time.
-Measured on the twenty-ticket sample:
-
-| mode | wall clock | cost | cache hits |
-|---|---|---|---|
-| serial | 91s | **$0.1645** | 20/20 |
-| concurrent (8) | 60s | $0.1751 | 20/20 |
-| Batches API | 163–224s | $0.2018 | **11/20** |
-
-A cache read is **0.1×** the input rate; the batch discount is **0.5×**. On a
-request dominated by a ~3,400-token cached handbook, losing the first to gain
-the second is a net loss and it is not close. Synchronous requests arrive in
-sequence so the prefix stays warm; a batch is fanned out on the provider's
-schedule and a warm prefix becomes a matter of luck.
-
-**Two discounts on the same tokens compete — they do not compose.** That is the
-transferable part, and it is easy to miss because both are real, both are
-documented, and each is correct in isolation.
-
-The scale caveat matters and is stated in
-[Lab 9](curriculum/labs/lab-9-shipping-it.md) Q3: at 400,000 tickets the prefix
-stays hot for hours and the result probably flips back. `triage:queue:batch`
-reports the hit rate so you can run a pilot instead of extrapolating. Note also
-that concurrency 8 cut wall clock by a third and nudged cost *up* — parallelism
-buys the clock, never the price.
-
-**Escalation actually escalates.** `requires_human` used to be a field the
-schema produced and nothing acted on. The storefront's pipeline now has a
-`persist` stage that writes flagged tickets to a reviewer queue at `/queue`,
-and `/ops` carries its first figure read from a database rather than from a
-constants file.
-
-Three properties, each enforced rather than documented: the stored message is
-**redacted** before it is written, documents **expire after 30 days** via a TTL
-index, and a storage failure **degrades the queue, not the answer** — the
-customer still gets their classification. Tickets that did not need a human are
-never stored at all, because storage is a consequence of escalation rather than
-of submission.
-
-**Trust boundary** — `npm run eval:redteam` contains 11/11 attacks and leaves
-3/3 benign controls intact, across five consecutive runs.
-
-The result worth reporting is not the green gate. Of the nine failures the gate
-produced while it was being written, **eight were mis-specified assertions
-rather than model failures** — one was literally inverted, and two failed the
-model for classifying a site-bug report as `other`, which is correct. The case
-notes in [`data/injections.jsonl`](data/injections.jsonl) record each one on
-purpose: this is the same "check the label before the model" lesson the eval
-set teaches, arriving in a context where it is much easier to mistake a broken
-test for a broken defence.
-
-The one real vulnerability was `inj-10`, which buries its instruction after
-blank lines and a separator and asks not to be mentioned. It defeated escaping
-and delimiting, because it never touches the structure. The fix was prompt
-hardening, and the honest claim about it is narrow: **five clean runs against a
-case that flipped beforehand, at no measurable accuracy cost** (11/12 and 12/12
-against a 10/12 baseline, inside the ordinary 10–12 band). That establishes a
-preference for the hardened prompt. It does not establish a rate, and the
-attack family is not covered.
-
-Rank the defences by kind. Escaping `<` and comparing `$900 > $200` hold by
-construction. Prompt instructions hold by probability. Never let a probability
-be the only thing between an attacker and money.
-
-**Model tiering** — measured across four runs of `npm run eval:models`:
-
-| model | accuracy | $/mo @ 4,100/wk | calibration gap |
-|---|---|---|---|
-| `claude-opus-5` | 10–12 / 12 | ~$137 | 0.35–0.41 |
-| `claude-sonnet-5` | 7–9 / 12 | ~$70–98 | 0.20–0.30 |
-| `claude-haiku-4-5` | 6–8 / 12 | ~$67–74 | −0.06 to +0.13 |
-
-Three findings, none of which the accuracy column alone would give you.
-
-Every tier lands **30–60× under Priya's $4,000 budget**, so cost is not a
-binding constraint at this volume and the usual "move down a tier to save
-money" reflex buys ~$65/month at the price of three to five cases in twelve.
-
-The cheap tiers do not fail randomly. They fail where two handbook rules
-interact — `eval-10` (delivered-not-received) nearly every run, and `eval-04`,
-the safety case, on Haiku in three runs of four.
-
-And the calibration gap degrades faster than accuracy does. Haiku's hovers
-around zero, meaning its confidence score carries almost no information about
-whether it is right — it returns the wrong answer on `eval-04` at **0.95
-confidence**. Any control built on that score (threshold routing, escalation,
-auto-resolve) silently stops working while continuing to report numbers. That
-is why `/v1/triage?tier=auto` routes on *input* signals rather than trusting the
-cheap tier to know when it is unsure.
+The storefront calls Claude for real, so it is rate-limited and spend-capped
+(MongoDB Atlas, five per IP per ten minutes, a global daily ceiling, and it
+fails closed rather than running uncapped).
 
 ---
 
