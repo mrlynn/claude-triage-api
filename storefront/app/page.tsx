@@ -21,8 +21,26 @@ export default function Home() {
         rather than a flat overlay — a scrim keeps the photograph legible where
         there is no text over it, which a uniform darkening does not.
       */}
-      <section className="relative -mt-8 mb-14 overflow-hidden sm:-mt-10 sm:rounded-lg">
-        <div className="relative aspect-[16/10] w-full sm:aspect-[21/9]">
+      {/*
+        Full-bleed on mobile: `main` applies px-4, and a hero that sits flush
+        under the header but inset 16px at the sides reads as a misalignment
+        rather than a choice. Cancel the padding below sm, keep the inset and
+        the rounded corners above it where the page has margins anyway.
+      */}
+      <section className="relative -mx-4 -mt-8 mb-14 overflow-hidden sm:-mt-10 sm:mx-0 sm:rounded-lg">
+        {/*
+          NO FIXED ASPECT RATIO ON MOBILE. A 16/10 box on a 375px viewport is
+          214px tall and this content needs about 420, so with justify-end the
+          overflow went UPWARD and `overflow-hidden` clipped it — the site's
+          headline rendered 77px above its own container and was invisible on
+          every phone.
+
+          So: content defines the height, with a minimum to stop a short
+          headline collapsing the image to a strip. The aspect ratio comes back
+          at sm: and up, where the width makes the box tall enough for the text
+          to fit inside it, and min-h stays as a floor even there.
+        */}
+        <div className="relative min-h-[27rem] w-full sm:min-h-[22rem] sm:aspect-[21/9]">
           <Image
             src={hero.src}
             alt={hero.alt}
@@ -35,10 +53,10 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-tr from-pine/85 via-pine/55 to-pine/10" />
 
           <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-10">
-            <h1 className="max-w-3xl text-3xl font-extrabold leading-[1.05] tracking-tight text-bone sm:text-5xl">
+            <h1 className="max-w-3xl text-[2rem] font-extrabold leading-[1.05] tracking-tight text-bone sm:text-5xl">
               Gear that outlasts the trip.
             </h1>
-            <p className="mt-3 max-w-xl leading-relaxed text-bone/85">
+            <p className="mt-3 max-w-xl text-sm leading-relaxed text-bone/85 sm:text-base">
               Technical shells, packs, bottles and shelter, built in the mountain
               west and guaranteed for the life of the gear. If it fails because
               we made it wrong, we replace it. No window, no receipt hunt.

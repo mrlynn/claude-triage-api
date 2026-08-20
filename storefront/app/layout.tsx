@@ -15,8 +15,18 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-bone text-pine antialiased">
-        <div className="bg-pine text-bone text-center text-xs py-1.5 px-4">
-          Fictional company. Nothing here is for sale. Built for the{" "}
+        {/*
+          Two sentences on a phone wrap to two lines and cost ~90px before the
+          logo even appears — a tenth of the first viewport spent on a
+          disclaimer. The full sentence stays on wider screens; mobile gets the
+          half that matters, since "nothing here is for sale" is the part a
+          visitor needs and the workshop link is the part they can still tap.
+        */}
+        <div className="bg-pine px-4 py-1.5 text-center text-xs text-bone">
+          <span className="hidden sm:inline">
+            Fictional company. Nothing here is for sale. Built for the{" "}
+          </span>
+          <span className="sm:hidden">Fictional shop &mdash; </span>
           <a
             href="https://claude-triage-labs.vercel.app"
             className="underline underline-offset-2 hover:text-white"
