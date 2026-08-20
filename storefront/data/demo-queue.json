@@ -1,0 +1,183 @@
+[
+  {
+    "_id": "DEMO-NW-T-1045",
+    "created_at": "2026-12-08T07:41:00Z",
+    "channel": "email",
+    "message_redacted": "Hi, probably nothing, but\n\nHi, probably nothing, but I wanted to mention it. My son has been using the insulated bottle we bought in the spring and the inside lining has started flaking. He had a stomach upset this week and the doctor asked what he had been drinking from. Might be unrelated. Just thought you should know.",
+    "redactions": [],
+    "triage": {
+      "category": "safety",
+      "urgency": "urgent",
+      "sentiment": "neutral",
+      "summary": "Customer reports child's illness possibly linked to flaking lining in insulated bottle; informational report needing safety review.",
+      "entities": {
+        "order_ids": [],
+        "product_names": [
+          "insulated bottle"
+        ],
+        "requested_remedy": "information"
+      },
+      "requires_human": true,
+      "escalation_reason": "Possible illness attributed to product (flaking bottle lining); section 5.3/5.4 mandate safety escalation regardless of customer downplaying it.",
+      "confidence": 0.88
+    },
+    "status": "claimed",
+    "claimed_by": "priya",
+    "model": "claude-opus-5",
+    "cost_usd": 0.008001
+  },
+  {
+    "_id": "DEMO-NW-T-1047",
+    "created_at": "2026-12-08T07:52:00Z",
+    "channel": "email",
+    "message_redacted": "Re: Re: Re: still no resolution\n\nThis is the fourth time I have written about the tent poles that arrived bent. Nobody has done anything. I have had it. Someone call me.",
+    "redactions": [],
+    "triage": {
+      "category": "product_defect",
+      "urgency": "high",
+      "sentiment": "angry",
+      "summary": "Fourth contact about tent poles that arrived bent; wants a phone call and resolution.",
+      "entities": {
+        "order_ids": [],
+        "product_names": [
+          "tent poles"
+        ],
+        "requested_remedy": "escalation"
+      },
+      "requires_human": true,
+      "escalation_reason": "Customer has contacted more than twice with no resolution and is explicitly requesting a phone call; automated reply not appropriate.",
+      "confidence": 0.6
+    },
+    "status": "resolved",
+    "model": "claude-opus-5",
+    "cost_usd": 0.009996
+  },
+  {
+    "_id": "DEMO-NW-T-1048",
+    "created_at": "2026-12-08T08:03:00Z",
+    "channel": "email",
+    "message_redacted": "address change\n\nI moved. Can you update the shipping address on my account and on order NW-52044 if it has not gone out yet?",
+    "redactions": [],
+    "triage": {
+      "category": "account",
+      "urgency": "normal",
+      "sentiment": "neutral",
+      "summary": "Customer moved and wants their account shipping address updated, plus order NW-52044 redirected if not yet shipped.",
+      "entities": {
+        "order_ids": [
+          "NW-52044"
+        ],
+        "product_names": [],
+        "requested_remedy": "information"
+      },
+      "requires_human": true,
+      "escalation_reason": "Address change requires identity verification per section 5.1, and the order may need interception before shipment.",
+      "confidence": 0.6
+    },
+    "status": "new",
+    "model": "claude-opus-5",
+    "cost_usd": 0.014311
+  },
+  {
+    "_id": "DEMO-NW-T-1050",
+    "created_at": "2026-12-08T08:18:00Z",
+    "channel": "email",
+    "message_redacted": "delivered but not here\n\nUPS marked my order delivered yesterday at 4pm. Nothing on the porch, nothing with neighbours, nothing in the garage. Order was about $220.",
+    "redactions": [],
+    "triage": {
+      "category": "shipping",
+      "urgency": "high",
+      "sentiment": "neutral",
+      "summary": "Order marked delivered by UPS yesterday but not received; ~$220 value, customer wants resolution.",
+      "entities": {
+        "order_ids": [],
+        "product_names": [],
+        "requested_remedy": "none"
+      },
+      "requires_human": true,
+      "escalation_reason": "Delivered-but-not-received claim over $150 requires supervisor review of the account for prior claims (section 3.4).",
+      "confidence": 0.82
+    },
+    "status": "new",
+    "model": "claude-opus-5",
+    "cost_usd": 0.010621
+  },
+  {
+    "_id": "DEMO-NW-T-1054",
+    "created_at": "2026-12-08T08:51:00Z",
+    "channel": "email",
+    "message_redacted": "legal notice re: tent failure\n\nMy attorney will be in contact regarding the tent poles that collapsed during a storm and damaged the roof of my vehicle. I am documenting everything.",
+    "redactions": [],
+    "triage": {
+      "category": "safety",
+      "urgency": "urgent",
+      "sentiment": "angry",
+      "summary": "Customer reports tent poles collapsed in storm damaging vehicle roof and says their attorney will make contact.",
+      "entities": {
+        "order_ids": [],
+        "product_names": [
+          "tent poles"
+        ],
+        "requested_remedy": "none"
+      },
+      "requires_human": true,
+      "escalation_reason": "Property damage attributed to product plus explicit mention of an attorney — section 5.3 mandates immediate supervisor escalation and Safety queue logging.",
+      "confidence": 0.95
+    },
+    "status": "new",
+    "model": "claude-opus-5",
+    "cost_usd": 0.008136
+  },
+  {
+    "_id": "DEMO-NW-T-1056",
+    "created_at": "2026-12-08T09:10:00Z",
+    "channel": "email",
+    "message_redacted": "wholesale enquiry\n\nWe run a guiding outfit in Colorado and would like to talk about bulk pricing on shells for our staff. Who should I speak to?",
+    "redactions": [],
+    "triage": {
+      "category": "other",
+      "urgency": "low",
+      "sentiment": "neutral",
+      "summary": "Colorado guiding outfit asks who to contact about bulk/wholesale pricing on shell jackets for staff.",
+      "entities": {
+        "order_ids": [],
+        "product_names": [
+          "shells"
+        ],
+        "requested_remedy": "information"
+      },
+      "requires_human": true,
+      "escalation_reason": "Wholesale/partnership inquiry requires routing to a human sales contact; outside automated support scope.",
+      "confidence": 0.88
+    },
+    "status": "new",
+    "model": "claude-opus-5",
+    "cost_usd": 0.007151
+  },
+  {
+    "_id": "DEMO-NW-T-1060",
+    "created_at": "2026-12-08T09:45:00Z",
+    "channel": "email",
+    "message_redacted": "refund and email change\n\ni need a refund on order nw48211 and also my email on the account is wrong can you change it to i.novak2@example.com",
+    "redactions": [],
+    "triage": {
+      "category": "returns",
+      "urgency": "normal",
+      "sentiment": "neutral",
+      "summary": "Customer wants a refund on order nw48211 and asks to change the account email to i.novak2@example.com.",
+      "entities": {
+        "order_ids": [
+          "nw48211"
+        ],
+        "product_names": [],
+        "requested_remedy": "refund"
+      },
+      "requires_human": true,
+      "escalation_reason": "Email-change request from an address that differs from the requested new address requires identity verification per 5.1/5.2; refund reason is unstated so no confident automated resolution.",
+      "confidence": 0.45
+    },
+    "status": "new",
+    "model": "claude-opus-5",
+    "cost_usd": 0.011201
+  }
+]

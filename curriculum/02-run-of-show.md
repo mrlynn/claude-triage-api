@@ -29,7 +29,8 @@ Written to be followed by someone who did not build the repo.
       naming when someone asks why their first call took six seconds.
 - [ ] Open these tabs: the [storefront support form][sf], the
       [injection playground][inj], the [queue][q] with your `QUEUE_TOKEN`
-      already exchanged, and [`/ops`][ops].
+      already exchanged (it is readable without one, but you want the live
+      board), and [`/ops`][ops].
 - [ ] Submit one safety ticket on the support form now, so the queue has
       something in it when you demo it on Day 2 and you are not typing into
       silence.
@@ -131,7 +132,11 @@ Five minutes, and it lands better than any slide about human-in-the-loop.
 2. Watch the pipeline reach `persist` and return a ticket id. Point out that a
    routine ticket produces **no id at all**: storage is a consequence of
    escalation, not of submission.
-3. Open the [queue][q]. Claim it, resolve it.
+3. Open the [queue][q]. It is public and read-only by default, showing the
+   course's seven fictional escalations — so learners can follow along on
+   their own laptops rather than watching yours. Your `QUEUE_TOKEN` cookie
+   swaps that for the real submissions and enables Claim and Resolve. Work
+   the ticket you just filed.
 4. Open [`/ops`][ops]. The escalation panel is the only figure on that dashboard
    read from a database; everything below is invented history, and both are
    badged. Ask which they would put in a board deck.

@@ -19,6 +19,13 @@ const TOOLS = [
     lab: "Scenario",
   },
   {
+    to: "https://northwind-outfitters.vercel.app/queue",
+    title: "The escalation queue",
+    blurb:
+      "Where requires_human actually goes. Seven fictional escalations, their reasons, and the states a reviewer moves them through. Read-only without a token.",
+    lab: "Lab 8",
+  },
+  {
     to: "https://northwind-outfitters.vercel.app/ops",
     title: "Priya's operations dashboard",
     blurb:

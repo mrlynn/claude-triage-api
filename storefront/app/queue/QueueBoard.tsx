@@ -34,6 +34,8 @@ interface Escalation {
   cost_usd: number;
 }
 
+type Mode = "demo" | "live";
+
 interface Stats {
   depth: number;
   medianTimeToClaimSec: number | null;
@@ -69,8 +71,24 @@ const ACTIONS: Record<Status, { to: Status; label: string }[]> = {
   dismissed: [{ to: "new", label: "Reopen" }],
 };
 
+/**
+ * Relative age, falling back to an absolute date.
+ *
+ * The demo fixtures are dated on Northwind's fictional timeline, which runs
+ * ahead of the real clock. Clamping that to zero rendered every card as
+ * "0s ago" — a relative time is only meaningful against a shared present, and
+ * a board where everything arrived this instant is not one anybody would
+ * believe. Anything future-dated or more than a week old shows its date
+ * instead.
+ */
 function age(iso: string): string {
-  const sec = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
+  const sec = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (sec < 0 || sec > 7 * 86400) {
+    return new Date(iso).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+    });
+  }
   if (sec < 60) return `${Math.round(sec)}s ago`;
   if (sec < 3600) return `${Math.round(sec / 60)}m ago`;
   if (sec < 86400) return `${Math.round(sec / 3600)}h ago`;
@@ -83,6 +101,10 @@ export default function QueueBoard() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
+  // Demo mode hides the mutation buttons rather than letting them 401. A
+  // control that is visible and always fails teaches the wrong thing about
+  // the system.
+  const [mode, setMode] = useState<Mode>("demo");
 
   const load = useCallback(async () => {
     try {
@@ -94,6 +116,7 @@ export default function QueueBoard() {
       }
       setItems(body.items as Escalation[]);
       setStats(body.stats as Stats);
+      setMode((body.mode as Mode) ?? "demo");
       setError(null);
     } catch {
       setError("Could not reach the queue.");
@@ -156,6 +179,13 @@ export default function QueueBoard() {
 
       {error && (
         <p className="rounded-md bg-ember/10 px-3 py-2 text-sm text-ember">{error}</p>
+      )}
+
+      {mode === "demo" && (
+        <p className="text-xs text-pine/55">
+          Read-only. Claim and Resolve act on real escalations and need{" "}
+          <code>QUEUE_TOKEN</code>.
+        </p>
       )}
 
       {items.length === 0 ? (
@@ -231,7 +261,7 @@ export default function QueueBoard() {
                       {item.claimed_by ? ` · ${item.claimed_by}` : ""}
                     </p>
 
-                    {ACTIONS[item.status].length > 0 && (
+                    {mode === "live" && ACTIONS[item.status].length > 0 && (
                       <div className="mt-4 flex flex-wrap gap-2">
                         {ACTIONS[item.status].map((a) => (
                           <button

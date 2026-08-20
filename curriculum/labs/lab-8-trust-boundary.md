@@ -240,8 +240,9 @@ covered. Try an attack on a layer that has no deterministic control behind it:
 reads and nothing scores.
 
 Then go and look at what the boundary work made possible. `requires_human` now
-routes: the storefront's `persist` stage writes flagged tickets to a reviewer
-queue, redacted, with a 30-day TTL — and the
+routes: the storefront's `persist` stage writes flagged tickets to a
+[reviewer queue](https://northwind-outfitters.vercel.app/queue), redacted, with
+a 30-day TTL — and the
 [ops dashboard](https://northwind-outfitters.vercel.app/ops) carries its first
 figure sourced from a database rather than from a constants file. A control is
 only worth building if something downstream acts on it.

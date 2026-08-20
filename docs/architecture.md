@@ -333,8 +333,11 @@ table was the one backed by no evidence. Every display site now renders `n/a`.
 
 Being explicit about scope is part of being teachable. Not here:
 
-- **Multi-tenancy and real auth.** The storefront now persists escalated
-  tickets in one collection behind a single shared token
+- **Multi-tenancy and real auth.** The storefront persists escalated tickets
+  in one collection. The board itself is public and read-only, seeded with the
+  course's own fictional escalations, because the board is the teaching
+  artifact and does not need real messages; the real submissions and every
+  reviewer action sit behind a single shared token
   ([Lab 8](../curriculum/labs/lab-8-trust-boundary.md) and the `/queue`
   reviewer board). There is no user model, no per-reviewer identity, no
   per-org isolation, and no audit log of who changed what. The UI says so on

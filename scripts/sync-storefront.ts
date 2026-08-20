@@ -90,7 +90,57 @@ writeIfChanged(
   "storefront/data/injections.json",
 );
 
-// --- 3. the pricing table ---------------------------------------------------
+// --- 3. the demo queue ------------------------------------------------------
+//
+// The seven fictional tickets that escalate, so /queue is a teaching surface
+// without a token. These are NW-T-10xx from data/inbound-queue.json — authored
+// for the course, classified by the real route, and about nobody. The board is
+// the thing worth showing; the real public submissions behind the token are
+// the part that needs guarding, and conflating those two made a page that
+// taught nothing to anyone without a credential.
+
+interface TriagedTicket {
+  id: string;
+  received_at: string;
+  channel: string;
+  message: string;
+  subject: string;
+  triage: { requires_human: boolean } & Record<string, unknown>;
+  cost_usd: number;
+}
+
+const triaged = JSON.parse(
+  readFileSync(join(root, "website", "src", "data", "triaged-queue.json"), "utf8"),
+) as { model: string; tickets: TriagedTicket[] };
+
+const demoQueue = triaged.tickets
+  .filter((t) => t.triage.requires_human)
+  .map((t, i) => ({
+    // Prefixed so a demo row can never be mistaken for a real one, in the UI
+    // or in a screenshot.
+    _id: `DEMO-${t.id}`,
+    created_at: t.received_at,
+    channel: t.channel,
+    // Redacted on the way in, exactly as a real one would be. These are
+    // fictional, so nothing is found — which is the point worth showing.
+    message_redacted: `${t.subject}\n\n${t.message}`,
+    redactions: [],
+    triage: t.triage,
+    // A spread of states so the board demonstrates the workflow rather than
+    // one column of identical cards.
+    status: i === 0 ? "claimed" : i === 1 ? "resolved" : "new",
+    ...(i === 0 ? { claimed_by: "priya" } : {}),
+    model: triaged.model,
+    cost_usd: t.cost_usd,
+  }));
+
+writeIfChanged(
+  join(root, "storefront", "data", "demo-queue.json"),
+  `${JSON.stringify(demoQueue, null, 2)}\n`,
+  "storefront/data/demo-queue.json",
+);
+
+// --- 4. the pricing table ---------------------------------------------------
 
 const generated = `/**
  * GENERATED FILE — do not edit.
