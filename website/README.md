@@ -62,10 +62,38 @@ is derived rather than typed.
 
 ### Vercel
 
-Deploy from the **repo root**, not from `website/`. The sync script reads
-`curriculum/` from the parent directory, so a website-rooted deploy would build
-with no content. Config lives in [`../vercel.json`](../vercel.json) and
-[`../.vercelignore`](../.vercelignore).
+This monorepo ships **two** Vercel projects from one GitHub repo. The teaching
+API in `src/` stays local — it is not deployed.
+
+| Project | Domain | Root Directory | Config |
+|---|---|---|---|
+| `claude-triage-labs` | docs / labs | **`.`** (repo root — leave empty) | [`../vercel.json`](../vercel.json) |
+| `northwind-outfitters` | storefront | **`storefront`** | [`../storefront/vercel.json`](../storefront/vercel.json) |
+
+**Why Root Directory must be `.` for the docs site:** the sync script reads
+`curriculum/` and `docs/` from the parent of `website/`. A Root Directory of
+`website` builds with no content.
+
+#### Dashboard settings (once per project)
+
+1. **Settings → Git** — connect `mrlynn/claude-triage-api` if it still says
+   "Connect Git Repository."
+2. **Settings → Build and Deployment → Root Directory** — set as in the table
+   above. Save.
+3. **Ignored Build Step** — set the dropdown to **Automatic**.
+
+Do not paste a `git diff` command into the Ignored Build Step field. Each
+`vercel.json` already sets `ignoreCommand`, which **overrides** that field and
+skips builds when only the other app (or the local API) changed:
+
+- Docs builds when `website/`, `curriculum/`, `docs/`, brand assets, or the
+  root deploy config change ([`website/scripts/vercel-ignore.sh`](scripts/vercel-ignore.sh)).
+- Storefront builds when anything under `storefront/` changes
+  ([`storefront/scripts/vercel-ignore.sh`](../storefront/scripts/vercel-ignore.sh)).
+
+#### CLI (optional one-offs)
+
+Still deploy from the **repo root** for the docs site:
 
 ```bash
 vercel
@@ -74,6 +102,9 @@ vercel
 ```bash
 vercel --prod
 ```
+
+Prefer Git-connected production deploys after the projects are linked — otherwise
+the dashboard keeps showing "Connect Git Repository" and pushes do nothing.
 
 ### GitHub Pages
 

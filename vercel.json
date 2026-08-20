@@ -6,6 +6,7 @@
   "outputDirectory": "website/build",
   "cleanUrls": true,
   "trailingSlash": false,
+  "ignoreCommand": "bash website/scripts/vercel-ignore.sh",
   "github": { "silent": true },
   "headers": [
     {
