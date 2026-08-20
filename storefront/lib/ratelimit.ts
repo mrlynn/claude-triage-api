@@ -40,6 +40,10 @@ const IP_WINDOW_MS = 10 * 60 * 1000;
 const SCOPES = {
   support: Number(process.env.SUPPORT_IP_LIMIT ?? 5),
   injection: Number(process.env.INJECTION_IP_LIMIT ?? 8),
+  // Token probing, not spending. A higher ceiling than the paid surfaces
+  // because a facilitator refreshing the board during a session is normal
+  // traffic — the point is a floor under brute force, not a tight budget.
+  queue: Number(process.env.QUEUE_IP_LIMIT ?? 60),
 } as const;
 
 export type LimitScope = keyof typeof SCOPES;

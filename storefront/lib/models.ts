@@ -112,6 +112,24 @@ export async function setStatus(
   return res.matchedCount === 1;
 }
 
+/**
+ * Empties the queue. For a facilitator running back-to-back sessions.
+ *
+ * This is the real need under "control the fictitious tickets": not
+ * randomising the demo set — those seven are chosen, and they sit where two
+ * handbook rules touch — but starting a session without yesterday's room's
+ * submissions on the board.
+ *
+ * Deletes rather than archives. The rows are public support messages with a
+ * 30-day TTL already on them; keeping a soft-deleted copy so a demo looks
+ * tidy would defeat the retention policy it sits next to.
+ */
+export async function clearEscalations(): Promise<number> {
+  const col = await collection();
+  const res = await col.deleteMany({});
+  return res.deletedCount ?? 0;
+}
+
 export interface QueueStats {
   depth: number;
   /**

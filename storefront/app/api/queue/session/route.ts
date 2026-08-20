@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { QUEUE_COOKIE } from "@/lib/queueAuth";
+import { checkLimits, clientIp } from "@/lib/ratelimit";
 
 /**
  * Exchanges a link token for an httpOnly cookie, then redirects to /queue.
@@ -19,6 +20,16 @@ import { QUEUE_COOKIE } from "@/lib/queueAuth";
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
+  // The cheapest endpoint to hammer, since it does no work — throttle it on
+  // the same scope so probing here and probing /api/queue share one budget.
+  const gate = await checkLimits(clientIp(request.headers), "queue");
+  if (!gate.ok) {
+    return NextResponse.json(
+      { error: "rate_limited", detail: "Too many attempts." },
+      { status: 429, headers: { "Retry-After": String(gate.retryAfterSec) } },
+    );
+  }
+
   const url = new URL(request.url);
   const token = url.searchParams.get("token");
 

@@ -129,6 +129,30 @@ export default function QueueBoard() {
     void load();
   }, [load]);
 
+  async function clearAll() {
+    // A destructive action on real customer messages gets a confirm. The rows
+    // have a 30-day TTL and no backup, so this is not undoable.
+    if (
+      !window.confirm(
+        `Delete all ${items.length} escalation(s)? They are not recoverable.`,
+      )
+    ) {
+      return;
+    }
+    setBusy("__all__");
+    try {
+      const res = await fetch("/api/queue", { method: "DELETE" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.detail ?? "Could not clear the queue.");
+        return;
+      }
+      await load();
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function move(id: string, to: Status) {
     setBusy(id);
     try {
@@ -181,11 +205,28 @@ export default function QueueBoard() {
         <p className="rounded-md bg-ember/10 px-3 py-2 text-sm text-ember">{error}</p>
       )}
 
-      {mode === "demo" && (
+      {mode === "demo" ? (
         <p className="text-xs text-pine/55">
           Read-only. Claim and Resolve act on real escalations and need{" "}
           <code>QUEUE_TOKEN</code>.
         </p>
+      ) : (
+        items.length > 0 && (
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={clearAll}
+              disabled={busy === "__all__"}
+              className="rounded-md border border-ember/40 px-3 py-1.5 text-xs text-ember hover:bg-ember hover:text-bone disabled:opacity-50"
+            >
+              {busy === "__all__" ? "Clearing…" : "Clear the queue"}
+            </button>
+            <span className="text-xs text-pine/55">
+              For starting a session without the last room&rsquo;s submissions.
+              Not recoverable.
+            </span>
+          </div>
+        )
       )}
 
       {items.length === 0 ? (

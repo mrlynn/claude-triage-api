@@ -5,6 +5,7 @@ import { pricingFor } from "./pricing.generated";
 import { redactPII } from "./untrusted";
 import { insertEscalation } from "./models";
 import { HAS_MONGO } from "./mongo";
+import { recordCall, recordBlocked } from "./telemetry";
 import {
   MAX_MESSAGE_CHARS,
   MAX_TOKENS,
@@ -129,6 +130,9 @@ export async function* runPipeline(
 
   const verdict = await checkLimits(ip);
   if (!verdict.ok) {
+    // Counted separately: a blocked request has no category and no cost, and
+    // folding it into `calls` would quietly deflate the mean cost per call.
+    recordBlocked();
     yield { type: "stage", id: "ratelimit", status: "failed", ms: mark() - s };
     yield {
       type: "failure",
@@ -389,6 +393,15 @@ export async function* runPipeline(
       };
     }
   }
+
+  // Fire-and-forget: telemetry must never be able to fail a customer's
+  // request, and by this point the classification has already succeeded.
+  recordCall({
+    category: response.parsed_output.category,
+    cacheHit: cacheRead > 0,
+    escalated: needsHuman,
+    costUsd: Math.round(cost * 1e6) / 1e6,
+  });
 
   yield {
     type: "result",

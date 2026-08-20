@@ -360,7 +360,15 @@ Being explicit about scope is part of being teachable. Not here:
   content. A public product needs a moderation pass in front of triage; a
   support queue for outdoor gear is a soft enough target that we left it out,
   and that is a domain judgement rather than a general one.
-- **Observability.** Costs are printed, not shipped. There is no tracing, no
-  metrics export, and no per-tenant cost attribution — `GET /v1/limits` shows
-  you the last rate-limit snapshot this process saw and nothing aggregates it.
-  The first thing a real deployment adds.
+- **Observability beyond a daily counter.** The storefront aggregates its own
+  Claude usage — calls, cache-hit rate, cost, category mix — into one document
+  per day and renders it on `/ops`. That is the floor, not observability: there
+  is no tracing, no metrics export, no per-tenant attribution, and no
+  alerting. `GET /v1/limits` still shows only the last rate-limit snapshot this
+  process saw, and nothing aggregates it.
+
+  The API service in `src/` is deliberately **not** instrumented and will not
+  be. It runs on learners' laptops, so there is nothing central to measure —
+  and adding phone-home to a repo people fork and read would undercut the
+  trust-boundary lab it ships with. That is a constraint of the shape of this
+  asset rather than a general recommendation.

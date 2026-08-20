@@ -102,6 +102,13 @@ export async function ensureIndexes(): Promise<void> {
           name: "retention",
         },
       ),
+
+      // Daily usage counters expire on their own too. Aggregates are far less
+      // sensitive than messages, but a number nobody has looked at in three
+      // months is not telemetry, it is residue.
+      db
+        .collection("usage_daily")
+        .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, name: "ttl" }),
     ]);
   })();
   await indexReady;

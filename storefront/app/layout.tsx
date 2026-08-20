@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
@@ -39,6 +40,17 @@ export default function RootLayout({
         <SiteHeader />
 
         <main className="mx-auto max-w-6xl px-4 py-8 sm:px-5 sm:py-10">{children}</main>
+
+        {/*
+          Page-view analytics, so "is anyone actually using this" has an
+          answer. Vercel's own, rather than something hand-rolled: a custom
+          dashboard would mean a store, a schema and a UI to maintain, all
+          competing with a thing that already exists and is better.
+
+          No cookies and no cross-site identifier, which matters on a page
+          that also asks members of the public to type support messages.
+        */}
+        <Analytics />
 
         <footer className="border-t border-pine/12 mt-16">
           <div className="mx-auto max-w-6xl px-4 py-8 text-xs sm:px-5 text-pine/65 space-y-2">
