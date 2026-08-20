@@ -6,6 +6,7 @@
   "outputDirectory": "website/build",
   "cleanUrls": true,
   "trailingSlash": false,
+  "ignoreCommand": "bash -c 'cd \"$(git rev-parse --show-toplevel)\" && bash website/scripts/vercel-ignore.sh'",
   "github": { "silent": true },
   "headers": [
     {

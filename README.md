@@ -22,6 +22,11 @@ flowchart LR
 | **The course** | `website/` — Docusaurus site: scenario, setup, six labs with inline knowledge checks, solutions, instructor guide, auto-scored assessment, and four interactive playgrounds. | [claude-triage-labs.vercel.app](https://claude-triage-labs.vercel.app) |
 | **The scenario, made real** | `storefront/` — Next.js shop for the fictional company. Browse the gear, file a support ticket, watch your own words get classified live. Includes Priya's ops dashboard. | [northwind-outfitters.vercel.app](https://northwind-outfitters.vercel.app) |
 
+Both public sites deploy from this one GitHub repo on Vercel (two projects, different
+Root Directories). See [`website/README.md`](website/README.md#vercel) for the
+exact dashboard settings — Ignored Build Step is configured in-repo via
+`ignoreCommand`, so leave that dropdown on **Automatic**.
+
 The storefront calls Claude for real, so it is rate-limited and spend-capped
 (MongoDB Atlas, five per IP per ten minutes, a global daily ceiling, and it
 fails closed rather than running uncapped).
