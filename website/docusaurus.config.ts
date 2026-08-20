@@ -166,8 +166,13 @@ const config: Config = {
       ],
     },
     prism: {
+      // github is near-neutral and sits fine on Bone. dracula was the default
+      // and is purple/pink — on a pine-and-spruce palette it read as a
+      // different site pasted into the middle of the page. oceanicNext is
+      // muted and slightly desaturated, and custom.css puts both on the site's
+      // own surface colour so a page never carries two competing grounds.
       theme: prismThemes.github,
-      darkTheme: prismThemes.dracula,
+      darkTheme: prismThemes.oceanicNext,
       additionalLanguages: ["bash", "json", "typescript"],
     },
   } satisfies Preset.ThemeConfig,
