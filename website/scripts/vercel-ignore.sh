@@ -2,10 +2,13 @@
 # Docs site (claude-triage-labs) — Ignored Build Step.
 # Exit 0 = skip this deploy. Exit 1 = build.
 #
-# Runs from the repo root (Root Directory must be "." / empty).
-# Prefer this over the dashboard presets: vercel.json ignoreCommand overrides them.
+# Always resolves to the git root so this works whether Vercel runs the
+# command from "." or from a nested Root Directory.
 
 set -u
+
+root="$(git rev-parse --show-toplevel)"
+cd "$root"
 
 prev="${VERCEL_GIT_PREVIOUS_SHA:-HEAD^}"
 

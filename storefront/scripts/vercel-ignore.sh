@@ -2,10 +2,13 @@
 # Storefront (northwind-outfitters) — Ignored Build Step.
 # Exit 0 = skip this deploy. Exit 1 = build.
 #
-# Runs with Root Directory = storefront, so "." is this app only.
-# Policy changes land here via `npm run sync:storefront` (vendored copy).
+# Always resolves to the git root and diffs storefront/, so this works whether
+# Vercel runs from the repo root or Root Directory = storefront.
 
 set -u
+
+root="$(git rev-parse --show-toplevel)"
+cd "$root"
 
 prev="${VERCEL_GIT_PREVIOUS_SHA:-HEAD^}"
 
@@ -14,7 +17,7 @@ if ! git cat-file -e "${prev}^{commit}" 2>/dev/null; then
   exit 1
 fi
 
-if git diff --quiet "$prev" HEAD -- .; then
+if git diff --quiet "$prev" HEAD -- storefront/; then
   echo "vercel-ignore-storefront: no changes under storefront/ — skipping"
   exit 0
 fi

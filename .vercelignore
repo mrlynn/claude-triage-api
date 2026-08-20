@@ -1,13 +1,16 @@
-# Only the docs site deploys. Keep the API service, its fixtures, and every
-# secret out of the upload — but curriculum/ and docs/ must stay, because the
-# sync script reads them at build time.
+# Only the docs site deploys from this vercel.json. Keep the API service, its
+# fixtures, and every secret out of the upload — but curriculum/ and docs/ must
+# stay, because the sync script reads them at build time.
+#
+# Do NOT ignore /storefront. Both Vercel projects share this repo; the
+# storefront project has Root Directory = storefront, and a root .vercelignore
+# that drops /storefront deletes the app before its ignoreCommand can run.
 #
 # Leading slashes matter: a bare "src" would also match website/src.
 /src
 /scripts
 /evals
 /data
-/storefront
 /node_modules
 /scratch
 .env
