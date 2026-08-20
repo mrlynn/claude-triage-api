@@ -1,0 +1,24 @@
+[project]
+name = "claude-triage-api-python"
+version = "1.0.0"
+description = "The Python half of the Claude triage course. Mirrors src/, on FastAPI."
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.125.0",
+    "fastapi>=0.115.0",
+    "uvicorn>=0.32.0",
+    "pydantic>=2.9.0",
+    # TestClient's transport. httpx2 rather than httpx: starlette deprecates
+    # the httpx pairing and warns on every import, and a deprecation warning
+    # printed above every eval run is noise people learn to ignore.
+    "httpx2",
+]
+
+# Two top-level packages on purpose: the service and the harness that measures
+# it, mirroring src/ and evals/ in the TypeScript half. Setuptools will not
+# guess between them, so name them.
+[tool.setuptools]
+packages = ["triage", "evals"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
