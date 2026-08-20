@@ -193,6 +193,16 @@ ANTHROPIC_API_KEY=sk-ant-nope npx tsx scratch/hello.ts
 **Q3.** `src/lib/errors.ts` maps `AuthenticationError` to HTTP **500**, not
 401. Argue for that choice in one sentence.
 
+## Step 6 — re-run the scoreboard
+
+```bash
+npm run eval:quick
+```
+
+You changed no prompt in this lab, so the score should not move. Confirm
+that it did not. A baseline you have never seen hold steady is not a baseline
+you trust yet.
+
 ---
 
 ## Checkpoint
@@ -203,6 +213,7 @@ You should be able to answer, without looking anything up:
 - [ ] What are the four `usage` fields and their relative costs?
 - [ ] What is `stop_reason: "max_tokens"` and how do you detect it?
 - [ ] Which error classes are retryable?
+- [ ] Scoreboard re-run; you can say why it did or did not move
 
 ---
 

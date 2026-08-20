@@ -19,8 +19,9 @@ flowchart LR
 | | What it is | Where |
 |---|---|---|
 | **The service** | `src/` — the Claude API reference implementation the whole course is about. Runs locally; not deployed. | this repo |
-| **The course** | `website/` — Docusaurus site: scenario, setup, six labs with inline knowledge checks, solutions, instructor guide, auto-scored assessment, and four interactive playgrounds. | [claude-triage-labs.vercel.app](https://claude-triage-labs.vercel.app) |
-| **The scenario, made real** | `storefront/` — Next.js shop for the fictional company. Browse the gear, file a support ticket, watch your own words get classified live. Includes Priya's ops dashboard. | [northwind-outfitters.vercel.app](https://northwind-outfitters.vercel.app) |
+| **The course** | `website/` — Docusaurus site: scenario, setup, ten labs with inline knowledge checks, solutions, instructor guide, auto-scored assessment, and seven interactive playgrounds. | [claude-triage-labs.vercel.app](https://claude-triage-labs.vercel.app) |
+| **The Python track** | `python/` — the same service on FastAPI, plus [what is actually different](python/labs/deltas.md). Four differences, all of them found by porting rather than recalled. | this repo |
+| **The scenario, made real** | `storefront/` — Next.js shop for the fictional company. Browse the gear, file a support ticket, watch your own words get classified live, then try to break the classifier. Escalated tickets land in a reviewer queue; Priya's ops dashboard sits on top. | [northwind-outfitters.vercel.app](https://northwind-outfitters.vercel.app) |
 
 Both public sites deploy from this one GitHub repo on Vercel (two projects, different
 Root Directories). See [`website/README.md`](website/README.md#vercel) for the
@@ -44,6 +45,7 @@ page, and the labs are much harder to motivate without it.
 | `POST /v1/resolve` | Tool use | Claude queries your systems and shows its work |
 | `POST /v1/draft` | Streaming | Token-by-token delivery over SSE, with real cost accounting |
 | `POST /v1/estimate` | Token counting | Know the bill before you pay it |
+| `GET /v1/limits` | Rate-limit headers | Your remaining headroom, before a 429 tells you |
 
 Cross-cutting, demonstrated throughout: **prompt caching** (a ~1,400-word
 policy handbook cached across every request), **usage and cost accounting**,
@@ -139,7 +141,13 @@ Production details this route does not skip:
 - **Usage is summed across every turn.** The final message's `usage` covers only
   the final request; reporting it alone under-reports a 5-turn loop by ~5×.
 - **The tool trace is returned.** In support tooling, "show your work" is an
-  audit requirement.
+  audit requirement — and it is also what the guardrails read, since a control
+  must take its inputs from a source the thing it controls cannot rewrite.
+- **The returned resolution is the CORRECTED one.** `enforceAuthority`
+  re-derives the $200 and $500 ceilings from the trace, and where the
+  arithmetic disagrees with the model's `within_agent_authority` boolean, the
+  arithmetic wins and `meta.guardrails` records
+  `model_claimed_authority_it_lacked`. Correct *and* alarm.
 
 ### `POST /v1/draft` — streaming
 
@@ -164,10 +172,40 @@ silently declines to cache, with no error.
 ## Evals
 
 ```bash
+npm run eval:quick
+```
+
+The scoreboard: deterministic scoring only, about a minute and $0.09 warm.
+It compares against the checked-in [`evals/baseline.json`](evals/baseline.json)
+and names the cases that moved, which is the number [Lab
+0](curriculum/labs/lab-0-scoreboard.md) puts on the board before any prompt
+work starts.
+
+```bash
+npm run eval:redteam
+```
+
+The trust-boundary gate: 14 cases (11 attacks, **3 benign controls**) through
+triage and the tool loop. Gates at **100%**, separately from accuracy — a rate
+is the wrong shape for a breach — and counts a blocked legitimate customer as
+loudly as a successful attack. ~$0.40. See
+[Lab 8](curriculum/labs/lab-8-trust-boundary.md).
+
+```bash
+npm run eval:models
+```
+
+The tier matrix: the same twelve cases against Opus, Sonnet, and Haiku, with a
+**pinned** judge and a per-case disagreement grid. `--emit-site` writes the
+summary the course site renders, so the published numbers trace to a command.
+About 90 seconds and $0.19. See [Lab 7](curriculum/labs/lab-7-choosing-a-model.md).
+
+```bash
 npm run eval
 ```
 
-Two measurements, because they answer different questions:
+The full run adds the LLM judge. Two measurements, because they answer
+different questions:
 
 1. **Deterministic scoring** against a 12-case hand-labelled gold set
    ([`evals/dataset.jsonl`](evals/dataset.jsonl)). Exits non-zero below 80%
@@ -231,15 +269,33 @@ for stating the 5-7 business day timeline, which is the specific behavior the
 fix targeted. Validating the *rate* needs a bigger sample — see
 [Lab 6](curriculum/labs/lab-6-evals.md) Q7.
 
-**Eval** — 11/12 and 12/12 across two runs. The only case that flips is
-`eval-11`, the one labelled *deliberately ambiguous* — and it scored **0.45–0.50**
-confidence both times, against a mean of **~0.84** on the cases that pass.
+**Eval** — **10/12 to 12/12 across runs**, with nothing changed between them.
+The two cases that flip are `eval-11` and `eval-03`, and they flip for
+different reasons worth telling apart.
 
-That is the calibration instruction in `TriageSchema` doing its job: the model
-is not merely wrong sometimes, it is **wrong exactly where it reports being
-unsure**. A confidence field with that property supports threshold routing; one
-that reports 0.9 on everything does not. See
+`eval-11` is labelled *deliberately ambiguous*, and it scores **0.45–0.48**
+confidence against a mean of **~0.85** on the passing cases. That is the
+calibration instruction in `TriageSchema` doing its job: the model is not
+merely wrong sometimes, it is **wrong exactly where it reports being unsure**.
+A confidence field with that property supports threshold routing; one that
+reports 0.9 on everything does not. See
 [Lab 2](curriculum/labs/lab-2-structured-outputs.md) Step 2.
+
+`eval-03` is the uncomfortable one. It turns on whether nine elapsed days is
+seven *business* days (handbook clause 3.2), and the model gets it right most
+of the time — but when it gets it wrong it does so at **0.70–0.72**
+confidence, which is above any threshold you would plausibly set. Confidence
+catches the ambiguous case and misses this one. That is the honest limit of
+self-reported confidence as a control, and it is why a deterministic check on a
+date rule beats asking the model how sure it feels.
+
+The variance itself is the third lesson, and the most transferable. A run-to-run
+spread of two cases on a twelve-case set is **17 percentage points** of
+movement with no change to the system. Any "improvement" smaller than that is
+unmeasurable here, which is why the checked-in
+[`evals/baseline.json`](evals/baseline.json) records the *passing case ids* and
+not just the count — a delta of `+2` may be noise, but `newly passing:
+eval-03` names something you can go look at.
 
 It also means a 12-case set cannot resolve a difference smaller than 8%. Sizing
 the set is [Lab 6](curriculum/labs/lab-6-evals.md) Q7.
@@ -286,6 +342,11 @@ evals/                 gold set + harness (deterministic + LLM judge)
 scripts/               smoke test, queue triage, policy sync
 assets/brand/          the Northwind mark
 
+python/                THE PYTHON TRACK
+  triage/              FastAPI mirror of src/, port 8788
+  evals/quick.py       the same gold set, its own baseline
+  labs/deltas.md       the four things that actually differ
+
 curriculum/            THE COURSE (canonical markdown)
   scenario.md          who Northwind is and why any of this exists
   setup.md             prerequisites and the two-terminal workflow
@@ -299,9 +360,13 @@ website/               THE COURSE SITE (Docusaurus)
 
 storefront/            THE SCENARIO, MADE REAL (Next.js)
   app/support/         the live triage form with the pipeline visualiser
-  app/ops/             Priya's dashboard
+  app/queue/           the reviewer board for escalated tickets
+  app/playground/      try to break the classifier, defences switchable
+  app/ops/             Priya's dashboard, plus one live figure from the DB
   lib/pipeline.ts      one generator, two consumers: SSE and plain JSON
-  lib/ratelimit.ts     MongoDB spend ceiling, fails closed
+  lib/models.ts        the escalation collection: redacted, 30-day TTL
+  lib/untrusted.ts     hand-mirrored escaping and redaction (see the header)
+  lib/ratelimit.ts     MongoDB spend ceiling, per-surface, fails closed
 ```
 
 Nothing under `website/docs/` is hand-written — it is generated from
@@ -320,16 +385,120 @@ map.
 
 | Lab | Topic | Time |
 |---|---|---|
+| [0](curriculum/labs/lab-0-scoreboard.md) | Build the scoreboard first | 20 min |
 | [1](curriculum/labs/lab-1-first-call.md) | Your first call, and reading `usage` | 20 min |
 | [2](curriculum/labs/lab-2-structured-outputs.md) | Structured outputs and schema design | 35 min |
 | [3](curriculum/labs/lab-3-tool-use.md) | Tool use and the agentic loop | 45 min |
 | [4](curriculum/labs/lab-4-streaming.md) | Streaming and SSE | 30 min |
 | [5](curriculum/labs/lab-5-prompt-caching.md) | Prompt caching and cost | 35 min |
-| [6](curriculum/labs/lab-6-evals.md) | Evals and LLM-as-judge | 45 min |
+| [6](curriculum/labs/lab-6-evals.md) | Eval design and LLM-as-judge | 45 min |
+| [7](curriculum/labs/lab-7-choosing-a-model.md) | Choosing a model | 45 min |
+| [8](curriculum/labs/lab-8-trust-boundary.md) | The trust boundary | 50 min |
+| [9](curriculum/labs/lab-9-shipping-it.md) | Shipping it: batch, limits, MCP | 60 min |
+
+Facilitators: [`curriculum/02-run-of-show.md`](curriculum/02-run-of-show.md) is
+minute-by-minute for a two-day delivery, and
+[`docs/facilitator/keys.md`](docs/facilitator/keys.md) covers workspaces, keys,
+and measured per-learner cost. `npm run workshop` manages the environment —
+note that **API keys cannot be created programmatically**, so the flow is
+provision-workspaces → issue-keys-by-hand → automated teardown.
 
 Instructors: [`curriculum/01-instructor-guide.md`](curriculum/01-instructor-guide.md)
 has timing, the failure modes learners hit, and what to do when a lab goes
 sideways. Solutions are in [`curriculum/solutions/`](curriculum/solutions/).
+
+---
+
+**Batch is half price and cost 23% more.** The Batches API bills at half rate,
+which makes it the obvious tool for a weekly queue nobody reads in real time.
+Measured on the twenty-ticket sample:
+
+| mode | wall clock | cost | cache hits |
+|---|---|---|---|
+| serial | 91s | **$0.1645** | 20/20 |
+| concurrent (8) | 60s | $0.1751 | 20/20 |
+| Batches API | 163–224s | $0.2018 | **11/20** |
+
+A cache read is **0.1×** the input rate; the batch discount is **0.5×**. On a
+request dominated by a ~3,400-token cached handbook, losing the first to gain
+the second is a net loss and it is not close. Synchronous requests arrive in
+sequence so the prefix stays warm; a batch is fanned out on the provider's
+schedule and a warm prefix becomes a matter of luck.
+
+**Two discounts on the same tokens compete — they do not compose.** That is the
+transferable part, and it is easy to miss because both are real, both are
+documented, and each is correct in isolation.
+
+The scale caveat matters and is stated in
+[Lab 9](curriculum/labs/lab-9-shipping-it.md) Q3: at 400,000 tickets the prefix
+stays hot for hours and the result probably flips back. `triage:queue:batch`
+reports the hit rate so you can run a pilot instead of extrapolating. Note also
+that concurrency 8 cut wall clock by a third and nudged cost *up* — parallelism
+buys the clock, never the price.
+
+**Escalation actually escalates.** `requires_human` used to be a field the
+schema produced and nothing acted on. The storefront's pipeline now has a
+`persist` stage that writes flagged tickets to a reviewer queue at `/queue`,
+and `/ops` carries its first figure read from a database rather than from a
+constants file.
+
+Three properties, each enforced rather than documented: the stored message is
+**redacted** before it is written, documents **expire after 30 days** via a TTL
+index, and a storage failure **degrades the queue, not the answer** — the
+customer still gets their classification. Tickets that did not need a human are
+never stored at all, because storage is a consequence of escalation rather than
+of submission.
+
+**Trust boundary** — `npm run eval:redteam` contains 11/11 attacks and leaves
+3/3 benign controls intact, across five consecutive runs.
+
+The result worth reporting is not the green gate. Of the nine failures the gate
+produced while it was being written, **eight were mis-specified assertions
+rather than model failures** — one was literally inverted, and two failed the
+model for classifying a site-bug report as `other`, which is correct. The case
+notes in [`data/injections.jsonl`](data/injections.jsonl) record each one on
+purpose: this is the same "check the label before the model" lesson the eval
+set teaches, arriving in a context where it is much easier to mistake a broken
+test for a broken defence.
+
+The one real vulnerability was `inj-10`, which buries its instruction after
+blank lines and a separator and asks not to be mentioned. It defeated escaping
+and delimiting, because it never touches the structure. The fix was prompt
+hardening, and the honest claim about it is narrow: **five clean runs against a
+case that flipped beforehand, at no measurable accuracy cost** (11/12 and 12/12
+against a 10/12 baseline, inside the ordinary 10–12 band). That establishes a
+preference for the hardened prompt. It does not establish a rate, and the
+attack family is not covered.
+
+Rank the defences by kind. Escaping `<` and comparing `$900 > $200` hold by
+construction. Prompt instructions hold by probability. Never let a probability
+be the only thing between an attacker and money.
+
+**Model tiering** — measured across four runs of `npm run eval:models`:
+
+| model | accuracy | $/mo @ 4,100/wk | calibration gap |
+|---|---|---|---|
+| `claude-opus-5` | 10–12 / 12 | ~$137 | 0.35–0.41 |
+| `claude-sonnet-5` | 7–9 / 12 | ~$70–98 | 0.20–0.30 |
+| `claude-haiku-4-5` | 6–8 / 12 | ~$67–74 | −0.06 to +0.13 |
+
+Three findings, none of which the accuracy column alone would give you.
+
+Every tier lands **30–60× under Priya's $4,000 budget**, so cost is not a
+binding constraint at this volume and the usual "move down a tier to save
+money" reflex buys ~$65/month at the price of three to five cases in twelve.
+
+The cheap tiers do not fail randomly. They fail where two handbook rules
+interact — `eval-10` (delivered-not-received) nearly every run, and `eval-04`,
+the safety case, on Haiku in three runs of four.
+
+And the calibration gap degrades faster than accuracy does. Haiku's hovers
+around zero, meaning its confidence score carries almost no information about
+whether it is right — it returns the wrong answer on `eval-04` at **0.95
+confidence**. Any control built on that score (threshold routing, escalation,
+auto-resolve) silently stops working while continuing to report numbers. That
+is why `/v1/triage?tier=auto` routes on *input* signals rather than trusting the
+cheap tier to know when it is unsure.
 
 ---
 
@@ -341,6 +510,18 @@ sideways. Solutions are in [`curriculum/solutions/`](curriculum/solutions/).
 - **Effort varies per route** (`low` for triage, `high` for resolve, `medium`
   for draft) and lives in [`src/config.ts`](src/config.ts) so the cost/quality
   tradeoff is a one-line experiment, not a scavenger hunt.
-- **Pricing** in `config.ts` is Claude Opus 5 list price at time of writing.
-  Verify against [current pricing](https://claude.com/pricing) before quoting
-  numbers to anyone.
+- **Model ids are aliases.** `claude-opus-5` improves without you doing
+  anything and changes without telling you. `MODEL_PINS` in `src/config.ts` is
+  where you pin a dated snapshot when you need to attribute a change; the
+  weekly `model-upgrade` job in CI runs the tier matrix so drift shows up in a
+  job summary rather than in an incident.
+- **Pricing** lives in `MODEL_CATALOG` in `src/config.ts`, keyed by model, with
+  capability flags alongside the rates (Haiku 4.5 rejects `output_config.effort`,
+  so tiering is not a name swap). `pricingFor()` **throws** on an unknown id
+  rather than defaulting — a cost table that guesses is worse than one that
+  crashes. Verify against [current pricing](https://claude.com/pricing) before
+  quoting numbers to anyone.
+- **The storefront's copy is generated**, not hand-maintained:
+  `npm run sync:storefront` emits `storefront/lib/pricing.generated.ts` from the
+  same catalog, because that app deploys from its own root directory and cannot
+  import from `src/`.

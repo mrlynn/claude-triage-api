@@ -67,6 +67,59 @@ In this repo: `/v1/triage` and `/v1/draft` are single calls. `/v1/resolve` is
 an agent — and it earns it, because which lookups are needed depends on what
 the earlier lookups returned.
 
+### The other tier question: which model
+
+Capability tiering is about how much *machinery* you build. Model tiering is
+about which model that machinery calls, and the two are independent choices
+that get confused constantly.
+
+| | Input $/MTok | Output $/MTok | Notes |
+|---|---|---|---|
+| `claude-opus-5` | $5.00 | $25.00 | 1M context |
+| `claude-sonnet-5` | $3.00 | $15.00 | 1M context |
+| `claude-haiku-4-5` | $1.00 | $5.00 | 200K context; **rejects `output_config.effort`** |
+
+Two things the price column does not tell you, both measured in
+[Lab 7](labs/lab-7-choosing-a-model.md):
+
+1. **Cheaper models are not uniformly worse — they are worse in a shape.** On
+   this repo's gold set the cheap tiers hold their own on single-rule cases and
+   lose the ones where two handbook rules interact. That is not 5% spread
+   evenly; it is concentrated in the cases the system exists for.
+2. **The confidence score degrades faster than the accuracy does.** Opus
+   separates its wrong answers from its right ones by ~0.38 of confidence.
+   Haiku separates them by roughly zero — so any control you build on top of
+   that score (threshold routing, escalation, auto-resolve) silently stops
+   working, while still reporting numbers.
+
+The order of operations that follows: **pick the cheapest model that passes
+your eval, but check the calibration gap before you build anything that routes
+on confidence.** And check whether cost is a binding constraint at all — at
+Northwind's 4,100 tickets a week, every tier lands 30× under budget, which
+makes the whole question moot and the accuracy question decisive.
+
+---
+
+## Named patterns, and where they already live here
+
+You have probably seen these four names. They are useful vocabulary and they
+are not a checklist — the goal is to recognize the shape you already built, not
+to collect all four.
+
+| Pattern | What it is | In this repo |
+|---|---|---|
+| **Routing** | Classify the input, send it down a specialized path | `/v1/triage` is a router for humans; `pickModel` ([`src/lib/route-model.ts`](../src/lib/route-model.ts)) routes for models |
+| **Prompt chaining** | Fixed sequence, each step's output feeding the next | triage → resolve → draft |
+| **Evaluator-optimizer** | One call produces, another critiques, repeat | the judge in [`evals/lib/judge.ts`](../evals/lib/judge.ts) critiquing the drafter |
+| **Orchestrator-workers** | A model decomposes a task and farms out subtasks | **not here, deliberately** |
+
+That last row is the important one. Nothing in this domain needs a model to
+invent its own subtasks: the lookups `/v1/resolve` needs are known in advance
+and bounded by three tools. Adding an orchestrator would buy unpredictability
+and a bigger bill, and the fact that a pattern has a name is not an argument
+for using it. [Lab 9](labs/lab-9-shipping-it.md) Q8 makes you label the code you
+have already written and then defend the pattern you left out.
+
 ---
 
 ## The mental model for cost
@@ -130,5 +183,6 @@ Three consequences that drive most real optimization work:
 | Let Claude query your systems | [Lab 3](labs/lab-3-tool-use.md) |
 | Stream to a UI | [Lab 4](labs/lab-4-streaming.md) |
 | Cut your bill | [Lab 5](labs/lab-5-prompt-caching.md) |
+| Put a number on the board before you start | [Lab 0](labs/lab-0-scoreboard.md) |
 | Know if any of it works | [Lab 6](labs/lab-6-evals.md) |
 | Understand why the code is shaped this way | [../docs/architecture.md](../docs/architecture.md) |

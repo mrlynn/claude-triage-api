@@ -49,17 +49,23 @@ flowchart LR
 
 ## Step 1 — see the mechanism
 
-Read [`src/routes/triage.ts`](../../src/routes/triage.ts) and
+Read [`src/lib/requests.ts`](../../src/lib/requests.ts),
+[`src/routes/triage.ts`](../../src/routes/triage.ts) and
 [`src/schemas.ts`](../../src/schemas.ts). Two lines do the work:
 
 ```ts
-output_config: { effort: EFFORT.triage, format: zodOutputFormat(TriageSchema) }
+output_config: { ...config, format: zodOutputFormat(TriageSchema) }
 ```
 
 ```ts
-const response = await anthropic.messages.parse({ ... });
+const response = await anthropic.messages.parse(buildTriageRequest(ticket));
 response.parsed_output; // TriageResult | null
 ```
+
+The request body lives in `buildTriageRequest` rather than in the route,
+because the eval sweep and the batch job in Lab 9 have to send the *identical*
+body — and the cached prefix is a byte-for-byte prefix match, so "equivalent"
+is not good enough.
 
 Note what is **absent**: no "respond only with JSON" in the prompt, no
 `JSON.parse` in a `try/catch`, no repair-and-retry loop.
@@ -175,6 +181,16 @@ curl -s localhost:8787/v1/estimate -H 'content-type: application/json' \
 the `cache_control` breakpoint so the schema cost is paid once rather than per
 request? (Hint: re-read the render order in the concept map.)
 
+## Step 6 — re-run the scoreboard
+
+```bash
+npm run eval:quick
+```
+
+This is the first lab where you changed something the model reads. Step 2 had
+you delete a `.describe()` and watch calibration collapse — the scoreboard is
+where that shows up as a number rather than a vibe.
+
 ---
 
 ## Checkpoint
@@ -183,6 +199,7 @@ request? (Hint: re-read the render order in the concept map.)
 - [ ] Why is `.describe()` load-bearing?
 - [ ] When is an `other` enum member correct, and when is it a bug magnet?
 - [ ] What does structured output guarantee — and what does it *not*?
+- [ ] Scoreboard re-run; you can say why it did or did not move
 
 ---
 

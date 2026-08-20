@@ -1,5 +1,11 @@
 # Setup
 
+**In a hurry, or on a locked-down laptop?** This repo ships a devcontainer.
+Open it in GitHub Codespaces or VS Code's *Reopen in Container* and everything
+below is done for you — Node 24, `jq`, `curl`, and dependencies installed in all
+three workspaces. You still supply your own key. Skip to
+[the key](#an-api-key-with-billing-enabled) and then run `npm run smoke`.
+
 Fifteen minutes, most of it waiting on `npm install`. Do this before Lab 1, and
 if you are attending a workshop, do it the day before rather than in the room.
 
@@ -167,6 +173,7 @@ Real measured numbers, not estimates.
 | Command | Cost |
 |---|---|
 | `npm run smoke` | ~$0.10 |
+| `npm run eval:quick` | ~$0.09 |
 | `npm run eval` | ~$0.20 |
 | A single `curl` to `/v1/triage` | ~$0.006 |
 | `/v1/estimate` | free, it runs no inference |
@@ -234,9 +241,10 @@ is not hung.
 You should be able to run all four of these:
 
 - [ ] `npm run smoke` completes and reports a cache hit
+- [ ] `npm run eval:quick` prints an accuracy line (this is Lab 0's scoreboard)
 - [ ] `npm run dev` starts and `/healthz` returns `{"ok":true}`
 - [ ] `curl -s localhost:8787/v1/triage -H 'content-type: application/json' -d '{"message":"test"}' | jq` returns a classification
 - [ ] `npx tsx scratch/hello.ts` runs, once Lab 1 has you create it
 
 Then start with [the scenario](scenario.md), or go straight to
-[Lab 1](labs/lab-1-first-call.md).
+[Lab 0](labs/lab-0-scoreboard.md).

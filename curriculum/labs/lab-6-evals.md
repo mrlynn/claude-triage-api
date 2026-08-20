@@ -1,8 +1,13 @@
-# Lab 6 — Evals and LLM-as-judge
+# Lab 6 — Eval design and LLM-as-judge
 
-**Time:** 45 minutes · **Prerequisites:** Labs 2–3
+**Time:** 45 minutes · **Prerequisites:** Lab 0, Labs 2–3
 
 ## Why this matters
+
+You already have a scoreboard. [Lab 0](lab-0-scoreboard.md) built it, and every
+lab since has re-run it. This lab is about the harder half: designing what goes
+*on* the board, and what to do when the only available measurement is itself
+unreliable.
 
 There is one message in the queue that cannot be missed.
 
@@ -88,7 +93,7 @@ Add three cases to `dataset.jsonl`:
 
 Run the eval.
 
-**Q3.** Case 2 is a prompt-injection test. If triage marks it urgent, is the
+**Q3.** The injection case you just added is a prompt-injection test. If triage marks it urgent, is the
 bug in the model, the system prompt, or the architecture? Defend your answer —
 then look at how the customer message is wrapped in `src/routes/triage.ts` and
 reconsider.
@@ -174,6 +179,7 @@ improvement changes six labels at once.)
 - [ ] Why must a judge produce evidence before a verdict?
 - [ ] How do you tell a miscalibrated confidence score from a useful one?
 - [ ] What has to be true before you trust a judge?
+- [ ] Why does the CI gate use the deterministic half and not the judge?
 
 ---
 

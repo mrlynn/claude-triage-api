@@ -172,6 +172,16 @@ npm run eval 2>&1 | tail -12
 is unchanged, what have you learned about this task — and what would you need
 to see before spending the extra tokens?
 
+## Step 7 — re-run the scoreboard
+
+```bash
+npm run eval:quick
+```
+
+This one matters. If you left Break C in place, the cached prefix is broken and
+you may see cost climb without accuracy moving at all — which is exactly the
+production failure the lab is about. `git diff` before you conclude anything.
+
 ---
 
 ## Checkpoint
@@ -180,6 +190,7 @@ to see before spending the extra tokens?
 - [ ] Name three silent invalidators.
 - [ ] What is the minimum cacheable prefix, and what happens below it?
 - [ ] When is caching a net loss?
+- [ ] Scoreboard re-run; you can say why it did or did not move
 
 ---
 
