@@ -3,6 +3,7 @@ import { Badge } from "@/components/charts";
 import { HAS_MONGO } from "@/lib/mongo";
 import { queueStats } from "@/lib/models";
 import { usageSummary } from "@/lib/telemetry";
+import { hasQueueCookie } from "@/lib/queueAuth";
 
 /**
  * The first number on this dashboard that comes from the database.
@@ -29,6 +30,36 @@ import { usageSummary } from "@/lib/telemetry";
  */
 export default async function LiveQueue() {
   await connection();
+
+  // GATED. Everything else on /ops is invented history about a fictional
+  // company and is a teaching artifact in its own right — six places in the
+  // course link to it. This section is different: it is real queue depth and
+  // real spend on a real Anthropic account, on a page labelled "Internal" that
+  // was not internal. Same token as the reviewer queue, same reasoning: the
+  // dashboard is worth showing, the operator's own numbers are not.
+  if (!(await hasQueueCookie())) {
+    return (
+      <section className="rounded-lg border border-dashed border-pine/25 bg-white/20 p-5">
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-pine">Live operations</h2>
+          <span className="rounded bg-pine/10 px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-pine/60">
+            token required
+          </span>
+        </div>
+        <p className="mt-2 max-w-2xl text-sm text-pine/70">
+          Queue depth and model spend are real figures from a real account, so
+          they are not public. Open{" "}
+          <code>/queue?token=…</code> once and this section appears here too —
+          it is the same <code>QUEUE_TOKEN</code>.
+        </p>
+        <p className="mt-2 max-w-2xl text-xs text-pine/55">
+          Everything below is unaffected: it is invented operating history for a
+          fictional company, badged <strong>SIMULATED</strong>, and showing it
+          is the point.
+        </p>
+      </section>
+    );
+  }
 
   if (!HAS_MONGO) {
     return (

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { listEscalations, queueStats, clearEscalations } from "@/lib/models";
 import { checkQueueAccess } from "@/lib/queueAuth";
 import { HAS_MONGO } from "@/lib/mongo";
+import { checkLimits, clientIp } from "@/lib/ratelimit";
 import { DEMO_QUEUE, demoStats } from "@/lib/demoQueue";
 
 /**
@@ -29,6 +30,19 @@ export const runtime = "nodejs";
 export const maxDuration = 15;
 
 export async function GET(request: Request) {
+  // Throttle BEFORE checking the token. Without this the auth path is a free
+  // oracle: unlimited attempts, no lockout, nothing counted. A long random
+  // token is not practically brute-forceable, but "not practical" is a
+  // property of the token rather than of the endpoint, and the endpoint
+  // should not depend on it.
+  const gate = await checkLimits(clientIp(request.headers), "queue");
+  if (!gate.ok) {
+    return NextResponse.json(
+      { error: "rate_limited", detail: "Too many queue requests." },
+      { status: 429, headers: { "Retry-After": String(gate.retryAfterSec) } },
+    );
+  }
+
   const auth = await checkQueueAccess(request);
 
   // No token, or no database: serve the demo board. Not an error state — it
@@ -55,6 +69,14 @@ export async function GET(request: Request) {
  * work on fixtures teaches the wrong thing about what it does.
  */
 export async function DELETE(request: Request) {
+  const gate = await checkLimits(clientIp(request.headers), "queue");
+  if (!gate.ok) {
+    return NextResponse.json(
+      { error: "rate_limited", detail: "Too many queue requests." },
+      { status: 429, headers: { "Retry-After": String(gate.retryAfterSec) } },
+    );
+  }
+
   const auth = await checkQueueAccess(request);
   if (!auth.ok) {
     return NextResponse.json(
