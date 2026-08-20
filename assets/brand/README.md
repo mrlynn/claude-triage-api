@@ -6,9 +6,14 @@ this exists.
 
 | File | Use |
 |---|---|
-| `northwind-mark.svg` | Primary. Dark badge, on light grounds. |
+| `northwind-mark.svg` | Primary. Dark badge, on light grounds. Also the source for site favicons. |
 | `northwind-mark-inverted.svg` | Light badge, on dark grounds. |
 | `northwind-mark-mono.svg` | One colour, no badge. Inherits `currentColor` when inlined. |
+
+Favicons for the course site (`website/static/img/favicon.*`) and the
+storefront (`storefront/app/favicon.ico`, `icon.svg`, `apple-icon.png`) are
+generated from `northwind-mark.svg` so the tab icon matches the mark on
+[/brand](https://claude-triage-labs.vercel.app/brand).
 
 The mark is two overlapping summits with a snowline notch, set in a rounded
 badge. It was picked over three alternatives because it is the only one that
