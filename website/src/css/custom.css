@@ -1,32 +1,237 @@
 /**
- * Any CSS included here will be global. The classic template
- * bundles Infima by default. Infima is a CSS framework designed to
- * work well for content-centric websites.
+ * Northwind Outfitters brand, applied to the course site.
+ *
+ * The storefront and the docs are two halves of one artifact — the shop is the
+ * scenario the labs are about — and until now they looked like two unrelated
+ * projects, because this file was stock Docusaurus green. Same palette now,
+ * same ground, same restraint.
+ *
+ * THE PALETTE, as defined on /brand:
+ *   Pine    #1F3D33   primary text, dark ground
+ *   Spruce  #5C9A86   secondary
+ *   Bone    #F2EDE4   light ground
+ *   Ember   #D9642A   accent ONLY, never in the mark
+ *   Slate   #8A9A93   muted text, rules
+ *
+ * WHERE THIS DEPARTS FROM THE STOREFRONT, and why.
+ *
+ * A shop is skimmed; documentation is read for an hour at a time, so contrast
+ * is a functional requirement here rather than a nicety. Measured against the
+ * Bone ground:
+ *
+ *   Pine    10.15:1   AAA
+ *   Spruce   2.80:1   FAILS
+ *   Slate    2.53:1   FAILS
+ *   Ember    3.10:1   large text only
+ *
+ * The storefront is not wrong — it uses Spruce for hovers and small accents,
+ * and `text-pine/70` for muted copy, never Spruce or Slate at body weight. But
+ * a docs site needs a link colour that carries paragraphs.
+ *
+ * So light mode introduces DEEP SPRUCE #457465: the same hue (161deg) and the
+ * same saturation as Spruce, dropped in lightness until it reaches 4.57:1. It
+ * reads as the same colour, and it can be read.
+ *
+ * Dark mode needs no such compromise — Spruce is 5.10:1 on the #12211c ground
+ * the brand page already uses, so dark gets the real thing.
+ *
+ * Ember stays an accent. It is the only warm note in the system and spending
+ * it on links would flatten it; it marks warnings and nothing else.
  */
 
-/* You can override the default Infima variables here. */
+/* ---------------------------------------------------------------- light -- */
+
 :root {
-  --ifm-color-primary: #2e8555;
-  --ifm-color-primary-dark: #29784c;
-  --ifm-color-primary-darker: #277148;
-  --ifm-color-primary-darkest: #205d3b;
-  --ifm-color-primary-light: #33925d;
-  --ifm-color-primary-lighter: #359962;
-  --ifm-color-primary-lightest: #3cad6e;
-  --ifm-code-font-size: 95%;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  /* Deep Spruce — Spruce's hue and saturation, darkened to 4.57:1 on Bone. */
+  --ifm-color-primary: #457465;
+  --ifm-color-primary-dark: #3d675a;
+  --ifm-color-primary-darker: #3a6154;
+  --ifm-color-primary-darkest: #325449;
+  --ifm-color-primary-light: #4f8473;
+  --ifm-color-primary-lighter: #548e7b;
+  --ifm-color-primary-lightest: #60a08c;
+
+  --nw-pine: #1f3d33;
+  --nw-spruce: #5c9a86;
+  --nw-bone: #f2ede4;
+  --nw-ember: #d9642a;
+
+  --ifm-background-color: var(--nw-bone);
+  /* Cards and code blocks lift off the ground with white at low alpha, which
+     is the storefront's `bg-white/40` panel idiom rather than a second flat
+     colour to keep in sync. */
+  --ifm-background-surface-color: rgba(255, 255, 255, 0.5);
+
+  --ifm-font-color-base: var(--nw-pine);
+  --ifm-heading-color: var(--nw-pine);
+  --ifm-toc-border-color: rgba(31, 61, 51, 0.15);
+  --ifm-hr-border-color: rgba(31, 61, 51, 0.12);
+
+  /* Emphasis ramp, tinted toward Pine. The playground components read these
+     directly for muted labels and borders, so getting them right is not only
+     about prose. */
+  --ifm-color-emphasis-100: rgba(31, 61, 51, 0.04);
+  --ifm-color-emphasis-200: rgba(31, 61, 51, 0.08);
+  --ifm-color-emphasis-300: rgba(31, 61, 51, 0.14);
+  --ifm-color-emphasis-500: rgba(31, 61, 51, 0.4);
+  --ifm-color-emphasis-600: rgba(31, 61, 51, 0.55);
+  --ifm-color-emphasis-700: rgba(31, 61, 51, 0.72);
+  --ifm-color-emphasis-800: rgba(31, 61, 51, 0.88);
+
+  --ifm-navbar-background-color: rgba(242, 237, 228, 0.95);
+  --ifm-navbar-link-color: var(--nw-pine);
+  --ifm-footer-background-color: rgba(31, 61, 51, 0.04);
+  --ifm-footer-color: rgba(31, 61, 51, 0.75);
+  --ifm-footer-link-color: var(--nw-pine);
+
+  --ifm-code-background: rgba(31, 61, 51, 0.07);
+  --ifm-code-font-size: 92%;
+  --ifm-blockquote-color: rgba(31, 61, 51, 0.8);
+  --ifm-blockquote-border-color: var(--nw-spruce);
+  --ifm-table-stripe-background: rgba(31, 61, 51, 0.03);
+  --ifm-table-border-color: rgba(31, 61, 51, 0.12);
+
+  --docusaurus-highlighted-code-line-bg: rgba(31, 61, 51, 0.1);
+
+  /* Ember is the only warm colour in the system. It marks warnings and
+     nothing else — spending it on links would flatten it to decoration. */
+  --ifm-color-warning: var(--nw-ember);
+  --ifm-color-warning-contrast-background: rgba(217, 100, 42, 0.1);
+  --ifm-color-warning-contrast-foreground: #8a3d15;
+  --ifm-color-success: #457465;
+  --ifm-color-success-contrast-background: rgba(69, 116, 101, 0.12);
+  --ifm-color-success-contrast-foreground: #2b4a40;
+  --ifm-color-danger-contrast-background: rgba(180, 45, 30, 0.1);
+  --ifm-color-danger-contrast-foreground: #8f2418;
+  --ifm-color-info-contrast-background: rgba(92, 154, 134, 0.14);
+  --ifm-color-info-contrast-foreground: #2b4a40;
 }
 
-/* For readability concerns, you should choose a lighter palette in dark mode. */
-[data-theme='dark'] {
-  --ifm-color-primary: #25c2a0;
-  --ifm-color-primary-dark: #21af90;
-  --ifm-color-primary-darker: #1fa588;
-  --ifm-color-primary-darkest: #1a8870;
-  --ifm-color-primary-light: #29d5b0;
-  --ifm-color-primary-lighter: #32d8b4;
-  --ifm-color-primary-lightest: #4fddbf;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+/* ----------------------------------------------------------------- dark -- */
+
+/*
+ * NOTE THE `html` PREFIX, which is load-bearing.
+ *
+ * Infima scopes its own dark block as `html[data-theme=dark]` — specificity
+ * (0,1,1). A bare `[data-theme="dark"]` is (0,1,0), and specificity beats
+ * source order, so Infima won every variable it also defines no matter that
+ * this file loads later. The symptom was a dark mode that took the primary
+ * colour and none of the grounds: green links on Infima's stock charcoal.
+ *
+ * Light mode was unaffected, because there both rules are `:root` and source
+ * order decides. That asymmetry is what made it easy to miss.
+ */
+html[data-theme="dark"] {
+  /* Real Spruce here: 5.10:1 on the ground below, so no compromise needed. */
+  --ifm-color-primary: #5c9a86;
+  --ifm-color-primary-dark: #548d7b;
+  --ifm-color-primary-darker: #518775;
+  --ifm-color-primary-darkest: #497a6a;
+  --ifm-color-primary-light: #6aa692;
+  --ifm-color-primary-lighter: #73ac99;
+  --ifm-color-primary-lightest: #86b7a7;
+
+  /* Deep pine rather than neutral charcoal — the same ground /brand uses for
+     the mark on dark. A grey background under a green palette reads as an
+     unstyled site with a green link colour. */
+  --ifm-background-color: #12211c;
+  --ifm-background-surface-color: #182b24;
+
+  --ifm-font-color-base: #eaf2ee;
+  --ifm-heading-color: #f4f8f6;
+  --ifm-toc-border-color: rgba(234, 242, 238, 0.14);
+  --ifm-hr-border-color: rgba(234, 242, 238, 0.12);
+
+  --ifm-color-emphasis-100: rgba(234, 242, 238, 0.05);
+  --ifm-color-emphasis-200: rgba(234, 242, 238, 0.09);
+  --ifm-color-emphasis-300: rgba(234, 242, 238, 0.16);
+  --ifm-color-emphasis-500: rgba(234, 242, 238, 0.45);
+  --ifm-color-emphasis-600: rgba(234, 242, 238, 0.6);
+  --ifm-color-emphasis-700: rgba(234, 242, 238, 0.76);
+  --ifm-color-emphasis-800: rgba(234, 242, 238, 0.9);
+
+  --ifm-navbar-background-color: rgba(18, 33, 28, 0.95);
+  --ifm-navbar-link-color: #eaf2ee;
+  --ifm-footer-background-color: #0e1a16;
+  --ifm-footer-color: rgba(234, 242, 238, 0.75);
+
+  --ifm-code-background: rgba(234, 242, 238, 0.1);
+  --ifm-blockquote-color: rgba(234, 242, 238, 0.8);
+  --ifm-blockquote-border-color: var(--ifm-color-primary);
+  --ifm-table-stripe-background: rgba(234, 242, 238, 0.03);
+  --ifm-table-border-color: rgba(234, 242, 238, 0.12);
+
+  --docusaurus-highlighted-code-line-bg: rgba(234, 242, 238, 0.1);
+
+  --ifm-color-warning: var(--nw-ember);
+  --ifm-color-warning-contrast-background: rgba(217, 100, 42, 0.16);
+  --ifm-color-warning-contrast-foreground: #f0b28c;
+  --ifm-color-success-contrast-background: rgba(92, 154, 134, 0.18);
+  --ifm-color-success-contrast-foreground: #a8d0c1;
+  --ifm-color-danger-contrast-background: rgba(220, 80, 60, 0.16);
+  --ifm-color-danger-contrast-foreground: #f0a79c;
+  --ifm-color-info-contrast-background: rgba(92, 154, 134, 0.16);
+  --ifm-color-info-contrast-foreground: #a8d0c1;
+}
+
+/* ------------------------------------------------------------ specifics -- */
+
+/* The storefront's header: a hairline rule and a translucent ground, so
+   content scrolling under it stays legible rather than being hidden. */
+.navbar {
+  border-bottom: 1px solid var(--ifm-toc-border-color);
+  backdrop-filter: blur(8px);
+  box-shadow: none;
+}
+
+/* Prose is the product on this site. Slightly tighter measure and looser
+   leading than Infima's default, matching the storefront's body copy. */
+.markdown {
+  --ifm-h1-font-size: 2.2rem;
+  --ifm-h2-font-size: 1.55rem;
+  --ifm-h3-font-size: 1.2rem;
+  line-height: 1.7;
+}
+
+.markdown > h2 {
+  margin-top: 2.4rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--ifm-hr-border-color);
+}
+
+.markdown > h2:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+/* Tables carry a lot of this course's measured results. Numbers line up. */
+.markdown table {
+  font-size: 0.9rem;
+}
+
+.markdown table td:not(:first-child) {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Code blocks sit on the surface colour rather than Prism's own ground, so a
+   page does not contain two competing backgrounds. Prism supplies only the
+   token hues; the block itself belongs to the site. */
+.theme-code-block,
+.theme-code-block pre,
+div[class^="codeBlockContainer"],
+div[class^="codeBlockContainer"] pre {
+  background-color: var(--ifm-background-surface-color) !important;
+}
+
+.theme-code-block {
+  border: 1px solid var(--ifm-toc-border-color);
+  box-shadow: none !important;
+}
+
+/* Inline code reads as a token, not as a second link colour. */
+.markdown :not(pre) > code {
+  border: 1px solid var(--ifm-toc-border-color);
+  color: inherit;
 }
 
 /* Mermaid diagrams — center and give breathing room in prose pages */
@@ -34,4 +239,14 @@
   margin: 1.5rem auto;
   max-width: 100%;
   text-align: center;
+}
+
+/* The sidebar is a table of contents, not a menu bar. Quieter by default,
+   Pine when it is where you are. */
+.menu__link {
+  font-size: 0.88rem;
+}
+
+.menu__link--active {
+  font-weight: 600;
 }
