@@ -16,7 +16,7 @@
  * The single diagnostic that matters: if `cache_read_input_tokens` is 0 across
  * repeated requests that should share a prefix, something is invalidating it.
  */
-import { PRICING } from "../config.js";
+import { pricingFor } from "../config.js";
 
 export interface UsageLike {
   input_tokens: number;
@@ -26,6 +26,10 @@ export interface UsageLike {
 }
 
 export interface UsageReport {
+  /** Which model produced this usage. Cost is meaningless without it. */
+  model: string;
+  /** True when billed through the Batches API at half rate. */
+  batch: boolean;
   input_tokens: number;
   output_tokens: number;
   cache_creation_input_tokens: number;
@@ -39,24 +43,34 @@ export interface UsageReport {
   savings_usd: number;
 }
 
-export function summarizeUsage(usage: UsageLike): UsageReport {
+export function summarizeUsage(
+  usage: UsageLike,
+  model: string,
+  opts: { batch?: boolean } = {},
+): UsageReport {
   const cacheWrite = usage.cache_creation_input_tokens ?? 0;
   const cacheRead = usage.cache_read_input_tokens ?? 0;
   const fresh = usage.input_tokens;
   const totalInput = fresh + cacheWrite + cacheRead;
 
-  const inRate = PRICING.inputPerMTok / 1_000_000;
-  const outRate = PRICING.outputPerMTok / 1_000_000;
+  const pricing = pricingFor(model);
+  const batch = opts.batch ?? false;
+  const discount = batch ? pricing.batchMultiplier : 1;
+
+  const inRate = (pricing.inputPerMTok / 1_000_000) * discount;
+  const outRate = (pricing.outputPerMTok / 1_000_000) * discount;
 
   const cost =
     fresh * inRate +
-    cacheWrite * inRate * PRICING.cacheWriteMultiplier +
-    cacheRead * inRate * PRICING.cacheReadMultiplier +
+    cacheWrite * inRate * pricing.cacheWriteMultiplier +
+    cacheRead * inRate * pricing.cacheReadMultiplier +
     usage.output_tokens * outRate;
 
   const uncached = totalInput * inRate + usage.output_tokens * outRate;
 
   return {
+    model,
+    batch,
     input_tokens: fresh,
     output_tokens: usage.output_tokens,
     cache_creation_input_tokens: cacheWrite,
@@ -71,7 +85,15 @@ export function summarizeUsage(usage: UsageLike): UsageReport {
 
 /** Adds usage reports across the many turns of an agentic loop. */
 export function sumUsage(reports: UsageReport[]): UsageReport {
+  // Turns of one loop should share a model; "mixed" makes it obvious when a
+  // caller has summed across a tier boundary and the total is not comparable
+  // to any single-model figure.
+  const models = new Set(reports.map((r) => r.model));
+  const model = models.size === 1 ? [...models][0]! : models.size === 0 ? "none" : "mixed";
+
   const zero: UsageReport = {
+    model,
+    batch: reports.some((r) => r.batch),
     input_tokens: 0,
     output_tokens: 0,
     cache_creation_input_tokens: 0,
@@ -83,6 +105,8 @@ export function sumUsage(reports: UsageReport[]): UsageReport {
     savings_usd: 0,
   };
   const total = reports.reduce((acc, r) => ({
+    model: acc.model,
+    batch: acc.batch,
     input_tokens: acc.input_tokens + r.input_tokens,
     output_tokens: acc.output_tokens + r.output_tokens,
     cache_creation_input_tokens:

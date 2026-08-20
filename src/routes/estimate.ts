@@ -13,11 +13,13 @@
  * use the endpoint.
  */
 import { Hono } from "hono";
+import type Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { anthropic } from "../anthropic.js";
-import { MODEL, PRICING } from "../config.js";
+import { MODEL, pricingFor } from "../config.js";
 import { buildSystem, volatileContext } from "../prompts.js";
 import { toHttpError } from "../lib/errors.js";
+import { createTools } from "../tools/index.js";
 
 export const estimateRoute = new Hono();
 
@@ -40,30 +42,54 @@ estimateRoute.post("/", async (c) => {
   try {
     const system = buildSystem(role, volatileContext({ channel: "email" }));
 
+    // Tools render BEFORE system in a request, so they are part of what you
+    // pay for on every resolve call. Omitting them here — which this route
+    // used to do — understated the resolve estimate by the entire tool block.
+    // We strip the executable halves and count the definitions the API sees.
+    // (The beta tool-runner's union also covers server-side tools that carry
+    // no input_schema, so narrow to the custom ones before projecting. Lab 9
+    // replaces this with a provider-neutral definition list.)
+    const tools: Anthropic.Tool[] | undefined =
+      role === "resolve"
+        ? createTools([])
+            .filter((t) => "input_schema" in t && "description" in t)
+            .map((t) => {
+              const custom = t as unknown as Anthropic.Tool;
+              return {
+                name: custom.name,
+                description: custom.description,
+                input_schema: custom.input_schema,
+              };
+            })
+        : undefined;
+
     // Count the full request and the cacheable prefix separately, so callers
     // can see how much of their input is eligible for the 90% cache discount.
     const [full, prefixOnly] = await Promise.all([
       anthropic.messages.countTokens({
         model: MODEL,
         system,
+        ...(tools ? { tools } : {}),
         messages: [{ role: "user", content: message }],
       }),
       anthropic.messages.countTokens({
         model: MODEL,
         system: [system[0]!],
+        ...(tools ? { tools } : {}),
         messages: [{ role: "user", content: "." }],
       }),
     ]);
 
-    const inRate = PRICING.inputPerMTok / 1_000_000;
-    const outRate = PRICING.outputPerMTok / 1_000_000;
+    const pricing = pricingFor(MODEL);
+    const inRate = pricing.inputPerMTok / 1_000_000;
+    const outRate = pricing.outputPerMTok / 1_000_000;
 
     const cacheablePrefix = prefixOnly.input_tokens;
     const perRequestVariable = full.input_tokens - cacheablePrefix;
 
     const coldCost = full.input_tokens * inRate + expected_output_tokens * outRate;
     const warmCost =
-      cacheablePrefix * inRate * PRICING.cacheReadMultiplier +
+      cacheablePrefix * inRate * pricing.cacheReadMultiplier +
       perRequestVariable * inRate +
       expected_output_tokens * outRate;
 
@@ -75,6 +101,8 @@ estimateRoute.post("/", async (c) => {
         assumed_output: expected_output_tokens,
         // Below ~1024 tokens the API silently declines to cache the prefix.
         prefix_meets_cache_minimum: cacheablePrefix >= 1024,
+        // Only populated for role "resolve"; the other roles send no tools.
+        tools_counted: tools?.length ?? 0,
       },
       cost_usd: {
         cold_request: round6(coldCost),

@@ -23,245 +23,19 @@
  * Run with:  npm run eval
  */
 import "../src/lib/env.js";
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
-import { z } from "zod";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import { app } from "../src/server.js";
-import { anthropic, assertCredentials } from "../src/anthropic.js";
-import { MODEL, MAX_TOKENS } from "../src/config.js";
-import { summarizeUsage } from "../src/lib/usage.js";
-import type { TriageResult } from "../src/schemas.js";
+import { assertCredentials } from "../src/anthropic.js";
+import { MODEL } from "../src/config.js";
+import { judgeDrafts, JUDGE_MODEL, judgePromptSha } from "./lib/judge.js";
+import {
+  loadCases,
+  scoreTriage,
+  accuracyOf,
+  calibrationOf,
+  fmtMetric,
+  type EvalCase,
+} from "./lib/score.js";
 
-const here = dirname(fileURLToPath(import.meta.url));
-
-interface EvalCase {
-  id: string;
-  message: string;
-  expected: {
-    category: string;
-    urgency: string;
-    requires_human: boolean;
-    requested_remedy: string;
-  };
-  notes: string;
-}
-
-const cases: EvalCase[] = readFileSync(join(here, "dataset.jsonl"), "utf8")
-  .split("\n")
-  .filter((line) => line.trim().length > 0)
-  .map((line) => JSON.parse(line));
-
-// ---------------------------------------------------------------------------
-// Part 1 — deterministic triage scoring
-// ---------------------------------------------------------------------------
-
-interface CaseResult {
-  id: string;
-  passed: boolean;
-  failures: string[];
-  confidence: number;
-  cost_usd: number;
-  latency_ms: number;
-}
-
-async function scoreTriage(): Promise<CaseResult[]> {
-  const results: CaseResult[] = [];
-
-  for (const testCase of cases) {
-    const started = Date.now();
-    const res = await app.request("/v1/triage", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: testCase.message }),
-    });
-
-    if (!res.ok) {
-      results.push({
-        id: testCase.id,
-        passed: false,
-        failures: [`HTTP ${res.status}: ${await res.text()}`],
-        confidence: 0,
-        cost_usd: 0,
-        latency_ms: Date.now() - started,
-      });
-      continue;
-    }
-
-    const body = (await res.json()) as {
-      triage: TriageResult;
-      meta: { usage: { estimated_cost_usd: number } };
-    };
-    const got = body.triage;
-    const want = testCase.expected;
-    const failures: string[] = [];
-
-    if (got.category !== want.category) {
-      failures.push(`category: expected ${want.category}, got ${got.category}`);
-    }
-    if (got.urgency !== want.urgency) {
-      failures.push(`urgency: expected ${want.urgency}, got ${got.urgency}`);
-    }
-    if (got.requires_human !== want.requires_human) {
-      failures.push(
-        `requires_human: expected ${want.requires_human}, got ${got.requires_human}`,
-      );
-    }
-    if (got.entities.requested_remedy !== want.requested_remedy) {
-      failures.push(
-        `requested_remedy: expected ${want.requested_remedy}, got ${got.entities.requested_remedy}`,
-      );
-    }
-
-    results.push({
-      id: testCase.id,
-      passed: failures.length === 0,
-      failures,
-      confidence: got.confidence,
-      cost_usd: body.meta.usage.estimated_cost_usd,
-      latency_ms: Date.now() - started,
-    });
-  }
-
-  return results;
-}
-
-// ---------------------------------------------------------------------------
-// Part 2 — LLM-as-judge on drafted replies
-// ---------------------------------------------------------------------------
-
-const JudgeSchema = z.object({
-  evidence: z
-    .array(z.string())
-    .describe(
-      "Direct quotes from the reply that bear on the rubric, gathered BEFORE scoring. Quote violations and compliant moves alike.",
-    ),
-  leads_with_resolution: z.boolean().describe("Rubric 1: the first sentence states what will happen, not an apology."),
-  apology_count_ok: z.boolean().describe("Rubric 2: at most one apology in the entire reply."),
-  no_banned_phrases: z
-    .boolean()
-    .describe("Rubric 3: contains none of 'unfortunately', 'as per our policy', \"I'm afraid\"."),
-  no_internal_jargon: z.boolean().describe("Rubric 4: no 'RMA', 'SKU', 'P1', 'tier-2', ticket IDs, or queue names."),
-  no_unauthorized_promise: z
-    .boolean()
-    .describe("Rubric 5: makes no promise the handbook forbids (immediate refunds, future features, unannounced fix dates)."),
-  under_180_words: z.boolean().describe("Rubric 6: the reply is under 180 words."),
-  verdict: z.enum(["pass", "fail"]).describe("Fail if ANY rubric item is false."),
-  rationale: z.string().describe("Two sentences explaining the verdict, referencing the evidence."),
-});
-
-const JUDGE_SYSTEM = `You are a support-quality auditor. You grade a customer-facing reply against a fixed rubric.
-
-You are grading the TEXT ONLY. You do not know, and must not speculate about, how it was produced.
-
-Method, in this order:
-1. Collect evidence: quote the exact spans of the reply relevant to each rubric item.
-2. Only then decide each rubric item.
-3. The verdict is "fail" if any single rubric item is false. There is no partial credit and no rounding up for effort.
-
-Be strict. A reply that is pleasant but breaks a rule fails. Graders who pass borderline work make the metric useless.`;
-
-interface JudgeResult {
-  id: string;
-  verdict: "pass" | "fail";
-  rationale: string;
-  broken_rules: string[];
-  cost_usd: number;
-}
-
-async function judgeDrafts(sample: EvalCase[]): Promise<JudgeResult[]> {
-  const results: JudgeResult[] = [];
-
-  for (const testCase of sample) {
-    // Generate a reply through the real streaming route, collecting the text.
-    const res = await app.request("/v1/draft", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: testCase.message }),
-    });
-
-    const reply = await collectSseText(res);
-    if (!reply.trim()) {
-      results.push({
-        id: testCase.id,
-        verdict: "fail",
-        rationale: "The draft route produced no text.",
-        broken_rules: ["no_output"],
-        cost_usd: 0,
-      });
-      continue;
-    }
-
-    const judged = await anthropic.messages.parse({
-      model: MODEL,
-      max_tokens: MAX_TOKENS.nonStreaming,
-      system: JUDGE_SYSTEM,
-      output_config: { effort: "medium", format: zodOutputFormat(JudgeSchema) },
-      messages: [
-        {
-          role: "user",
-          content: `Grade this reply.\n\n<reply>\n${reply}\n</reply>`,
-        },
-      ],
-    });
-
-    const verdict = judged.parsed_output;
-    if (!verdict) {
-      results.push({
-        id: testCase.id,
-        verdict: "fail",
-        rationale: "Judge output failed schema validation.",
-        broken_rules: ["judge_unparseable"],
-        cost_usd: summarizeUsage(judged.usage).estimated_cost_usd,
-      });
-      continue;
-    }
-
-    const broken = Object.entries({
-      leads_with_resolution: verdict.leads_with_resolution,
-      apology_count_ok: verdict.apology_count_ok,
-      no_banned_phrases: verdict.no_banned_phrases,
-      no_internal_jargon: verdict.no_internal_jargon,
-      no_unauthorized_promise: verdict.no_unauthorized_promise,
-      under_180_words: verdict.under_180_words,
-    })
-      .filter(([, ok]) => !ok)
-      .map(([rule]) => rule);
-
-    results.push({
-      id: testCase.id,
-      verdict: verdict.verdict,
-      rationale: verdict.rationale,
-      broken_rules: broken,
-      cost_usd: summarizeUsage(judged.usage).estimated_cost_usd,
-    });
-  }
-
-  return results;
-}
-
-/** Drains an SSE response and concatenates the `text` events. */
-async function collectSseText(res: Response): Promise<string> {
-  if (!res.body) return "";
-  const decoder = new TextDecoder();
-  let buffer = "";
-  let out = "";
-
-  for await (const chunk of res.body as unknown as AsyncIterable<Uint8Array>) {
-    buffer += decoder.decode(chunk, { stream: true });
-    const frames = buffer.split("\n\n");
-    buffer = frames.pop() ?? "";
-    for (const frame of frames) {
-      const eventLine = frame.split("\n").find((l) => l.startsWith("event: "));
-      const dataLine = frame.split("\n").find((l) => l.startsWith("data: "));
-      if (eventLine?.slice(7) === "text" && dataLine) {
-        out += (JSON.parse(dataLine.slice(6)) as { text: string }).text;
-      }
-    }
-  }
-  return out;
-}
+const cases: EvalCase[] = loadCases();
 
 // ---------------------------------------------------------------------------
 
@@ -269,7 +43,7 @@ async function main() {
   assertCredentials();
 
   console.log(`\nTriage accuracy — ${cases.length} cases, model ${MODEL}\n`);
-  const triageResults = await scoreTriage();
+  const triageResults = await scoreTriage({ model: MODEL });
 
   for (const r of triageResults) {
     const mark = r.passed ? "PASS" : "FAIL";
@@ -277,25 +51,32 @@ async function main() {
       `  ${mark}  ${r.id}  conf=${r.confidence.toFixed(2)}  ${r.latency_ms}ms  $${r.cost_usd.toFixed(4)}`,
     );
     for (const f of r.failures) console.log(`          - ${f}`);
+    // The case's own note, on failure only. Check the LABEL before the model:
+    // the first run of this dataset scored 58% and five of the six failures
+    // were mislabelled cases, not model errors.
+    if (!r.passed) console.log(`          note: ${r.notes}`);
   }
 
   const passed = triageResults.filter((r) => r.passed).length;
-  const accuracy = passed / triageResults.length;
+  const accuracy = accuracyOf(triageResults);
   const triageCost = triageResults.reduce((a, r) => a + r.cost_usd, 0);
 
   // Calibration: is the confidence score actually informative? If failures
   // score as confidently as passes, the field is decoration.
-  const avgConf = (rs: CaseResult[]) =>
-    rs.length === 0 ? 0 : rs.reduce((a, r) => a + r.confidence, 0) / rs.length;
+  const calibration = calibrationOf(triageResults);
 
   console.log(`\n  accuracy: ${passed}/${triageResults.length} (${(accuracy * 100).toFixed(1)}%)`);
-  console.log(`  mean confidence on passes: ${avgConf(triageResults.filter((r) => r.passed)).toFixed(2)}`);
-  console.log(`  mean confidence on fails:  ${avgConf(triageResults.filter((r) => !r.passed)).toFixed(2)}`);
+  console.log(`  mean confidence on passes: ${fmtMetric(calibration.onPass)}`);
+  console.log(`  mean confidence on fails:  ${fmtMetric(calibration.onFail)}`);
+  console.log(`  calibration gap:           ${fmtMetric(calibration.gap)}`);
   console.log(`  triage cost: $${triageCost.toFixed(4)}\n`);
 
   // Judge a subset — judging every case doubles cost for little extra signal.
   const sample = cases.slice(0, 4);
-  console.log(`Tone compliance (LLM judge) — ${sample.length} drafted replies\n`);
+  console.log(
+    `Tone compliance (LLM judge) — ${sample.length} drafted replies\n` +
+      `  judge=${JUDGE_MODEL} prompt=${judgePromptSha()} (pinned; never varies with the model under test)\n`,
+  );
   const judgeResults = await judgeDrafts(sample);
 
   for (const r of judgeResults) {
