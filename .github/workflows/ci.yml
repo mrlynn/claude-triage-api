@@ -1,0 +1,124 @@
+# CI for the triage course.
+#
+# THREE JOBS, and the split is the interesting part:
+#
+#   checks       needs no API key. Runs on every PR including forks.
+#   evals        needs a key. Skipped on forks rather than failing on them.
+#   model-upgrade  manual + weekly. The regression rehearsal.
+#
+# A fork PR that fails because the contributor has no Anthropic key is a bad
+# first experience and teaches everyone to ignore red builds. So everything
+# that can run without a credential does, unconditionally, and the paid half
+# is gated on the secret actually being present.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Weekly model-drift check. See the model-upgrade job.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  checks:
+    name: typecheck, builds, snippet drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      # The drift guard. Every ```ts fence in curriculum/ that names a source
+      # file must still match it. This is what makes the manual sweeps of
+      # Phases 1-3 the last manual sweeps.
+      - run: npm run check:snippets
+      - name: website build
+        run: npm ci && npm run build
+        working-directory: website
+      - name: storefront build
+        run: npm ci && npm run build
+        working-directory: storefront
+        env:
+          # A build must not require real credentials. If this ever starts
+          # failing without them, something moved from request time to build
+          # time and should move back.
+          ANTHROPIC_API_KEY: build-time-placeholder
+
+  python:
+    name: python track
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: astral-sh/setup-uv@v5
+      # Import-only. The Python track shares the gold set with the TypeScript
+      # half, so gating it on accuracy would spend twice to measure the same
+      # thing. What CI needs to know is that it still builds and that the
+      # schema still loads — the two things a careless port breaks.
+      - name: install and import
+        run: |
+          uv venv
+          uv pip install -e .
+          .venv/bin/python -c "from triage.server import app; from evals.quick import load_cases; assert len(load_cases()) == 12"
+        working-directory: python
+
+  evals:
+    name: eval gate + red team
+    runs-on: ubuntu-latest
+    # Forks cannot read secrets. Skip rather than fail.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - name: scoreboard
+        run: npm run eval:quick -- --gate
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      # Separate step, deliberately. Containment and accuracy answer different
+      # questions and must not be averaged into one health signal: a strong
+      # accuracy number should never be able to pay for a breach.
+      - name: red team
+        run: npm run eval:redteam
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      - name: smoke
+        run: npm run smoke
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+  model-upgrade:
+    name: model drift rehearsal
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      # This is the whole point of the weekly cron. `claude-opus-5` is an
+      # alias, so the model can improve — or simply change — without anything
+      # in this repo changing. Running the tier matrix on a schedule means the
+      # delta shows up in a job summary on a Monday, rather than in a
+      # production incident on a Thursday that nobody can attribute.
+      - name: tier matrix
+        run: |
+          {
+            echo '## Model matrix'
+            echo
+            npm run eval:models -- --no-judge --concurrency 4 2>/dev/null | sed -n '/| model |/,/^$/p'
+          } >> "$GITHUB_STEP_SUMMARY"
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
