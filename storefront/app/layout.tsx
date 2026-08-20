@@ -41,6 +41,12 @@ export default function RootLayout({
               business days to appear on your statement.
             </p>
             <p>
+              <a className="underline" href="/credits">
+                Photo credits
+              </a>{" "}
+              &mdash; the shop is fictional, the photographs are not.
+            </p>
+            <p>
               Northwind Outfitters does not exist. It is the scenario behind a
               workshop on building with the Claude API &mdash; read{" "}
               <a
