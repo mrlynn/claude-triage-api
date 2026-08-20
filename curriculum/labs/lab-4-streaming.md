@@ -85,8 +85,13 @@ first-run UX?
 `usage` is not available mid-stream. It arrives at the end:
 
 ```ts
+// src/routes/draft.ts
 const final = await stream.finalMessage();
-send("done", { usage: summarizeUsage(final.usage) });
+send("done", {
+  stop_reason: final.stop_reason,
+  model: final.model,
+  usage: summarizeUsage(final.usage, final.model),
+});
 ```
 
 **Q2.** A teammate proposes wrapping `stream.on("message", ...)` in a
@@ -141,6 +146,15 @@ Start a request and kill curl mid-generation (Ctrl-C).
 
 **Q5.** Without this line, what continues to happen, and who pays for it?
 
+## Step 7 — re-run the scoreboard
+
+```bash
+npm run eval:quick
+```
+
+Streaming is a delivery change, not a reasoning change. If the score moved,
+something other than delivery changed and you want to know what.
+
 ---
 
 ## Checkpoint
@@ -149,6 +163,7 @@ Start a request and kill curl mid-generation (Ctrl-C).
 - [ ] How do you get `usage` from a stream?
 - [ ] Why can't a mid-stream error be an HTTP error?
 - [ ] What must you do on client disconnect?
+- [ ] Scoreboard re-run; you can say why it did or did not move
 
 ---
 

@@ -21,6 +21,12 @@ const LINKS = [
   { href: "/products", label: "Shop" },
   { href: "/orders", label: "Your orders" },
   { href: "/ops", label: "Ops", title: "Internal operations dashboard" },
+  { href: "/queue", label: "Queue", title: "Escalation queue (internal)" },
+  {
+    href: "/playground/injection",
+    label: "Break it",
+    title: "Prompt-injection playground",
+  },
 ];
 
 function Mark({ size = 30 }: { size?: number }) {

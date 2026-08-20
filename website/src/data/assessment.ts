@@ -79,6 +79,48 @@ export const MECHANICS: ScoredQuestion[] = [
     explain:
       "429 and 5xx and connection errors are retryable; 400 and 401 and 404 are not. Note that an invalid Anthropic key should surface as a 500, not a 401 — the caller's credentials are not the problem, yours are.",
   },
+  {
+    id: "m5",
+    prompt:
+      "You are picking a model for a classifier at 4,100 tickets/week against a $4,000/month budget. Every tier projects under $140/month. What decides it?",
+    options: [
+      "The cheapest tier — all of them fit the budget, so price is the tiebreaker",
+      "Accuracy and calibration, because cost is not a binding constraint at this volume",
+      "Latency, since cost and accuracy are both acceptable",
+      "The largest context window, to leave headroom for the policy handbook",
+    ],
+    answer: 1,
+    explain:
+      "Cost optimization only matters where cost binds. At 30x headroom the ~$65/month saved by moving down a tier is under 2% of the budget, paid for with three to five lost cases out of twelve — concentrated in the multi-rule cases the system exists to handle. Calibration belongs beside accuracy because it decides whether you can build a confidence threshold at all: measured here, the flagship separates right from wrong answers by ~0.38 of confidence and the cheap tier by roughly zero.",
+  },
+  {
+    id: "m6",
+    prompt:
+      "In an agentic loop with three tools, where does output sanitization and PII redaction belong?",
+    options: [
+      "In each tool's implementation, so every tool owns its own data hygiene",
+      "In the one wrapper every tool result passes through on its way to the model",
+      "In the system prompt, instructing the model to ignore any PII it sees",
+      "On the response, just before returning it to the caller",
+    ],
+    answer: 1,
+    explain:
+      "One choke point, because three implementations drift and the fourth tool someone adds will forget. Option 3 fails outright: a prompt instruction still means the card number reached the request logs and anything downstream that persists a transcript, so 'the model was polite about it' is not redaction. Option 4 is too late for the same reason. Option 1 is defensible and loses on maintenance. Note also that tool output is untrusted input in its own right — a customer-supplied field echoed by a lookup arrives wearing the authority of a system-provided fact.",
+  },
+  {
+    id: "m7",
+    prompt:
+      "The Batches API bills at half rate. When does moving a workload to it INCREASE your bill?",
+    options: [
+      "Never — half rate is half rate",
+      "When it costs you prompt-cache hits, which are 90% off, on a large stable prefix",
+      "When the batch exceeds the 24-hour SLA and requests expire",
+      "When you have more requests than the batch size limit",
+    ],
+    answer: 1,
+    explain:
+      "Measured on this repo: twenty tickets cost $0.1645 synchronously with 20/20 cache hits, and $0.2018 through the Batches API with 11/20. A cache read is 0.1x the input rate; the batch discount is 0.5x. On a request dominated by a ~3,400-token cached prefix, losing the first to gain the second is a net loss and it is not close. Synchronous requests arrive in sequence so the prefix stays warm; a batch is fanned out on the provider's schedule and a warm prefix becomes luck. The general form: two discounts on the same tokens compete, they do not compose.",
+  },
 ];
 
 export const DIAGNOSIS: ScoredQuestion[] = [
@@ -138,6 +180,20 @@ export const DIAGNOSIS: ScoredQuestion[] = [
     explain:
       "What matters is separability, not the absolute value. Measure mean confidence on correct answers versus on incorrect ones. If the distributions overlap, there is no threshold that works and the field is decoration — fix calibration first, or route on something with real signal.",
   },
+  {
+    id: "d5",
+    prompt:
+      "After a one-line config change, eval accuracy is unchanged at 11/12 but reported cost per request drops 90%. Nobody touched the prompt. What do you check first?",
+    options: [
+      "Nothing — a 90% drop with no accuracy loss is the caching win working as designed",
+      "Whether the reported figure is still being computed for the model that actually answered",
+      "Whether the eval set is too small to detect the quality regression that must have happened",
+      "The provider's status page, since pricing changes are announced there",
+    ],
+    answer: 1,
+    explain:
+      "Cost is a computed number, not an observed one. A 90% drop with accuracy pinned to the case is far more consistent with the accounting changing than with the workload changing — a model swap where the cost table still assumes the old rates, or a cache-read multiplier applied to tokens that were never cached. Check that the figure is keyed to `response.model` before you celebrate. This repo throws on an unknown model id for exactly this reason: a cost table that silently guesses hands you a plausible wrong number, and you find out at the invoice.",
+  },
 ];
 
 export const JUDGMENT: OpenQuestion[] = [
@@ -157,11 +213,13 @@ export const JUDGMENT: OpenQuestion[] = [
     prompt:
       "Product wants to backfill categories across a 400,000-ticket archive overnight. The synchronous /v1/triage route would work but is not the right tool. What changes, what stays, and roughly what does it cost? State your assumptions.",
     rubric: [
-      "Reaches for the Batches API, and knows it is roughly half price",
+      "Reaches for the Batches API, and knows the rate is half",
+      "Does NOT stop there: recognises that a cache read is 90% off and that the two discounts compete on the same tokens, so half rate on a cache miss can cost more than full rate on a hit",
+      "Proposes measuring the batch cache-hit rate with a pilot rather than extrapolating a per-unit cost from a small sample",
       "Keeps the schema, the prompt and the eval set unchanged — only the transport changes",
-      "Notes results arrive in any order and must be keyed by custom_id",
+      "Notes results arrive in any order and must be keyed by custom_id, never by position",
+      "Handles all four result types (succeeded/errored/canceled/expired) and reconciles submitted ids against returned ones",
       "Does the arithmetic with stated assumptions rather than guessing a number",
-      "Considers whether caching still helps at that volume, and over what window",
     ],
   },
   {
@@ -174,6 +232,9 @@ export const JUDGMENT: OpenQuestion[] = [
       "Identifies the real control: /v1/triage has no tools and takes no actions",
       "Recognises the answer changes at /v1/resolve because tools exist there, so authority checks must be deterministic and outside the model",
       "Mentions that card digits should be redacted at the ingress boundary, in code, not by instructing the model",
+      "Distinguishes delimiting from ESCAPING: the wrapper is only a boundary if the payload cannot close the tag, so `<` must be escaped inside it",
+      "Ranks the defences by kind — escaping and an arithmetic authority check hold by construction; prompt instructions hold by probability — and refuses to let a probability be the only thing between an attacker and money",
+      "Bonus: notes that a corpus of attacks alone cannot detect an over-aggressive defence, and that legitimate messages containing angle brackets or attack-like strings must be tested too",
     ],
   },
   {
@@ -186,6 +247,20 @@ export const JUDGMENT: OpenQuestion[] = [
       "PHI handling — forces redaction at the boundary, changes logging, and constrains what may go in a prompt at all",
       "Names concrete files rather than gesturing: schemas, tools, the policy corpus, the gold set",
       "Recognises the policy corpus is far larger and changes more often, which affects caching strategy",
+    ],
+  },
+  {
+    id: "j5",
+    prompt:
+      "You are asked to prove that a cheaper model is 'just as good' for your classifier. Describe the experiment you would run and the claim you would be willing to defend from it.",
+    rubric: [
+      "Holds the grader constant: pins the judge model and reports its id, and ideally a hash of the judge prompt, so a moved score has one possible cause",
+      "Changes one variable at a time — the model or the gold set, never both",
+      "Reports which cases each model loses, not only how many; an aggregate score hides whether the losses cluster in the cases that matter",
+      "Checks the calibration gap, not just accuracy, since a model whose confidence carries no signal cannot support threshold routing or escalation downstream",
+      "Accounts for run-to-run variance and states the smallest difference the sample could detect; refuses to claim a rate improvement the sample cannot support",
+      "Notes capability differences that make the comparison unequal (e.g. a model that rejects output_config.effort is not running 'low effort', it is running none)",
+      "States a defensible narrow claim rather than 'just as good', and names what observation would overturn it",
     ],
   },
 ];

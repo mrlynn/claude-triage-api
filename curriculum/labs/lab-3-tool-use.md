@@ -93,8 +93,9 @@ Restore it before continuing.
 `src/routes/resolve.ts` iterates the runner instead of awaiting it:
 
 ```ts
+// src/routes/resolve.ts
 for await (const message of runner) {
-  usagePerTurn.push(summarizeUsage(message.usage));
+  usagePerTurn.push(summarizeUsage(message.usage, message.model));
 }
 const final = await runner.done();
 ```
@@ -175,6 +176,16 @@ $640).
 good argument for the tool anyway, and one situation where the tool is
 overkill.
 
+## Step 6 — re-run the scoreboard
+
+```bash
+npm run eval:quick
+```
+
+Tool use does not touch `/v1/triage`, so accuracy should be unchanged. Run it
+anyway. Knowing which changes *cannot* move the number is half of knowing what
+the number means.
+
 ---
 
 ## Checkpoint
@@ -183,18 +194,24 @@ overkill.
 - [ ] Why must `run()` return a string?
 - [ ] Why sum usage across turns?
 - [ ] What happens when `max_iterations` is reached, and how do you detect it?
+- [ ] Scoreboard re-run; you can say why it did or did not move
 
 ---
 
 ## Extensions
 
-1. **Redaction (production gap).** Handbook clause 4.5 requires that card
-   digits never be echoed. The service does not implement this. Add redaction
-   at the ingress boundary in `TicketInput` and justify why the boundary — not
-   the prompt — is the right place for it.
+1. **Redaction.** Handbook clause 4.5 requires that card digits never be
+   echoed. Work out where redaction belongs before you look at how this repo
+   does it, and justify why the boundary — not the prompt — is the right place.
+   Then read [`src/lib/untrusted.ts`](../../src/lib/untrusted.ts) and the
+   `record()` closure in [`src/tools/index.ts`](../../src/tools/index.ts), and
+   see whether you picked the same choke point.
+   [Lab 8](lab-8-trust-boundary.md) is the full treatment.
 2. **Human-in-the-loop.** Make `check_refund_authority` require approval for
    amounts over $200 by returning a "pending approval" result from inside
    `run()`. Note that you do **not** need a manual loop for this — gate inside
-   the tool.
+   the tool. Compare your version with
+   [`src/lib/authority.ts`](../../src/lib/authority.ts), which does the check
+   *after* the loop instead, and decide which placement you prefer and why.
 
 **Answers:** [../solutions/lab-3.md](../solutions/lab-3.md)

@@ -23,6 +23,10 @@ import { ResolutionSchema, TicketInput } from "../schemas.js";
 import { buildSystem, volatileContext } from "../prompts.js";
 import { summarizeUsage, sumUsage, type UsageReport } from "../lib/usage.js";
 import { toHttpError } from "../lib/errors.js";
+import { enforceAuthority } from "../lib/authority.js";
+import { verifyCitations } from "../lib/citations.js";
+import { wrapUntrusted } from "../lib/untrusted.js";
+import { safeJson } from "../lib/json.js";
 import { createTools, type ToolCallRecord } from "../tools/index.js";
 
 export const resolveRoute = new Hono();
@@ -67,7 +71,7 @@ resolveRoute.post("/", async (c) => {
           content:
             `Determine what Northwind should do about this ${ticket.channel} message. ` +
             `Look up the facts before you decide.\n\n` +
-            `<customer_message>\n${ticket.message}\n</customer_message>`,
+            wrapUntrusted(ticket.message),
         },
       ],
     });
@@ -76,7 +80,7 @@ resolveRoute.post("/", async (c) => {
     // observe each turn. Awaiting `runner` directly would give us the final
     // message and silently discard intermediate usage.
     for await (const message of runner) {
-      usagePerTurn.push(summarizeUsage(message.usage));
+      usagePerTurn.push(summarizeUsage(message.usage, message.model));
 
       // A server-side tool can end a turn with pause_turn. The runner only
       // auto-continues after a CLIENT tool returns a result, so a paused turn
@@ -109,10 +113,27 @@ resolveRoute.post("/", async (c) => {
       );
     }
 
+    // GUARDRAILS. Everything above this line trusted the model's own account
+    // of what it was allowed to do. Everything below re-derives it from the
+    // recorded facts, and where the two disagree the recomputation wins.
+    const authority = enforceAuthority(validated.data, trace);
+    const citations = verifyCitations(validated.data.policy_citations, trace);
+
     return c.json({
-      resolution: validated.data,
+      // The CORRECTED resolution, not the model's. A caller that has to
+      // remember to check a sibling field before acting will eventually
+      // forget, so the safe value is the one in the obvious place.
+      resolution: authority.corrected,
       tool_trace: trace,
       meta: {
+        guardrails: {
+          authority_allowed: authority.allowed,
+          authority_violations: authority.violations,
+          unsupported_citations: citations.unsupported,
+          cited_without_search: citations.cited_without_search,
+          policy_searched: citations.searched,
+          redactions: trace.reduce((n, t) => n + t.redactions.length, 0),
+        },
         model: final.model,
         stop_reason: final.stop_reason,
         iterations: usagePerTurn.length,
@@ -127,11 +148,3 @@ resolveRoute.post("/", async (c) => {
     return c.json(body, status as 400);
   }
 });
-
-function safeJson(text: string): unknown {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
-}

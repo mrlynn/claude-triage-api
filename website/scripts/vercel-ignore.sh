@@ -17,10 +17,15 @@ if ! git cat-file -e "${prev}^{commit}" 2>/dev/null; then
   exit 1
 fi
 
+# Anything sync-docs.mjs reads at build time has to be listed here, or a
+# change to it produces a site that never rebuilds. python/labs/ is on the
+# list because the Python deltas page is published as a doc; the rest of
+# python/ is participant-only and never enters a Vercel build.
 paths=(
   website/
   curriculum/
   docs/
+  python/labs/
   assets/brand/
   README.md
   vercel.json

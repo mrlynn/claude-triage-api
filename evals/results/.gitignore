@@ -1,0 +1,4 @@
+# Timestamped run artifacts: local evidence, not shared state.
+# The checked-in summary the course site renders is
+# website/src/data/model-matrix.json.
+*.json

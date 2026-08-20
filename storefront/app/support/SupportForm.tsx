@@ -35,6 +35,8 @@ interface Outcome {
   cache_hit: boolean;
   latency_ms: number;
   total_ms: number;
+  /** Set when the ticket was escalated and written to the reviewer queue. */
+  ticket_id?: string;
 }
 
 function freshStages(): Record<StageId, Stage> {
@@ -207,6 +209,7 @@ export default function SupportForm() {
             stages={stages}
             state={state}
             category={outcome?.triage.category}
+            escalated={Boolean(outcome?.ticket_id)}
           />
           {state === "idle" && (
             <p className="mt-1 text-center text-xs text-pine/45">
@@ -243,6 +246,15 @@ export default function SupportForm() {
                 </span>
               )}
             </div>
+
+            {outcome.ticket_id && (
+              <p className="mt-4 rounded-md border border-pine/20 bg-pine/5 px-3 py-2.5 text-sm text-pine">
+                Escalated to a person — queued as{" "}
+                <span className="font-mono font-semibold">{outcome.ticket_id}</span>.
+                A specialist picks this up from the review queue; it is not
+                waiting on an automated reply.
+              </p>
+            )}
 
             <p className="mt-4 text-sm font-medium">{outcome.triage.summary}</p>
 

@@ -17,6 +17,7 @@ import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { app } from "../src/server.js";
+import { mapWithConcurrency } from "../src/lib/pool.js";
 import { assertCredentials } from "../src/anthropic.js";
 import type { TriageResult } from "../src/schemas.js";
 
@@ -39,10 +40,20 @@ const tickets: InboundTicket[] = JSON.parse(
 async function main() {
   assertCredentials();
 
-  const out: unknown[] = [];
-  let totalCost = 0;
+  // Concurrency defaults to 1, preserving the serial behaviour this script has
+  // always had. Lab 9 turns it up and measures what changes (wall clock) and
+  // what does not (cost per ticket) — the second half is the point: parallelism
+  // buys latency, never price. Only batching buys price.
+  const cIdx = process.argv.indexOf("--concurrency");
+  const concurrency = cIdx >= 0 ? Number(process.argv[cIdx + 1]) || 1 : 1;
 
-  for (const [i, ticket] of tickets.entries()) {
+  let totalCost = 0;
+  let failures = 0;
+  const startedAll = Date.now();
+
+  console.log(`  concurrency: ${concurrency}${concurrency === 1 ? " (serial)" : ""}\n`);
+
+  const out = await mapWithConcurrency(tickets, concurrency, async (ticket, i) => {
     const started = Date.now();
     const res = await app.request("/v1/triage", {
       method: "POST",
@@ -56,7 +67,8 @@ async function main() {
 
     if (!res.ok) {
       console.error(`  FAIL ${ticket.id}: HTTP ${res.status}`);
-      continue;
+      failures++;
+      return null;
     }
 
     const body = (await res.json()) as {
@@ -66,21 +78,24 @@ async function main() {
 
     totalCost += body.meta.usage.estimated_cost_usd;
 
-    out.push({
-      ...ticket,
-      triage: body.triage,
-      cost_usd: body.meta.usage.estimated_cost_usd,
-      cache_hit: body.meta.usage.cache_hit,
-      latency_ms: Date.now() - started,
-    });
-
     console.log(
       `  ${String(i + 1).padStart(2)}/${tickets.length}  ${ticket.id}  ` +
         `${body.triage.category.padEnd(15)} ${body.triage.urgency.padEnd(7)} ` +
         `conf=${body.triage.confidence.toFixed(2)}` +
         `${body.triage.requires_human ? "  [human]" : ""}`,
     );
-  }
+
+    return {
+      ...ticket,
+      triage: body.triage,
+      cost_usd: body.meta.usage.estimated_cost_usd,
+      cache_hit: body.meta.usage.cache_hit,
+      latency_ms: Date.now() - started,
+    };
+  });
+
+  const triaged = out.filter((x) => x !== null);
+  const wallClockSec = Math.round((Date.now() - startedAll) / 1000);
 
   const target = join(repoRoot, "website", "src", "data");
   mkdirSync(target, { recursive: true });
@@ -90,16 +105,28 @@ async function main() {
       {
         generated_at: new Date().toISOString(),
         model: process.env.TRIAGE_MODEL ?? "claude-opus-5",
+        mode: concurrency === 1 ? "sync-serial" : `sync-concurrent-${concurrency}`,
         total_cost_usd: Math.round(totalCost * 1e6) / 1e6,
-        tickets: out,
+        wall_clock_sec: wallClockSec,
+        tickets: triaged,
       },
       null,
       2,
     )}\n`,
   );
 
-  console.log(`\n  ${out.length} tickets triaged for $${totalCost.toFixed(4)}`);
+  console.log(
+    `\n  ${triaged.length}/${tickets.length} tickets triaged for $${totalCost.toFixed(4)} ` +
+      `in ${wallClockSec}s`,
+  );
   console.log(`  wrote website/src/data/triaged-queue.json\n`);
+
+  // A run that silently skipped tickets used to exit 0, which made this
+  // unusable as anything but a demo: a partial backfill reported success.
+  if (failures > 0) {
+    console.error(`  ${failures} ticket(s) failed and were not written.`);
+    process.exitCode = 1;
+  }
 }
 
 main().catch((err) => {

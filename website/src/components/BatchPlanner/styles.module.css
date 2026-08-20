@@ -1,0 +1,128 @@
+.wrap {
+  border: 1px solid var(--ifm-toc-border-color);
+  border-radius: var(--ifm-global-radius);
+  background: var(--ifm-background-surface-color);
+  overflow: hidden;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  border-bottom: 1px solid var(--ifm-toc-border-color);
+}
+
+.field {
+  margin: 0;
+  padding: 0.9rem;
+  border: none;
+  border-right: 1px solid var(--ifm-toc-border-color);
+}
+
+.field:last-child {
+  border-right: none;
+}
+
+.field legend {
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ifm-color-emphasis-600);
+  padding: 0;
+  margin-bottom: 0.4rem;
+}
+
+.slider {
+  width: 100%;
+}
+
+.value {
+  font-family: var(--ifm-font-family-monospace);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.95rem;
+  margin-top: 0.2rem;
+}
+
+.hint {
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--ifm-color-emphasis-600);
+  margin: 0.35rem 0 0;
+}
+
+.results {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 700px) {
+  .results {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card,
+.cardWin {
+  padding: 1rem;
+  border-right: 1px solid var(--ifm-toc-border-color);
+}
+
+.card:last-child,
+.cardWin:last-child {
+  border-right: none;
+}
+
+.cardWin {
+  background: var(--ifm-color-success-contrast-background);
+}
+
+.cardTitle {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.big {
+  font-family: var(--ifm-font-family-monospace);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.8rem;
+  line-height: 1.2;
+  margin-top: 0.25rem;
+}
+
+.sub {
+  font-size: 0.78rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.meta {
+  font-size: 0.72rem;
+  color: var(--ifm-color-emphasis-600);
+  margin-top: 0.3rem;
+}
+
+.verdictGood,
+.verdictBad {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  font-size: 0.86rem;
+  border-top: 1px solid var(--ifm-toc-border-color);
+}
+
+.verdictGood {
+  background: var(--ifm-color-success-contrast-background);
+  color: var(--ifm-color-success-contrast-foreground);
+}
+
+.verdictBad {
+  background: var(--ifm-color-warning-contrast-background);
+  color: var(--ifm-color-warning-contrast-foreground);
+}
+
+.footnote {
+  margin: 0;
+  padding: 0.7rem 0.9rem;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--ifm-color-emphasis-700);
+  border-top: 1px solid var(--ifm-toc-border-color);
+}

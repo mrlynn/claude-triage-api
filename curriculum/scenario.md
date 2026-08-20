@@ -213,7 +213,8 @@ answer that cannot be explained is what got the last system cancelled.
 does not send replies unreviewed, and it does not close tickets. Every route
 here produces a recommendation or a draft that a human approves. That
 constraint is doing more security work than any prompt instruction, and it is
-the real answer to the prompt-injection question in Lab 6.
+the real answer to the prompt-injection question in
+[Lab 8](labs/lab-8-trust-boundary.md).
 
 **Policy changes weekly.** Legal updates the handbook constantly. The system
 cannot have policy baked into prompts or, worse, into code. It reads the

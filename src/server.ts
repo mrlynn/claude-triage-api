@@ -19,6 +19,7 @@ import { triageRoute } from "./routes/triage.js";
 import { resolveRoute } from "./routes/resolve.js";
 import { draftRoute } from "./routes/draft.js";
 import { estimateRoute } from "./routes/estimate.js";
+import { limitsRoute } from "./routes/limits.js";
 
 export const app = new Hono();
 
@@ -34,6 +35,7 @@ app.get("/", (c) =>
       "POST /v1/resolve": "Decide what to do, using tools to look up orders, accounts, and policy.",
       "POST /v1/draft": "Stream a customer-ready reply over SSE.",
       "POST /v1/estimate": "Count tokens and project cost without calling the model.",
+      "GET /v1/limits": "The rate-limit headers from the most recent upstream call.",
       "GET /healthz": "Liveness.",
     },
     docs: "See README.md and curriculum/ for the labs.",
@@ -46,6 +48,7 @@ app.route("/v1/triage", triageRoute);
 app.route("/v1/resolve", resolveRoute);
 app.route("/v1/draft", draftRoute);
 app.route("/v1/estimate", estimateRoute);
+app.route("/v1/limits", limitsRoute);
 
 app.notFound((c) => c.json({ error: "not_found", detail: "No such route." }, 404));
 

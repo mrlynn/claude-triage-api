@@ -33,6 +33,27 @@ const TOOLS = [
     lab: "Scenario",
   },
   {
+    to: "/playground/batch",
+    title: "Batch planner",
+    blurb:
+      "The Batches API is half price and cost 23% more on this workload. Move the prefix size and find the crossover for yours.",
+    lab: "Lab 9",
+  },
+  {
+    to: "/playground/injection",
+    title: "The trust boundary",
+    blurb:
+      "Toggle the escaping off and watch a customer message write its way out of the data block. Then meet the attack that escaping does nothing about.",
+    lab: "Lab 8",
+  },
+  {
+    to: "/playground/models",
+    title: "Model matrix",
+    blurb:
+      "The same twelve cases across three tiers. The accuracy column is the one that misleads you; the calibration gap is the one that decides anything.",
+    lab: "Lab 7",
+  },
+  {
     to: "/playground/cost",
     title: "Cost explorer",
     blurb:

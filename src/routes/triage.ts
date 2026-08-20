@@ -9,17 +9,33 @@
  *   output_config.format = zodOutputFormat(TriageSchema)  <- the constraint
  *   client.messages.parse(...)                            <- validate + type
  *
+ * The body itself is built by `buildTriageRequest` in lib/requests.ts, so the
+ * eval sweep and the batch script send the byte-identical request this route
+ * does. What is left here is the HTTP shell: validate in, map errors out.
+ *
  * `parse()` returns `parsed_output`, which is `TriageResult | null`. It is
  * null when parsing failed — guard it, do not assert past it in production.
+ *
+ * TWO OPTIONAL QUERY PARAMS (Lab 7), both additive and both off by default:
+ *
+ *   ?model=<id>       pin the model for this request (the eval sweep uses this)
+ *   ?tier=auto        route the model on cheap pre-call signals (pickModel)
+ *   ?escalate=true    re-run on the flagship when the first pass is unsure
+ *
+ * They compose. `?tier=auto&escalate=true` is the shape a real deployment
+ * ships: route down by default, buy a second opinion only when the cheap
+ * answer admits it is unsure. `meta.usage_per_pass` reports every call made,
+ * because a two-pass route that reports only the second pass under-reports
+ * its own cost in exactly the way `/v1/resolve` warns about.
  */
 import { Hono } from "hono";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { anthropic } from "../anthropic.js";
-import { MODEL, MAX_TOKENS, EFFORT } from "../config.js";
-import { TriageSchema, TicketInput } from "../schemas.js";
-import { buildSystem, volatileContext } from "../prompts.js";
-import { summarizeUsage } from "../lib/usage.js";
+import { TicketInput } from "../schemas.js";
+import { buildTriageRequest } from "../lib/requests.js";
+import { summarizeUsage, sumUsage, type UsageReport } from "../lib/usage.js";
 import { toHttpError } from "../lib/errors.js";
+import { pickModel, ESCALATE_BELOW } from "../lib/route-model.js";
+import { MODEL_TIERS, MODEL_CATALOG, specFor } from "../config.js";
 
 export const triageRoute = new Hono();
 
@@ -34,30 +50,70 @@ triageRoute.post("/", async (c) => {
   const ticket = parsedBody.data;
   const startedAt = Date.now();
 
-  try {
-    const response = await anthropic.messages.parse({
-      model: MODEL,
-      max_tokens: MAX_TOKENS.nonStreaming,
-      system: buildSystem(
-        "triage",
-        volatileContext({
-          channel: ticket.channel,
-          customerEmail: ticket.customer_email,
-        }),
-      ),
-      output_config: {
-        // Effort and format both live inside output_config. Triage is a
-        // bounded classification on the hot path, so we buy the cheap tier.
-        effort: EFFORT.triage,
-        format: zodOutputFormat(TriageSchema),
-      },
-      messages: [
+  const autoTier = c.req.query("tier") === "auto";
+  const mayEscalate = c.req.query("escalate") === "true";
+  // An explicit ?model= wins over ?tier=auto. The eval sweep needs to pin the
+  // model per request; a router that quietly overrode it would make the whole
+  // comparison measure the router instead.
+  const explicitModel = c.req.query("model") ?? null;
+
+  // Validate here rather than letting specFor() throw from inside the cost
+  // math. An unknown model in a query param is the CALLER's mistake, so it is
+  // a 400 with the known ids listed — not a 500 that reads like our bug.
+  if (explicitModel) {
+    try {
+      specFor(explicitModel);
+    } catch {
+      return c.json(
         {
-          role: "user",
-          content: `Classify this inbound ${ticket.channel} message.\n\n<customer_message>\n${ticket.message}\n</customer_message>`,
+          error: "unknown_model",
+          detail: `No pricing or capability data for "${explicitModel}".`,
+          known_models: Object.keys(MODEL_CATALOG),
         },
-      ],
-    });
+        400,
+      );
+    }
+  }
+
+  const routed = explicitModel
+    ? { model: explicitModel, reason: "explicit ?model= override" }
+    : autoTier
+      ? pickModel(ticket.message)
+      : null;
+
+  try {
+    const usagePerPass: UsageReport[] = [];
+
+    const first = await anthropic.messages.parse(
+      buildTriageRequest(ticket, routed ? { model: routed.model } : {}),
+    );
+    // The RESPONSE's model, not the config constant: it survives an alias
+    // resolving to something else and stays correct under ?tier=auto.
+    usagePerPass.push(summarizeUsage(first.usage, first.model));
+
+    const firstConfidence = first.parsed_output?.confidence ?? null;
+
+    // Second opinion, but only when the first pass says it needs one AND it
+    // was not already the flagship — re-asking the same model the same
+    // question costs money and buys nothing.
+    const needsSecondOpinion =
+      mayEscalate &&
+      firstConfidence !== null &&
+      firstConfidence < ESCALATE_BELOW &&
+      first.model !== MODEL_TIERS.flagship;
+
+    const second = needsSecondOpinion
+      ? await anthropic.messages.parse(
+          buildTriageRequest(ticket, { model: MODEL_TIERS.flagship }),
+        )
+      : null;
+
+    if (second) usagePerPass.push(summarizeUsage(second.usage, second.model));
+
+    const response = second ?? first;
+    const escalated = second
+      ? { from: first.model, to: second.model, confidence: firstConfidence! }
+      : null;
 
     if (!response.parsed_output) {
       return c.json(
@@ -76,7 +132,13 @@ triageRoute.post("/", async (c) => {
         model: response.model,
         stop_reason: response.stop_reason,
         latency_ms: Date.now() - startedAt,
-        usage: summarizeUsage(response.usage),
+        routed,
+        escalated,
+        usage: sumUsage(usagePerPass),
+        // Every call this request made. When two passes ran, `usage` above is
+        // their SUM — reporting only the final pass would hide the first one's
+        // cost, which is the same trap /v1/resolve documents for tool loops.
+        usage_per_pass: usagePerPass,
       },
     });
   } catch (err) {

@@ -37,6 +37,9 @@ const NODES: NodeSpec[] = [
   { id: "schema", label: "Schema", glyph: "{ }", x: 524, y: 170, r: 17 },
   { id: "model", label: "Claude", glyph: "✳︎", x: 372, y: 170, r: 23 },
   { id: "parse", label: "Parse", glyph: "{✓}", x: 220, y: 170, r: 17 },
+  // The terminal node's label is overridden at render time: a ticket that
+  // needed a human did not end at "categorized", it ended in a queue, and a
+  // diagram that says otherwise is telling the comfortable version.
   { id: "sink", label: "Categorized", glyph: "#", x: 68, y: 170, r: 17 },
 ];
 
@@ -59,10 +62,13 @@ export default function FlowDiagram({
   stages,
   state,
   category,
+  escalated,
 }: {
   stages: Record<StageId, Stage>;
   state: "idle" | "sending" | "done" | "error";
   category?: string;
+  /** True once the ticket has been queued for a human. */
+  escalated?: boolean;
 }) {
   const idle = state === "idle";
 
@@ -147,7 +153,14 @@ export default function FlowDiagram({
         {NODES.map((node) => {
           const status = nodeStatus(node.id);
           const isSink = node.id === "sink";
-          const label = isSink && category ? category : node.label;
+          // An escalated ticket did not end at "categorized" — it ended in a
+          // queue, and the diagram should say so rather than showing the
+          // comfortable version.
+          const label = isSink
+            ? escalated
+              ? "Queued for a human"
+              : (category ?? node.label)
+            : node.label;
 
           const circleProps =
             status === "done"

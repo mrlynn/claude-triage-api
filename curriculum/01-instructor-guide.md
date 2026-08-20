@@ -24,26 +24,38 @@ below. Otherwise it surfaces on its own as a confusing bug in Lab 3.
 | Format | Duration | Content |
 |---|---|---|
 | Lightning talk | 45 min | Concept map + live demo of all four routes |
-| Half day | 3.5 hrs | Labs 1–4, concept map, architecture walkthrough |
-| Full day | 6.5 hrs | Labs 1–6 + assessment + extension time |
+| Half day | 3.5 hrs | Lab 0, Labs 1–4, concept map, architecture walkthrough |
+| Full day | 6.5 hrs | Lab 0, Labs 1–6 + assessment + extension time |
+| Day 2 — production | 4 hrs | Labs 7–9: model choice, the trust boundary, and shipping it |
 | Self-paced | ~4 hrs | All labs; solutions unlocked per-lab |
+
+Day 1 (Lab 0 + Labs 1–6) is the capability spine and stands alone. Day 2 starts
+at [Lab 7](labs/lab-7-choosing-a-model.md) and assumes the scoreboard from Lab 0
+exists, because every measurement in it is a comparison against that baseline.
+
+**Lab 0 is not optional and it is not a warm-up.** It is twenty minutes and it
+establishes the scoreboard every later lab re-runs. Cutting it to save time
+means Labs 2 and 5 have learners changing prompts with no way to tell whether
+the change helped, which is the exact habit this course exists to break.
 
 **Half-day timing (3.5 hrs including two breaks):**
 
 | Time | Segment |
 |---|---|
-| 0:00–0:20 | Framing: the four-capability map, tier selection |
-| 0:20–0:40 | Lab 1 |
-| 0:40–1:15 | Lab 2 |
-| 1:15–1:25 | Break |
-| 1:25–2:10 | Lab 3 |
-| 2:10–2:40 | Lab 4 |
+| 0:00–0:15 | Framing: the four-capability map, tier selection |
+| 0:15–0:35 | Lab 0 |
+| 0:35–0:50 | Lab 1 |
+| 0:50–1:25 | Lab 2 |
+| 1:25–1:35 | Break |
+| 1:35–2:15 | Lab 3 |
+| 2:15–2:40 | Lab 4 |
 | 2:40–2:50 | Break |
 | 2:50–3:20 | Architecture walkthrough (`docs/architecture.md`), Q&A |
 | 3:20–3:30 | Where to go next |
 
 Running behind, cut Lab 4 Steps 5–6 and the Lab 3 extensions. Never cut Lab 2.
-It is the conceptual spine, and Labs 3 and 6 both build on it.
+It is the conceptual spine, and Labs 3 and 6 both build on it. Never cut Lab 0
+either — see above.
 
 ---
 
@@ -69,6 +81,20 @@ Have 2–3 spare keys on hand. Someone's will not work.
 ---
 
 ## What learners get wrong, by lab
+
+### Lab 0
+
+- **Skipping the hand-labelling in Step 2.** Learners want to run the command.
+  Make them write three labels on paper first and compare with a neighbour. The
+  disagreement on `NW-T-1060` is the whole lab — it is a multi-intent message
+  against a single-label schema, so the argument is about the *schema*, not the
+  ticket, and that reframe is what makes Lab 2 land.
+- **Reading the score as a grade.** 10/12 is not a B. Push on what a one-case
+  move can and cannot tell you; the second quiz item does this, but say it out
+  loud too.
+- **Not committing the baseline.** If nobody runs `--save`, nothing downstream
+  has anything to compare against and the scoreboard steps in Labs 1–6 print
+  "no baseline yet" for the rest of the day.
 
 ### Lab 1
 
@@ -168,6 +194,91 @@ Have 2–3 spare keys on hand. Someone's will not work.
 
 ---
 
+### Lab 7
+
+- **Reaching for the cheap tier before reading the budget.** The instinct is
+  overwhelming and the lab is built to frustrate it. Make someone say out loud
+  that $137/month against $4,000 means cost is not the binding constraint here.
+  The transferable form: optimize the constraint that binds.
+- **Reading the accuracy column and stopping.** Push them to the calibration
+  gap. If the room only takes one thing from Day 2, it should be that a
+  confidence score you have not checked for separation cannot carry a control.
+- **Expecting the cheap tier to fail randomly.** It does not. It fails the
+  multi-rule cases, and it fails `eval-04` — the safety case — at 0.95
+  confidence. That single cell is the most persuasive thing on the page; put it
+  on the screen.
+- **Variance, again.** The matrix moves by up to two cases per model per run.
+  Someone will get a run where Sonnet beats Opus on a case and want to build a
+  theory on it. Point them back at Lab 0 Q5.
+- **Timing.** `eval:models` takes 90 seconds and costs ~$0.19 per learner. If
+  the room is on a shared key, run it once on the projector and have them read
+  the checked-in matrix at `/playground/models` instead.
+
+### Lab 8
+
+- **Expecting prompt injection to be the whole lesson.** It is the hook. The
+  substance is that `within_agent_authority` was a model-judged boolean nobody
+  checked. Get someone to say out loud that the model was deciding whether the
+  model was allowed.
+- **Assuming a green gate means the defence is complete.** When this lab was
+  built, the red-team run produced nine failures and **eight of them were
+  mis-specified assertions**, including one that was literally inverted and two
+  that failed the model for classifying a site-bug report as `other`. That is
+  Lab 0's "check the label before the model" arriving in a new costume, and the
+  case notes in `data/injections.jsonl` record it deliberately. Show them.
+- **Forgetting the benign controls.** Three of the fourteen cases must NOT be
+  blocked. Ask the room how they would score a defence that returns 400 for
+  every request; the answer (12/12 on an attacks-only corpus) lands hard.
+- **Skipping Step 5.** Measuring what the hardening cost is the step that
+  separates this from security theatre. Budget for it.
+- **Timing and cost.** `eval:redteam` is ~90 seconds and ~$0.40 per learner —
+  the most expensive single command in the course. On a shared key, run it once
+  on the projector.
+
+### Demoing the live queue
+
+Worth five minutes at the end of Lab 8, and it lands better than any slide
+about human-in-the-loop.
+
+1. Open the storefront's [support form](https://northwind-outfitters.vercel.app/support)
+   and submit something a human must handle. The reliable one is a casually
+   worded injury report — *"the bottle lining flaked and my kid swallowed a
+   bit, probably nothing"* — because it is the October 2025 incident from the
+   scenario, typed live.
+2. Watch the pipeline reach `persist` and return a ticket id. Point out that
+   the routine ticket you submitted earlier produced no id at all: storage is
+   a consequence of escalation, not of submission.
+3. Open `/queue?token=…` and work the ticket. Claim it, resolve it.
+4. Open `/ops`. The escalation panel at the top is the only figure on that
+   dashboard read from the database; everything below it is invented history,
+   and both are badged. Ask the room which of the two they would trust in a
+   board deck, and why the badge exists.
+
+Two things to have ready: the `QUEUE_TOKEN` value, and the fact that the stored
+message is redacted — expand the message on a card and show the
+`[card ending 1111]` if someone submitted digits.
+
+### Lab 9
+
+- **The batch result is the lab.** Everyone arrives certain that batch is half
+  price. It cost 23% MORE on this workload, because a cache read is 90% off and
+  the two discounts compete on the same tokens. Do not spoil it — let them run
+  all three commands and read the table. The moment the room realises why is
+  the best five minutes of Day 2.
+- **Do not overclaim it either.** At 400,000 tickets the prefix stays hot for
+  hours and the result probably flips back. Lab 9 Q3 exists so nobody leaves
+  believing "batch is a trap." The lesson is *measure*, not *avoid*.
+- **Concurrency confusion.** Several learners will expect concurrency to cut
+  cost. It cut wall clock 91s → 60s and nudged cost UP, because in-flight
+  requests raced the cache write. Parallelism buys the clock, never the price.
+- **The MCP step needs a client.** Have Claude Desktop or Claude Code
+  pre-configured on the projector machine, or the step becomes reading a file.
+- **Timing.** Step 1 alone is ~6 minutes of wall clock and about $0.55 per
+  learner — by far the most expensive command in the course. On a shared key,
+  run the three modes once on the projector and have the room read the
+  [batch planner](https://claude-triage-labs.vercel.app/playground/batch)
+  instead.
+
 ## Knowledge checks
 
 Ten checks sit inline in the labs, at the point the idea is taught rather than
@@ -203,22 +314,22 @@ Use these when a group finishes early or the room goes quiet:
 
 ## Grading the assessment
 
-[`assessment.md`](assessment.md) has 12 questions, and there is an auto-scored
+[`assessment.md`](assessment.md) has 16 questions, and there is an auto-scored
 version at [/assessment](https://claude-triage-labs.vercel.app/assessment)
 that marks sections 1 and 2 and walks learners through self-assessing section
 3. Suggested weighting:
 
 | Section | Questions | Weight |
 |---|---|---|
-| Mechanics (API surface, parameters) | 1–4 | 30% |
-| Diagnosis (given a symptom, find the cause) | 5–8 | 40% |
-| Design judgment (open-ended) | 9–12 | 30% |
+| Mechanics (API surface, parameters) | 1–7 | 30% |
+| Diagnosis (given a symptom, find the cause) | 8–12 | 40% |
+| Design judgment (open-ended) | 13–16 | 30% |
 
 Diagnosis carries the most weight on purpose. Reciting that `cache_control`
 exists is worth very little. Recognizing a flat-zero `cache_read_input_tokens`
 as a timestamp in the prefix is the skill that transfers.
 
-Questions 9–12 have no answer key, so score the reasoning. A learner who picks
+Questions 13–16 have no answer key, so score the reasoning. A learner who picks
 the "wrong" option with a sound cost and latency argument should outscore one
 who picks the "right" option from memory.
 

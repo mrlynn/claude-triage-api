@@ -108,7 +108,7 @@ every other item's verdict, because `verdict` is fail-if-any.
    build on a near-threshold result.
 2. **Cost per run.** Every CI run spends real money and takes real time. →
    Mitigate by running the full set on merge to main and a fast subset on PRs;
-   use the Batches API for offline runs (roughly half price); cache the prefix
+   consider the Batches API for offline runs (half rate, but see Lab 9 — it can cost MORE when it costs you cache hits); cache the prefix
    so eval runs are cheap.
 3. **Legitimate label churn.** A genuine prompt improvement can flip several
    labels at once, and the gate cannot tell improvement from regression. →

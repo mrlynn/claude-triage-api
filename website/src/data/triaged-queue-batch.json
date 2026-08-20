@@ -1,0 +1,538 @@
+{
+  "generated_at": "2026-08-20T14:03:46.751Z",
+  "mode": "batch",
+  "model": "claude-opus-5",
+  "total_cost_usd": 0.201835,
+  "wall_clock_sec": 224,
+  "cache_hits": 11,
+  "tickets": [
+    {
+      "id": "NW-T-1041",
+      "received_at": "2026-12-08T07:12:00Z",
+      "channel": "email",
+      "customer_email": "j.abara@example.com",
+      "subject": "Where is my order?",
+      "message": "Placed an order two weeks ago for a daypack and the tracking still says label created. Can someone check on this? I need it before the 20th.",
+      "triage": {
+        "category": "shipping",
+        "urgency": "high",
+        "sentiment": "frustrated",
+        "summary": "Customer's daypack order shows only 'label created' after two weeks and needs it by the 20th.",
+        "entities": {
+          "order_ids": [],
+          "product_names": [
+            "daypack"
+          ],
+          "requested_remedy": "information"
+        },
+        "requires_human": false,
+        "escalation_reason": null,
+        "confidence": 0.72
+      },
+      "cost_usd": 0.004293,
+      "cache_hit": true,
+      "cache_read_tokens": 5022
+    },
+    {
+      "id": "NW-T-1042",
+      "received_at": "2026-12-08T07:19:00Z",
+      "channel": "chat",
+      "customer_email": "h.ostrom@example.com",
+      "subject": "wrong size",
+      "message": "The shell I got is way too big even though I followed the size chart. Can I swap it for a medium?",
+      "triage": {
+        "category": "returns",
+        "urgency": "normal",
+        "sentiment": "neutral",
+        "summary": "Customer received a shell jacket too large despite the size chart and wants to exchange it for a medium.",
+        "entities": {
+          "order_ids": [],
+          "product_names": [],
+          "requested_remedy": "replacement"
+        },
+        "requires_human": false,
+        "escalation_reason": null,
+        "confidence": 0.82
+      },
+      "cost_usd": 0.003703,
+      "cache_hit": true,
+      "cache_read_tokens": 5022
+    },
+    {
+      "id": "NW-T-1043",
+      "received_at": "2026-12-08T07:26:00Z",
+      "channel": "email",
+      "customer_email": "r.velasquez@example.com",
+      "subject": "Trail Club renewal",
+      "message": "I was charged $89 for Trail Club but I cancelled back in October. I have the confirmation email. Please refund.",
+      "triage": {
+        "category": "billing",
+        "urgency": "high",
+        "sentiment": "frustrated",
+        "summary": "Customer charged $89 Trail Club renewal despite cancelling in October; wants a refund.",
+        "entities": {
+          "order_ids": [],
+          "product_names": [
+            "Trail Club"
+          ],
+          "requested_remedy": "refund"
+        },
+        "requires_human": false,
+        "escalation_reason": null,
+        "confidence": 0.82
+      },
+      "cost_usd": 0.003151,
+      "cache_hit": true,
+      "cache_read_tokens": 5022
+    },
+    {
+      "id": "NW-T-1044",
+      "received_at": "2026-12-08T07:33:00Z",
+      "channel": "email",
+      "customer_email": "t.mbeki@example.com",
+      "subject": "gift order question",
+      "message": "If I order the insulated bottle today does it arrive before the 24th? Not sure whether to pay for expedited.",
+      "triage": {
+        "category": "shipping",
+        "urgency": "low",
+        "sentiment": "neutral",
+        "summary": "Pre-purchase question: will an insulated bottle ordered today arrive before the 24th, or is expedited shipping needed?",
+        "entities": {
+          "order_ids": [],
+          "product_names": [
+            "insulated bottle"
+          ],
+          "requested_remedy": "information"
+        },
+        "requires_human": false,
+        "escalation_reason": null,
+        "confidence": 0.6
+      },
+      "cost_usd": 0.017701,
+      "cache_hit": false,
+      "cache_read_tokens": 0
+    },
+    {
+      "id": "NW-T-1045",
+      "received_at": "2026-12-08T07:41:00Z",
+      "channel": "email",
+      "customer_email": "s.lindqvist@example.com",
+      "subject": "Hi, probably nothing, but",
+      "message": "Hi, probably nothing, but I wanted to mention it. My son has been using the insulated bottle we bought in the spring and the inside lining has started flaking. He had a stomach upset this week and the doctor asked what he had been drinking from. Might be unrelated. Just thought you should know.",
+      "triage": {
+        "category": "safety",
+        "urgency": "urgent",
+        "sentiment": "neutral",
+        "summary": "Parent reports flaking lining in insulated bottle and child's stomach illness possibly linked; informational report.",
+        "entities": {
+          "order_ids": [],
+          "product_names": [
+            "insulated bottle"
+          ],
+          "requested_remedy": "information"
+        },
+        "requires_human": true,
+        "escalation_reason": "Possible product-related illness in a child; section 5.3/5.4 requires supervisor and Safety queue logging within one hour.",
+        "confidence": 0.9
+      },
+      "cost_usd": 0.018301,
+      "cache_hit": false,
+      "cache_read_tokens": 0
+    },
+    {
+      "id": "NW-T-1046",
+      "received_at": "2026-12-08T07:44:00Z",
+      "channel": "chat",
+      "customer_email": "d.okafor@example.com",
+      "subject": "coupon not working",
+      "message": "TRAIL15 wont apply at checkout. Says invalid. Am I doing something wrong?",
+      "triage": {
+        "category": "billing",
+        "urgency": "normal",
+        "sentiment": "neutral",
+        "summary": "Customer's TRAIL15 coupon code is rejected as invalid at checkout and wants help applying it.",
+        "entities": {
+          "order_ids": [],
+          "product_names": [],
+          "requested_remedy": "information"
+        },
+        "requires_human": false,
+        "escalation_reason": null,
+        "confidence": 0.55
+      },
+      "cost_usd": 0.003096,
+      "cache_hit": true,
+      "cache_read_tokens": 5022
+    },
+    {
+      "id": "NW-T-1047",
+      "received_at": "2026-12-08T07:52:00Z",
+      "channel": "email",
+      "customer_email": "m.fitzgerald@example.com",
+      "subject": "Re: Re: Re: still no resolution",
+      "message": "This is the fourth time I have written about the tent poles that arrived bent. Nobody has done anything. I have had it. Someone call me.",
+      "triage": {
+        "category": "product_defect",
+        "urgency": "high",
+        "sentiment": "angry",
+        "summary": "Fourth contact about bent tent poles with no resolution; customer demands a phone call.",
+        "entities": {
+          "order_ids": [],
+          "product_names": [
+            "tent poles"
+          ],
+          "requested_remedy": "escalation"
+        },
+        "requires_human": true,
+        "escalation_reason": "Customer has contacted repeatedly (fourth time) with no resolution and explicitly requests a phone call; automated reply not appropriate.",
+        "confidence": 0.7
+      },
+      "cost_usd": 0.018136,
+      "cache_hit": false,
+      "cache_read_tokens": 0
+    },
+    {
+      "id": "NW-T-1048",
+      "received_at": "2026-12-08T08:03:00Z",
+      "channel": "email",
+      "customer_email": "a.nakamura@example.com",
+      "subject": "address change",
+      "message": "I moved. Can you update the shipping address on my account and on order NW-52044 if it has not gone out yet?",
+      "triage": {
+        "category": "account",
+        "urgency": "urgent",
+        "sentiment": "neutral",
+        "summary": "Customer moved and wants their account shipping address updated, plus order NW-52044 redirected if it has not shipped.",
+        "entities": {
+          "order_ids": [
+            "NW-52044"
+          ],
+          "product_names": [],
+          "requested_remedy": "information"
+        },
+        "requires_human": false,
+        "escalation_reason": null,
+        "confidence": 0.55
+      },
+      "cost_usd": 0.004668,
+      "cache_hit": true,
+      "cache_read_tokens": 5022
+    },
+    {
+      "id": "NW-T-1049",
+      "received_at": "2026-12-08T08:11:00Z",
+      "channel": "phone_transcript",
+      "customer_email": "c.pereira@example.com",
+      "subject": "Call notes: jacket zipper",
+      "message": "Customer called. Ridgeline shell purchased 2024, main zipper has separated at the base. Wants a repair or replacement. Advised we would follow up by email.",
+      "triage": {
+        "category": "product_defect",
+        "urgency": "normal",
+        "sentiment": "neutral",
+        "summary": "Customer's Ridgeline shell main zipper separated at base; wants repair or replacement.",
+        "entities": {
+          "order_ids": [],
+          "product_names": [
+            "Ridgeline shell"
+          ],
+          "requested_remedy": "replacement"
+        },
+        "requires_human": false,
+        "escalation_reason": null,
+        "confidence": 0.82
+      },
+      "cost_usd": 0.003283,
+      "cache_hit": true,
+      "cache_read_tokens": 5022
+    },
+    {
+      "id": "NW-T-1050",
+      "received_at": "2026-12-08T08:18:00Z",
+      "channel": "email",
+      "customer_email": "l.thorsen@example.com",
+      "subject": "delivered but not here",
+      "message": "UPS marked my order delivered yesterday at 4pm. Nothing on the porch, nothing with neighbours, nothing in the garage. Order was about $220.",
+      "triage": {
+        "category": "shipping",
+        "urgency": "normal",
+        "sentiment": "neutral",
+        "summary": "Order marked delivered yesterday but not received; ~$220 value, customer wants package located or replaced.",
+        "entities": {
+          "order_ids": [],
+          "product_names": [],
+          "requested_remedy": "none"
+        },
+        "requires_human": true,
+        "escalation_reason": "Delivered-not-received claim over $150 requires supervisor account review per section 3.4.",
+        "confidence": 0.82
+      },
+      "cost_usd": 0.003486,
+      "cache_hit": true,
+      "cache_read_tokens": 5022
+    },
+    {
+      "id": "NW-T-1051",
+      "received_at": "2026-12-08T08:27:00Z",
+      "channel": "chat",
+      "customer_email": "b.kowalski@example.com",
+      "subject": "just saying thanks",
+      "message": "Wore the Ridgeline through three days of rain in the Cascades and stayed completely dry. Wanted you to know. Great jacket.",
+      "triage": {
+        "category": "other",
+        "urgency": "low",
+        "sentiment": "positive",
+        "summary": "Customer is sharing praise for the Ridgeline jacket's rain performance; no action requested.",
+        "entities": {
+          "order_ids": [],
+          "product_names": [
+            "Ridgeline"
+          ],
+          "requested_remedy": "none"
+        },
+        "requires_human": false,
+        "escalation_reason": null,
+        "confidence": 0.94
+      },
+      "cost_usd": 0.017571,
+      "cache_hit": false,
+      "cache_read_tokens": 0
+    },
+    {
+      "id": "NW-T-1052",
+      "received_at": "2026-12-08T08:35:00Z",
+      "channel": "email",
+      "customer_email": "n.haddad@example.com",
+      "subject": "refund still not showing",
+      "message": "You told me the refund was processed six days ago and there is still nothing on my card. Starting to think it was never actually sent.",
+      "triage": {
+        "category": "billing",
+        "urgency": "high",
+        "sentiment": "frustrated",
+        "summary": "Customer says a refund processed six days ago has not appeared on their card and wants it verified.",
+        "entities": {
+          "order_ids": [],
+          "product_names": [],
+          "requested_remedy": "refund"
+        },
+        "requires_human": false,
+        "escalation_reason": null,
+        "confidence": 0.82
+      },
+      "cost_usd": 0.017469,
+      "cache_hit": false,
+      "cache_read_tokens": 0
+    },
+    {
+      "id": "NW-T-1053",
+      "received_at": "2026-12-08T08:44:00Z",
+      "channel": "email",
+      "customer_email": "p.andersson@example.com",
+      "subject": "return - final sale?",
+      "message": "I want to return a beanie I bought in the November sale. It was under the clearance tab. Is that returnable or not?",
+      "triage": {
+        "category": "returns",
+        "urgency": "normal",
+        "sentiment": "neutral",
+        "summary": "Customer asks whether a clearance-tab beanie bought in the November sale can be returned.",
+        "entities": {
+          "order_ids": [],
+          "product_names": [
+            "beanie"
+          ],
+          "requested_remedy": "information"
+        },
+        "requires_human": false,
+        "escalation_reason": null,
+        "confidence": 0.82
+      },
+      "cost_usd": 0.017516,
+      "cache_hit": false,
+      "cache_read_tokens": 0
+    },
+    {
+      "id": "NW-T-1054",
+      "received_at": "2026-12-08T08:51:00Z",
+      "channel": "email",
+      "customer_email": "g.rossi@example.com",
+      "subject": "legal notice re: tent failure",
+      "message": "My attorney will be in contact regarding the tent poles that collapsed during a storm and damaged the roof of my vehicle. I am documenting everything.",
+      "triage": {
+        "category": "safety",
+        "urgency": "urgent",
+        "sentiment": "angry",
+        "summary": "Customer reports tent pole collapse damaged their vehicle roof and says an attorney will contact us.",
+        "entities": {
+          "order_ids": [],
+          "product_names": [
+            "tent poles"
+          ],
+          "requested_remedy": "none"
+        },
+        "requires_human": true,
+        "escalation_reason": "Property damage attributed to product plus mention of an attorney — section 5.3 mandates immediate supervisor escalation and Safety queue logging.",
+        "confidence": 0.96
+      },
+      "cost_usd": 0.003993,
+      "cache_hit": true,
+      "cache_read_tokens": 5022
+    },
+    {
+      "id": "NW-T-1055",
+      "received_at": "2026-12-08T09:02:00Z",
+      "channel": "chat",
+      "customer_email": "y.tanaka@example.com",
+      "subject": "password reset loop",
+      "message": "Reset link keeps saying expired even though I click it right away. Tried three times. Cannot get into my account.",
+      "triage": {
+        "category": "account",
+        "urgency": "high",
+        "sentiment": "frustrated",
+        "summary": "Customer cannot log in; password reset links show as expired after three attempts and wants account access restored.",
+        "entities": {
+          "order_ids": [],
+          "product_names": [],
+          "requested_remedy": "none"
+        },
+        "requires_human": false,
+        "escalation_reason": null,
+        "confidence": 0.82
+      },
+      "cost_usd": 0.017466,
+      "cache_hit": false,
+      "cache_read_tokens": 0
+    },
+    {
+      "id": "NW-T-1056",
+      "received_at": "2026-12-08T09:10:00Z",
+      "channel": "email",
+      "customer_email": "e.dubois@example.com",
+      "subject": "wholesale enquiry",
+      "message": "We run a guiding outfit in Colorado and would like to talk about bulk pricing on shells for our staff. Who should I speak to?",
+      "triage": {
+        "category": "other",
+        "urgency": "low",
+        "sentiment": "neutral",
+        "summary": "Colorado guiding outfit asks who to contact about bulk/wholesale pricing on shell jackets for staff.",
+        "entities": {
+          "order_ids": [],
+          "product_names": [
+            "shells"
+          ],
+          "requested_remedy": "information"
+        },
+        "requires_human": true,
+        "escalation_reason": "Wholesale/partnership inquiry requires routing to a human sales contact; no automated resolution available.",
+        "confidence": 0.88
+      },
+      "cost_usd": 0.018014,
+      "cache_hit": false,
+      "cache_read_tokens": 0
+    },
+    {
+      "id": "NW-T-1057",
+      "received_at": "2026-12-08T09:19:00Z",
+      "channel": "email",
+      "customer_email": "k.brennan@example.com",
+      "subject": "double charged",
+      "message": "There are two identical $142 charges on my statement from this morning, ten minutes apart. I only placed one order.",
+      "triage": {
+        "category": "billing",
+        "urgency": "high",
+        "sentiment": "neutral",
+        "summary": "Customer reports two identical $142 charges ten minutes apart for one order and wants the duplicate resolved.",
+        "entities": {
+          "order_ids": [],
+          "product_names": [],
+          "requested_remedy": "refund"
+        },
+        "requires_human": false,
+        "escalation_reason": null,
+        "confidence": 0.88
+      },
+      "cost_usd": 0.003091,
+      "cache_hit": true,
+      "cache_read_tokens": 5022
+    },
+    {
+      "id": "NW-T-1058",
+      "received_at": "2026-12-08T09:28:00Z",
+      "channel": "email",
+      "customer_email": "w.eriksen@example.com",
+      "subject": "stranded without gear",
+      "message": "My expedition tent was supposed to arrive Friday for a trip that leaves Wednesday morning. It has not shipped. I am flying to Patagonia and I have no shelter. What are my options right now?",
+      "triage": {
+        "category": "shipping",
+        "urgency": "urgent",
+        "sentiment": "frustrated",
+        "summary": "Customer's expedition tent hasn't shipped and trip to Patagonia departs Wednesday; wants options now.",
+        "entities": {
+          "order_ids": [],
+          "product_names": [
+            "expedition tent"
+          ],
+          "requested_remedy": "information"
+        },
+        "requires_human": true,
+        "escalation_reason": "Time-critical departure within 48 hours with unshipped order; needs human to expedite or arrange alternative.",
+        "confidence": 0.82
+      },
+      "cost_usd": 0.018191,
+      "cache_hit": false,
+      "cache_read_tokens": 0
+    },
+    {
+      "id": "NW-T-1059",
+      "received_at": "2026-12-08T09:36:00Z",
+      "channel": "chat",
+      "customer_email": "f.castillo@example.com",
+      "subject": "sizing question",
+      "message": "Between a 32 and 34 waist which do the trail pants run closer to? Do not want to order both.",
+      "triage": {
+        "category": "other",
+        "urgency": "low",
+        "sentiment": "neutral",
+        "summary": "Pre-sales sizing question: asks whether trail pants run closer to a 32 or 34 waist.",
+        "entities": {
+          "order_ids": [],
+          "product_names": [
+            "trail pants"
+          ],
+          "requested_remedy": "information"
+        },
+        "requires_human": false,
+        "escalation_reason": null,
+        "confidence": 0.72
+      },
+      "cost_usd": 0.003118,
+      "cache_hit": true,
+      "cache_read_tokens": 5022
+    },
+    {
+      "id": "NW-T-1060",
+      "received_at": "2026-12-08T09:45:00Z",
+      "channel": "email",
+      "customer_email": "i.novak@example.com",
+      "subject": "refund and email change",
+      "message": "i need a refund on order nw48211 and also my email on the account is wrong can you change it to i.novak2@example.com",
+      "triage": {
+        "category": "returns",
+        "urgency": "normal",
+        "sentiment": "neutral",
+        "summary": "Customer wants a refund on order nw48211 and asks to change the account email to i.novak2@example.com.",
+        "entities": {
+          "order_ids": [
+            "nw48211"
+          ],
+          "product_names": [],
+          "requested_remedy": "refund"
+        },
+        "requires_human": true,
+        "escalation_reason": "Email change on file requires identity verification per section 5.1, and the refund reason is unstated, so no confident automated reply is possible.",
+        "confidence": 0.5
+      },
+      "cost_usd": 0.005588,
+      "cache_hit": true,
+      "cache_read_tokens": 5022
+    }
+  ]
+}

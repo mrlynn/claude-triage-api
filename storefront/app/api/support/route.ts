@@ -17,7 +17,14 @@ export async function POST(request: Request) {
     if (event.type === "failure") {
       return NextResponse.json(
         { error: event.error, detail: event.detail },
-        { status: event.status },
+        {
+          status: event.status,
+          // A 429 without Retry-After tells a client to back off and leaves it
+          // to guess for how long, which in practice means a tight retry loop.
+          headers: event.retryAfterSec
+            ? { "Retry-After": String(event.retryAfterSec) }
+            : undefined,
+        },
       );
     }
     if (event.type === "result") {
@@ -27,6 +34,11 @@ export async function POST(request: Request) {
         cache_hit: event.cache_hit,
         latency_ms: event.latency_ms,
         total_ms: event.total_ms,
+        // Only present when the ticket was escalated and queued. This route
+        // picks fields explicitly rather than spreading the event, which is
+        // why adding one to the pipeline needs a line here too — the cost of
+        // the explicit shape, paid knowingly.
+        ...(event.ticket_id ? { ticket_id: event.ticket_id } : {}),
       });
     }
   }

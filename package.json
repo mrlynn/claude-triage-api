@@ -11,14 +11,22 @@
     "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
     "typecheck": "tsc --noEmit",
+    "check:snippets": "tsx scripts/check-snippets.ts",
     "eval": "tsx evals/run-eval.ts",
+    "eval:quick": "tsx evals/quick.ts",
+    "eval:models": "tsx evals/compare-models.ts",
+    "eval:redteam": "tsx evals/red-team.ts",
     "smoke": "tsx scripts/smoke.ts",
     "triage:queue": "tsx scripts/triage-queue.ts",
-    "sync:storefront": "node scripts/sync-storefront-policy.mjs"
+    "triage:queue:batch": "tsx scripts/triage-queue-batch.ts",
+    "mcp": "tsx src/mcp/server.ts",
+    "workshop": "tsx scripts/provision-workshop.ts",
+    "sync:storefront": "tsx scripts/sync-storefront.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",
     "@hono/node-server": "^2.0.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "hono": "^4.6.14",
     "zod": "^4.4.3"
   },

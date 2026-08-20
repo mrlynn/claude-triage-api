@@ -1,0 +1,295 @@
+{
+  "generated_at": "2026-08-20T12:26:57.713Z",
+  "generated_by": "npm run eval:models -- --emit-site",
+  "judge_model": "claude-opus-5",
+  "judge_prompt_sha": "47ddcecf",
+  "tickets_per_week": 4100,
+  "monthly_budget": 4000,
+  "caveat": "One run. This set moves by up to two cases run-to-run with nothing changed, so read the disagreement matrix and the calibration gap, not the accuracy column.",
+  "cases": [
+    {
+      "id": "eval-01",
+      "notes": "Clean defect case inside window. Explicit ask."
+    },
+    {
+      "id": "eval-02",
+      "notes": "Duplicate charge, clause 4.4. 'Fix it' on a double charge is a refund ask."
+    },
+    {
+      "id": "eval-03",
+      "notes": "NOT yet 'high': clause 3.2 requires 7 BUSINESS days past projected delivery before a package is lost. Tests whether the model applies the business-day rule instead of reacting to 'nine days'."
+    },
+    {
+      "id": "eval-04",
+      "notes": "Safety outranks everything; 5.3 + 5.4. 'Want someone to look into this' is an explicit escalation ask."
+    },
+    {
+      "id": "eval-05",
+      "notes": "Compliment. Must not be mis-escalated."
+    },
+    {
+      "id": "eval-06",
+      "notes": "Final sale + outside 60 days. The correct RESOLUTION is a decline, but triage is still 'returns' — tests that triage does not pre-empt the resolution step."
+    },
+    {
+      "id": "eval-07",
+      "notes": "Clause 4.2, no retention script."
+    },
+    {
+      "id": "eval-08",
+      "notes": "Property damage AND legal mention: two independent 5.3 triggers. requested_remedy is 'none' — the customer announced legal action and asked for NOTHING. Tests the 'what they asked for, not what they should get' rule under maximum pressure to answer 'escalation'."
+    },
+    {
+      "id": "eval-09",
+      "notes": "Pre-sales."
+    },
+    {
+      "id": "eval-10",
+      "notes": "Delivered-not-received (clause 3.4). The customer reports a fact and asks for nothing explicitly — remedy is 'none'. Urgency is 'normal', not 'high': 3.2's 'confirmed lost' bar is not met. Resolution-time handling still triggers the >$150 supervisor review."
+    },
+    {
+      "id": "eval-11",
+      "notes": "DELIBERATELY AMBIGUOUS. Multi-intent (billing + account) with a malformed order id, so a single confident automated reply is not possible -> requires_human true. The correct behavior is a LOW confidence score; see the calibration line in the harness output."
+    },
+    {
+      "id": "eval-12",
+      "notes": "Repeat contact >2 raises urgency to high; sentiment should be angry. requested_remedy is 'none' — frustration is not a request. Another test of the verbatim-extraction rule."
+    }
+  ],
+  "models": [
+    {
+      "model": "claude-opus-5",
+      "effort_applied": true,
+      "accuracy": 0.9166666666666666,
+      "passed": 11,
+      "total": 12,
+      "latency_p50": 17791,
+      "latency_p95": 22443,
+      "cost_per_ticket": 0.0076185,
+      "monthly_projection": 135.35535000000002,
+      "calibration": {
+        "onPass": 0.8563636363636363,
+        "onFail": 0.45,
+        "gap": 0.4063636363636363
+      },
+      "per_case": [
+        {
+          "id": "eval-01",
+          "passed": true,
+          "confidence": 0.9
+        },
+        {
+          "id": "eval-02",
+          "passed": true,
+          "confidence": 0.93
+        },
+        {
+          "id": "eval-03",
+          "passed": true,
+          "confidence": 0.72
+        },
+        {
+          "id": "eval-04",
+          "passed": true,
+          "confidence": 0.95
+        },
+        {
+          "id": "eval-05",
+          "passed": true,
+          "confidence": 0.95
+        },
+        {
+          "id": "eval-06",
+          "passed": true,
+          "confidence": 0.72
+        },
+        {
+          "id": "eval-07",
+          "passed": true,
+          "confidence": 0.9
+        },
+        {
+          "id": "eval-08",
+          "passed": true,
+          "confidence": 0.95
+        },
+        {
+          "id": "eval-09",
+          "passed": true,
+          "confidence": 0.92
+        },
+        {
+          "id": "eval-10",
+          "passed": true,
+          "confidence": 0.82
+        },
+        {
+          "id": "eval-11",
+          "passed": false,
+          "confidence": 0.45
+        },
+        {
+          "id": "eval-12",
+          "passed": true,
+          "confidence": 0.66
+        }
+      ]
+    },
+    {
+      "model": "claude-sonnet-5",
+      "effort_applied": true,
+      "accuracy": 0.5833333333333334,
+      "passed": 7,
+      "total": 12,
+      "latency_p50": 15669,
+      "latency_p95": 18207,
+      "cost_per_ticket": 0.0038722500000000003,
+      "monthly_projection": 68.796975,
+      "calibration": {
+        "onPass": 0.8499999999999999,
+        "onFail": 0.55,
+        "gap": 0.2999999999999998
+      },
+      "per_case": [
+        {
+          "id": "eval-01",
+          "passed": true,
+          "confidence": 0.85
+        },
+        {
+          "id": "eval-02",
+          "passed": true,
+          "confidence": 0.9
+        },
+        {
+          "id": "eval-03",
+          "passed": false,
+          "confidence": 0.65
+        },
+        {
+          "id": "eval-04",
+          "passed": true,
+          "confidence": 0.95
+        },
+        {
+          "id": "eval-05",
+          "passed": true,
+          "confidence": 0.9
+        },
+        {
+          "id": "eval-06",
+          "passed": false,
+          "confidence": 0
+        },
+        {
+          "id": "eval-07",
+          "passed": true,
+          "confidence": 0.9
+        },
+        {
+          "id": "eval-08",
+          "passed": false,
+          "confidence": 0.9
+        },
+        {
+          "id": "eval-09",
+          "passed": true,
+          "confidence": 0.85
+        },
+        {
+          "id": "eval-10",
+          "passed": false,
+          "confidence": 0.6
+        },
+        {
+          "id": "eval-11",
+          "passed": true,
+          "confidence": 0.6
+        },
+        {
+          "id": "eval-12",
+          "passed": false,
+          "confidence": 0.6
+        }
+      ]
+    },
+    {
+      "model": "claude-haiku-4-5",
+      "effort_applied": false,
+      "accuracy": 0.5,
+      "passed": 6,
+      "total": 12,
+      "latency_p50": 9065,
+      "latency_p95": 9661,
+      "cost_per_ticket": 0.003797249999999999,
+      "monthly_projection": 67.46447499999998,
+      "calibration": {
+        "onPass": 0.895,
+        "onFail": 0.765,
+        "gap": 0.13
+      },
+      "per_case": [
+        {
+          "id": "eval-01",
+          "passed": true,
+          "confidence": 0.95
+        },
+        {
+          "id": "eval-02",
+          "passed": true,
+          "confidence": 0.95
+        },
+        {
+          "id": "eval-03",
+          "passed": false,
+          "confidence": 0.92
+        },
+        {
+          "id": "eval-04",
+          "passed": false,
+          "confidence": 0.95
+        },
+        {
+          "id": "eval-05",
+          "passed": true,
+          "confidence": 0.98
+        },
+        {
+          "id": "eval-06",
+          "passed": false,
+          "confidence": 0
+        },
+        {
+          "id": "eval-07",
+          "passed": true,
+          "confidence": 0.95
+        },
+        {
+          "id": "eval-08",
+          "passed": false,
+          "confidence": 0.98
+        },
+        {
+          "id": "eval-09",
+          "passed": false,
+          "confidence": 0.92
+        },
+        {
+          "id": "eval-10",
+          "passed": false,
+          "confidence": 0.82
+        },
+        {
+          "id": "eval-11",
+          "passed": true,
+          "confidence": 0.72
+        },
+        {
+          "id": "eval-12",
+          "passed": true,
+          "confidence": 0.82
+        }
+      ]
+    }
+  ]
+}

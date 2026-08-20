@@ -20,6 +20,7 @@ import { TicketInput } from "../schemas.js";
 import { buildSystem, volatileContext } from "../prompts.js";
 import { summarizeUsage } from "../lib/usage.js";
 import { toHttpError } from "../lib/errors.js";
+import { wrapUntrusted } from "../lib/untrusted.js";
 import { SSE_HEADERS, sseEvent } from "../lib/sse.js";
 
 export const draftRoute = new Hono();
@@ -49,7 +50,7 @@ draftRoute.post("/", async (c) => {
     messages: [
       {
         role: "user",
-        content: `Write the reply to this customer.\n\n<customer_message>\n${ticket.message}\n</customer_message>`,
+        content: `Write the reply to this customer.\n\n${wrapUntrusted(ticket.message)}`,
       },
     ],
   });
@@ -86,7 +87,7 @@ draftRoute.post("/", async (c) => {
           // everywhere else, so always guard before reading it.
           stop_details: final.stop_reason === "refusal" ? final.stop_details : null,
           model: final.model,
-          usage: summarizeUsage(final.usage),
+          usage: summarizeUsage(final.usage, final.model),
         });
       } catch (err) {
         const { body: errorBody } = toHttpError(err);
