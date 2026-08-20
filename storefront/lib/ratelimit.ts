@@ -24,8 +24,26 @@ import { getDb, ensureIndexes, HAS_MONGO } from "./mongo";
  * must not silently remove the spend ceiling.
  */
 
-const IP_LIMIT = Number(process.env.SUPPORT_IP_LIMIT ?? 5);
 const IP_WINDOW_MS = 10 * 60 * 1000;
+
+/**
+ * Independent ceilings per surface.
+ *
+ * The support form and the injection playground both spend real money on the
+ * same key, but they must not share a per-IP window: someone working through
+ * the playground would otherwise burn the allowance for filing an actual
+ * support ticket, which is the one thing on this site that has to work.
+ *
+ * They DO share the global daily cap, and that is deliberate — the daily cap
+ * protects the bill, and the bill does not care which page spent it.
+ */
+const SCOPES = {
+  support: Number(process.env.SUPPORT_IP_LIMIT ?? 5),
+  injection: Number(process.env.INJECTION_IP_LIMIT ?? 8),
+} as const;
+
+export type LimitScope = keyof typeof SCOPES;
+
 const DAILY_CAP = Number(process.env.SUPPORT_DAILY_CAP ?? 600);
 
 export type LimitVerdict =
@@ -56,11 +74,16 @@ async function bump(id: string, ttlMs: number): Promise<number> {
   return result?.count ?? 1;
 }
 
-export async function checkLimits(ip: string): Promise<LimitVerdict> {
+export async function checkLimits(
+  ip: string,
+  scope: LimitScope = "support",
+): Promise<LimitVerdict> {
+  const ipLimit = SCOPES[scope];
+
   if (!HAS_MONGO) {
     // Local development without a cluster stays usable; production does not.
     return process.env.NODE_ENV === "development"
-      ? { ok: true, remaining: IP_LIMIT }
+      ? { ok: true, remaining: ipLimit }
       : { ok: false, reason: "unconfigured", retryAfterSec: 3600 };
   }
 
@@ -70,8 +93,9 @@ export async function checkLimits(ip: string): Promise<LimitVerdict> {
     // Fixed window: the bucket id carries the window, so an expired window is
     // simply a different document.
     const window = Math.floor(Date.now() / IP_WINDOW_MS);
-    const ipCount = await bump(`ip:${ip}:${window}`, IP_WINDOW_MS * 2);
-    if (ipCount > IP_LIMIT) {
+    // The scope is part of the bucket id, so surfaces cannot starve each other.
+    const ipCount = await bump(`${scope}:ip:${ip}:${window}`, IP_WINDOW_MS * 2);
+    if (ipCount > ipLimit) {
       const windowEnds = (window + 1) * IP_WINDOW_MS;
       return {
         ok: false,

@@ -67,17 +67,42 @@ export async function getDb(): Promise<Db> {
 }
 
 /**
- * TTL index so expired buckets clean themselves up. Created once per warm
- * instance; createIndex is idempotent and cheap after the first call.
+ * Indexes, created once per warm instance. `createIndex` is idempotent and
+ * cheap after the first call, so this runs on the request path rather than in
+ * a migration step — appropriate for a demo with two collections, and the
+ * first thing to move if this ever became real.
  */
 let indexReady: Promise<void> | null = null;
+
+/** Escalations are deleted this long after arrival. Enforced by the database. */
+const ESCALATION_RETENTION_DAYS = 30;
 
 export async function ensureIndexes(): Promise<void> {
   indexReady ??= (async () => {
     const db = await getDb();
-    await db
-      .collection("rate_limits")
-      .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, name: "ttl" });
+    await Promise.all([
+      db
+        .collection("rate_limits")
+        .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, name: "ttl" }),
+
+      // The reviewer board reads by status, newest first.
+      db
+        .collection("escalations")
+        .createIndex({ status: 1, created_at: -1 }, { name: "board" }),
+
+      // Retention as an index, not as a promise in a README. A public demo
+      // that accumulates the public's support messages indefinitely is a
+      // liability that grows by itself, and the only version of a retention
+      // policy that survives contact with a busy team is one the database
+      // enforces without being asked.
+      db.collection("escalations").createIndex(
+        { created_at: 1 },
+        {
+          expireAfterSeconds: ESCALATION_RETENTION_DAYS * 24 * 60 * 60,
+          name: "retention",
+        },
+      ),
+    ]);
   })();
   await indexReady;
 }

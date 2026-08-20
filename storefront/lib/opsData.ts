@@ -93,6 +93,14 @@ export const CATEGORY_MIX: { category: string; count: number; humanRequired: num
 
 /** MEASURED. Unit economics from real runs. */
 export const ECONOMICS = {
+  /**
+   * Which model produced the measured figures below. A cost-per-ticket number
+   * without a model attached is not a fact — it is a rumour. Rates for this
+   * model live in lib/pricing.generated.ts; these numbers are MEASURED
+   * observations from real /v1/triage calls and are deliberately NOT
+   * recomputed from that table, which is why the badge says "measured".
+   */
+  model: "claude-opus-5",
   costPerTicketWarm: 0.0053,
   costPerTicketCold: 0.0302,
   cacheSavingPct: 0.82,

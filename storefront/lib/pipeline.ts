@@ -1,6 +1,10 @@
 import "server-only";
 import { z } from "zod";
 import { checkLimits } from "./ratelimit";
+import { pricingFor } from "./pricing.generated";
+import { redactPII } from "./untrusted";
+import { insertEscalation } from "./models";
+import { HAS_MONGO } from "./mongo";
 import {
   MAX_MESSAGE_CHARS,
   MAX_TOKENS,
@@ -34,6 +38,7 @@ export const StageId = [
   "model",
   "parse",
   "account",
+  "persist",
 ] as const;
 export type StageId = (typeof StageId)[number];
 
@@ -55,6 +60,8 @@ export interface ResultEvent {
   cache_hit: boolean;
   latency_ms: number;
   total_ms: number;
+  /** Present when the ticket was escalated and stored. Shown to the customer. */
+  ticket_id?: string;
 }
 
 export interface FailureEvent {
@@ -63,6 +70,12 @@ export interface FailureEvent {
   status: number;
   error: string;
   detail: string;
+  /**
+   * Seconds until a retry could succeed, when we know. The limiter has always
+   * computed this; until now nothing carried it out of the pipeline, so a 429
+   * told the client to back off without saying for how long.
+   */
+  retryAfterSec?: number;
 }
 
 export type PipelineEvent = StageEvent | ResultEvent | FailureEvent;
@@ -122,6 +135,7 @@ export async function* runPipeline(
       id: "ratelimit",
       status: 429,
       error: verdict.reason,
+      retryAfterSec: verdict.retryAfterSec,
       detail:
         verdict.reason === "per_ip"
           ? "You have submitted a few of these already. Give it a few minutes."
@@ -254,14 +268,19 @@ export async function* runPipeline(
   // ---- 7. Account for it ------------------------------------------------
   s = mark();
   const u = response.usage;
-  const inRate = 5 / 1_000_000;
-  const outRate = 25 / 1_000_000;
+  // Rates come from the generated table, not from literals typed in here.
+  // Its source is MODEL_CATALOG in the API repo's src/config.ts; regenerate
+  // with `npm run sync:storefront`. Hardcoding $5/$25 was how this file
+  // quietly kept reporting Opus prices no matter what TRIAGE_MODEL said.
+  const pricing = pricingFor(MODEL);
+  const inRate = pricing.inputPerMTok / 1_000_000;
+  const outRate = pricing.outputPerMTok / 1_000_000;
   const cacheWrite = u.cache_creation_input_tokens ?? 0;
   const cacheRead = u.cache_read_input_tokens ?? 0;
   const cost =
     u.input_tokens * inRate +
-    cacheWrite * inRate * 1.25 +
-    cacheRead * inRate * 0.1 +
+    cacheWrite * inRate * pricing.cacheWriteMultiplier +
+    cacheRead * inRate * pricing.cacheReadMultiplier +
     u.output_tokens * outRate;
   const uncached =
     (u.input_tokens + cacheWrite + cacheRead) * inRate + u.output_tokens * outRate;
@@ -284,6 +303,93 @@ export async function* runPipeline(
     },
   };
 
+  // ---- 8. Persist, but only if a human is needed -------------------------
+  //
+  // This stage is the one-generator-two-consumers design earning its keep: it
+  // was added in exactly one place and both the SSE route and the JSON route
+  // picked it up without either being edited. If a stage moves, it moves once.
+  //
+  // Note what is NOT stored. Tickets that do not require a human are
+  // classified and discarded, as they always were — a demo should not
+  // accumulate the public's messages just because it now has somewhere to put
+  // them. Storage is a consequence of escalation, not of submission.
+  s = mark();
+  yield { type: "stage", id: "persist", status: "running" };
+
+  let ticketId: string | undefined;
+  const needsHuman = response.parsed_output.requires_human;
+
+  if (!needsHuman) {
+    yield {
+      type: "stage",
+      id: "persist",
+      status: "done",
+      ms: mark() - s,
+      headline: "Nothing to store — no human needed",
+      detail: {
+        why: "requires_human is false, so the classification is the whole answer and the message is discarded. Storing every submission would mean holding the public's support text for no operational reason.",
+        requires_human: false,
+      },
+    };
+  } else if (!HAS_MONGO) {
+    // A missing database must not fail the customer's submission. They still
+    // get their classification; we simply cannot queue it.
+    yield {
+      type: "stage",
+      id: "persist",
+      status: "done",
+      ms: mark() - s,
+      headline: "Escalation skipped — no database configured",
+      detail: {
+        why: "MONGODB_URI is unset, so there is nowhere to queue this. The classification still returns: a storage outage should degrade the queue, not the answer.",
+      },
+    };
+  } else {
+    try {
+      // The REDACTED text, never the raw message. Same decision as the
+      // boundary redaction, applied one layer out — once you persist, the
+      // only question that matters is what is in the database.
+      const { text: redactedMessage, redactions } = redactPII(message);
+      ticketId = await insertEscalation({
+        channel: "web form",
+        message_redacted: redactedMessage,
+        redactions,
+        triage: response.parsed_output,
+        model: MODEL,
+        cost_usd: Math.round(cost * 1e6) / 1e6,
+      });
+
+      yield {
+        type: "stage",
+        id: "persist",
+        status: "done",
+        ms: mark() - s,
+        headline: `Queued for a human as ${ticketId}`,
+        detail: {
+          why: "requires_human was true, so the ticket is now in the reviewer queue rather than in a log line. A flag nobody routes on is a comment.",
+          ticket_id: ticketId,
+          escalation_reason: response.parsed_output.escalation_reason,
+          redactions_before_storage: redactions.length,
+          retention: "deleted after 30 days by a TTL index",
+        },
+      };
+    } catch (err) {
+      // Same principle as above: the customer's answer does not depend on our
+      // queue working. Report the stage as failed and continue to the result.
+      console.error("escalation insert failed", err);
+      yield {
+        type: "stage",
+        id: "persist",
+        status: "failed",
+        ms: mark() - s,
+        headline: "Could not queue this for a human",
+        detail: {
+          why: "The classification succeeded and the store did not. The customer still gets an answer; the operations team is the one with a problem, which is the correct place for it to surface.",
+        },
+      };
+    }
+  }
+
   yield {
     type: "result",
     triage: response.parsed_output,
@@ -291,5 +397,6 @@ export async function* runPipeline(
     cache_hit: cacheRead > 0,
     latency_ms: modelMs,
     total_ms: Date.now() - t0,
+    ticket_id: ticketId,
   };
 }

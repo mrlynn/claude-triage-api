@@ -1,4 +1,5 @@
 import "server-only";
+import { wrapUntrusted } from "./untrusted";
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
@@ -133,7 +134,17 @@ export function buildSystem(context: {
   ] as SystemBlocks;
 }
 
-export function callClaude(system: SystemBlocks, message: string) {
+/**
+ * @param defended When false, the message is interpolated into the delimiters
+ *   RAW — which is exactly what this app did before Lab 8. It exists so the
+ *   injection playground can show the difference side by side rather than
+ *   asserting it. It is never false on the real support form.
+ */
+export function callClaude(
+  system: SystemBlocks,
+  message: string,
+  { defended = true }: { defended?: boolean } = {},
+) {
   return anthropic.messages.parse({
     model: MODEL,
     max_tokens: MAX_TOKENS,
@@ -145,7 +156,11 @@ export function callClaude(system: SystemBlocks, message: string) {
     messages: [
       {
         role: "user",
-        content: `Classify this inbound web form message.\n\n<customer_message>\n${message}\n</customer_message>`,
+        content: `Classify this inbound web form message.\n\n${
+          defended
+            ? wrapUntrusted(message)
+            : `<customer_message>\n${message}\n</customer_message>`
+        }`,
       },
     ],
   });

@@ -23,7 +23,8 @@ export type StageId =
   | "schema"
   | "model"
   | "parse"
-  | "account";
+  | "account"
+  | "persist";
 
 export interface Stage {
   id: StageId;
@@ -81,6 +82,14 @@ export const STAGE_META: Record<
       href: "https://claude-triage-labs.vercel.app/docs/labs/lab-5-prompt-caching",
     },
   },
+  persist: {
+    title: "Queue it for a human",
+    sub: "Only when requires_human is true",
+    lab: {
+      label: "Lab 8",
+      href: "https://claude-triage-labs.vercel.app/docs/labs/lab-8-trust-boundary",
+    },
+  },
 };
 
 export const STAGE_ORDER: StageId[] = [
@@ -91,6 +100,7 @@ export const STAGE_ORDER: StageId[] = [
   "model",
   "parse",
   "account",
+  "persist",
 ];
 
 function Dot({ status }: { status: Stage["status"] }) {
