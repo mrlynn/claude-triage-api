@@ -1,9 +1,10 @@
 {
-  "generated_at": "2026-08-20T13:59:17.488Z",
+  "generated_at": "2026-08-20T14:03:46.751Z",
+  "mode": "batch",
   "model": "claude-opus-5",
-  "mode": "sync-concurrent-8",
-  "total_cost_usd": 0.175055,
-  "wall_clock_sec": 60,
+  "total_cost_usd": 0.201835,
+  "wall_clock_sec": 224,
+  "cache_hits": 11,
   "tickets": [
     {
       "id": "NW-T-1041",
@@ -15,8 +16,8 @@
       "triage": {
         "category": "shipping",
         "urgency": "high",
-        "sentiment": "neutral",
-        "summary": "Customer's daypack order placed two weeks ago still shows only 'label created'; wants status and needed it by the 20th.",
+        "sentiment": "frustrated",
+        "summary": "Customer's daypack order shows only 'label created' after two weeks and needs it by the 20th.",
         "entities": {
           "order_ids": [],
           "product_names": [
@@ -26,11 +27,11 @@
         },
         "requires_human": false,
         "escalation_reason": null,
-        "confidence": 0.68
+        "confidence": 0.72
       },
-      "cost_usd": 0.011011,
+      "cost_usd": 0.004293,
       "cache_hit": true,
-      "latency_ms": 6088
+      "cache_read_tokens": 5022
     },
     {
       "id": "NW-T-1042",
@@ -43,21 +44,19 @@
         "category": "returns",
         "urgency": "normal",
         "sentiment": "neutral",
-        "summary": "Customer received a shell jacket that runs too large and wants to exchange it for a medium.",
+        "summary": "Customer received a shell jacket too large despite the size chart and wants to exchange it for a medium.",
         "entities": {
           "order_ids": [],
-          "product_names": [
-            "shell"
-          ],
+          "product_names": [],
           "requested_remedy": "replacement"
         },
         "requires_human": false,
         "escalation_reason": null,
-        "confidence": 0.72
+        "confidence": 0.82
       },
-      "cost_usd": 0.008006,
+      "cost_usd": 0.003703,
       "cache_hit": true,
-      "latency_ms": 4689
+      "cache_read_tokens": 5022
     },
     {
       "id": "NW-T-1043",
@@ -69,8 +68,8 @@
       "triage": {
         "category": "billing",
         "urgency": "high",
-        "sentiment": "neutral",
-        "summary": "Customer says they cancelled Trail Club in October but was charged the $89 renewal; wants a refund.",
+        "sentiment": "frustrated",
+        "summary": "Customer charged $89 Trail Club renewal despite cancelling in October; wants a refund.",
         "entities": {
           "order_ids": [],
           "product_names": [
@@ -80,11 +79,11 @@
         },
         "requires_human": false,
         "escalation_reason": null,
-        "confidence": 0.88
+        "confidence": 0.82
       },
-      "cost_usd": 0.006776,
+      "cost_usd": 0.003151,
       "cache_hit": true,
-      "latency_ms": 3378
+      "cache_read_tokens": 5022
     },
     {
       "id": "NW-T-1044",
@@ -95,9 +94,9 @@
       "message": "If I order the insulated bottle today does it arrive before the 24th? Not sure whether to pay for expedited.",
       "triage": {
         "category": "shipping",
-        "urgency": "normal",
+        "urgency": "low",
         "sentiment": "neutral",
-        "summary": "Pre-purchase question: will an insulated bottle ordered today arrive before the 24th, or is expedited needed?",
+        "summary": "Pre-purchase question: will an insulated bottle ordered today arrive before the 24th, or is expedited shipping needed?",
         "entities": {
           "order_ids": [],
           "product_names": [
@@ -107,11 +106,11 @@
         },
         "requires_human": false,
         "escalation_reason": null,
-        "confidence": 0.55
+        "confidence": 0.6
       },
-      "cost_usd": 0.010801,
-      "cache_hit": true,
-      "latency_ms": 6737
+      "cost_usd": 0.017701,
+      "cache_hit": false,
+      "cache_read_tokens": 0
     },
     {
       "id": "NW-T-1045",
@@ -124,7 +123,7 @@
         "category": "safety",
         "urgency": "urgent",
         "sentiment": "neutral",
-        "summary": "Customer reports child's illness possibly linked to flaking lining in insulated bottle; informational report needing safety review.",
+        "summary": "Parent reports flaking lining in insulated bottle and child's stomach illness possibly linked; informational report.",
         "entities": {
           "order_ids": [],
           "product_names": [
@@ -133,12 +132,12 @@
           "requested_remedy": "information"
         },
         "requires_human": true,
-        "escalation_reason": "Possible illness attributed to product (flaking bottle lining); section 5.3/5.4 mandate safety escalation regardless of customer downplaying it.",
-        "confidence": 0.88
+        "escalation_reason": "Possible product-related illness in a child; section 5.3/5.4 requires supervisor and Safety queue logging within one hour.",
+        "confidence": 0.9
       },
-      "cost_usd": 0.008001,
-      "cache_hit": true,
-      "latency_ms": 3697
+      "cost_usd": 0.018301,
+      "cache_hit": false,
+      "cache_read_tokens": 0
     },
     {
       "id": "NW-T-1046",
@@ -151,7 +150,7 @@
         "category": "billing",
         "urgency": "normal",
         "sentiment": "neutral",
-        "summary": "Customer says coupon code TRAIL15 is rejected as invalid at checkout and asks if they're doing something wrong.",
+        "summary": "Customer's TRAIL15 coupon code is rejected as invalid at checkout and wants help applying it.",
         "entities": {
           "order_ids": [],
           "product_names": [],
@@ -161,9 +160,9 @@
         "escalation_reason": null,
         "confidence": 0.55
       },
-      "cost_usd": 0.007791,
+      "cost_usd": 0.003096,
       "cache_hit": true,
-      "latency_ms": 4022
+      "cache_read_tokens": 5022
     },
     {
       "id": "NW-T-1047",
@@ -176,7 +175,7 @@
         "category": "product_defect",
         "urgency": "high",
         "sentiment": "angry",
-        "summary": "Fourth contact about tent poles that arrived bent; wants a phone call and resolution.",
+        "summary": "Fourth contact about bent tent poles with no resolution; customer demands a phone call.",
         "entities": {
           "order_ids": [],
           "product_names": [
@@ -185,12 +184,12 @@
           "requested_remedy": "escalation"
         },
         "requires_human": true,
-        "escalation_reason": "Customer has contacted more than twice with no resolution and is explicitly requesting a phone call; automated reply not appropriate.",
-        "confidence": 0.6
+        "escalation_reason": "Customer has contacted repeatedly (fourth time) with no resolution and explicitly requests a phone call; automated reply not appropriate.",
+        "confidence": 0.7
       },
-      "cost_usd": 0.009996,
-      "cache_hit": true,
-      "latency_ms": 4941
+      "cost_usd": 0.018136,
+      "cache_hit": false,
+      "cache_read_tokens": 0
     },
     {
       "id": "NW-T-1048",
@@ -201,9 +200,9 @@
       "message": "I moved. Can you update the shipping address on my account and on order NW-52044 if it has not gone out yet?",
       "triage": {
         "category": "account",
-        "urgency": "normal",
+        "urgency": "urgent",
         "sentiment": "neutral",
-        "summary": "Customer moved and wants their account shipping address updated, plus order NW-52044 redirected if not yet shipped.",
+        "summary": "Customer moved and wants their account shipping address updated, plus order NW-52044 redirected if it has not shipped.",
         "entities": {
           "order_ids": [
             "NW-52044"
@@ -211,13 +210,13 @@
           "product_names": [],
           "requested_remedy": "information"
         },
-        "requires_human": true,
-        "escalation_reason": "Address change requires identity verification per section 5.1, and the order may need interception before shipment.",
-        "confidence": 0.6
+        "requires_human": false,
+        "escalation_reason": null,
+        "confidence": 0.55
       },
-      "cost_usd": 0.014311,
+      "cost_usd": 0.004668,
       "cache_hit": true,
-      "latency_ms": 8613
+      "cache_read_tokens": 5022
     },
     {
       "id": "NW-T-1049",
@@ -230,7 +229,7 @@
         "category": "product_defect",
         "urgency": "normal",
         "sentiment": "neutral",
-        "summary": "Customer's 2024 Ridgeline shell has a separated main zipper; wants repair or replacement.",
+        "summary": "Customer's Ridgeline shell main zipper separated at base; wants repair or replacement.",
         "entities": {
           "order_ids": [],
           "product_names": [
@@ -242,9 +241,9 @@
         "escalation_reason": null,
         "confidence": 0.82
       },
-      "cost_usd": 0.006666,
+      "cost_usd": 0.003283,
       "cache_hit": true,
-      "latency_ms": 5944
+      "cache_read_tokens": 5022
     },
     {
       "id": "NW-T-1050",
@@ -255,21 +254,21 @@
       "message": "UPS marked my order delivered yesterday at 4pm. Nothing on the porch, nothing with neighbours, nothing in the garage. Order was about $220.",
       "triage": {
         "category": "shipping",
-        "urgency": "high",
+        "urgency": "normal",
         "sentiment": "neutral",
-        "summary": "Order marked delivered by UPS yesterday but not received; ~$220 value, customer wants resolution.",
+        "summary": "Order marked delivered yesterday but not received; ~$220 value, customer wants package located or replaced.",
         "entities": {
           "order_ids": [],
           "product_names": [],
           "requested_remedy": "none"
         },
         "requires_human": true,
-        "escalation_reason": "Delivered-but-not-received claim over $150 requires supervisor review of the account for prior claims (section 3.4).",
+        "escalation_reason": "Delivered-not-received claim over $150 requires supervisor account review per section 3.4.",
         "confidence": 0.82
       },
-      "cost_usd": 0.010621,
+      "cost_usd": 0.003486,
       "cache_hit": true,
-      "latency_ms": 10816
+      "cache_read_tokens": 5022
     },
     {
       "id": "NW-T-1051",
@@ -282,7 +281,7 @@
         "category": "other",
         "urgency": "low",
         "sentiment": "positive",
-        "summary": "Customer sends praise for the Ridgeline jacket's rain performance; no action or response needed.",
+        "summary": "Customer is sharing praise for the Ridgeline jacket's rain performance; no action requested.",
         "entities": {
           "order_ids": [],
           "product_names": [
@@ -294,9 +293,9 @@
         "escalation_reason": null,
         "confidence": 0.94
       },
-      "cost_usd": 0.006266,
-      "cache_hit": true,
-      "latency_ms": 15598
+      "cost_usd": 0.017571,
+      "cache_hit": false,
+      "cache_read_tokens": 0
     },
     {
       "id": "NW-T-1052",
@@ -309,7 +308,7 @@
         "category": "billing",
         "urgency": "high",
         "sentiment": "frustrated",
-        "summary": "Customer says a refund promised six days ago has not appeared on their card and wants it verified.",
+        "summary": "Customer says a refund processed six days ago has not appeared on their card and wants it verified.",
         "entities": {
           "order_ids": [],
           "product_names": [],
@@ -317,11 +316,11 @@
         },
         "requires_human": false,
         "escalation_reason": null,
-        "confidence": 0.83
+        "confidence": 0.82
       },
-      "cost_usd": 0.006761,
-      "cache_hit": true,
-      "latency_ms": 18392
+      "cost_usd": 0.017469,
+      "cache_hit": false,
+      "cache_read_tokens": 0
     },
     {
       "id": "NW-T-1053",
@@ -346,9 +345,9 @@
         "escalation_reason": null,
         "confidence": 0.82
       },
-      "cost_usd": 0.007706,
-      "cache_hit": true,
-      "latency_ms": 22860
+      "cost_usd": 0.017516,
+      "cache_hit": false,
+      "cache_read_tokens": 0
     },
     {
       "id": "NW-T-1054",
@@ -361,7 +360,7 @@
         "category": "safety",
         "urgency": "urgent",
         "sentiment": "angry",
-        "summary": "Customer reports tent poles collapsed in storm damaging vehicle roof and says their attorney will make contact.",
+        "summary": "Customer reports tent pole collapse damaged their vehicle roof and says an attorney will contact us.",
         "entities": {
           "order_ids": [],
           "product_names": [
@@ -370,12 +369,12 @@
           "requested_remedy": "none"
         },
         "requires_human": true,
-        "escalation_reason": "Property damage attributed to product plus explicit mention of an attorney — section 5.3 mandates immediate supervisor escalation and Safety queue logging.",
-        "confidence": 0.95
+        "escalation_reason": "Property damage attributed to product plus mention of an attorney — section 5.3 mandates immediate supervisor escalation and Safety queue logging.",
+        "confidence": 0.96
       },
-      "cost_usd": 0.008136,
+      "cost_usd": 0.003993,
       "cache_hit": true,
-      "latency_ms": 25610
+      "cache_read_tokens": 5022
     },
     {
       "id": "NW-T-1055",
@@ -386,9 +385,9 @@
       "message": "Reset link keeps saying expired even though I click it right away. Tried three times. Cannot get into my account.",
       "triage": {
         "category": "account",
-        "urgency": "normal",
+        "urgency": "high",
         "sentiment": "frustrated",
-        "summary": "Customer cannot log in; password reset links report expired immediately after three attempts.",
+        "summary": "Customer cannot log in; password reset links show as expired after three attempts and wants account access restored.",
         "entities": {
           "order_ids": [],
           "product_names": [],
@@ -396,11 +395,11 @@
         },
         "requires_human": false,
         "escalation_reason": null,
-        "confidence": 0.88
+        "confidence": 0.82
       },
-      "cost_usd": 0.007656,
-      "cache_hit": true,
-      "latency_ms": 29142
+      "cost_usd": 0.017466,
+      "cache_hit": false,
+      "cache_read_tokens": 0
     },
     {
       "id": "NW-T-1056",
@@ -422,12 +421,12 @@
           "requested_remedy": "information"
         },
         "requires_human": true,
-        "escalation_reason": "Wholesale/partnership inquiry requires routing to a human sales contact; outside automated support scope.",
+        "escalation_reason": "Wholesale/partnership inquiry requires routing to a human sales contact; no automated resolution available.",
         "confidence": 0.88
       },
-      "cost_usd": 0.007151,
-      "cache_hit": true,
-      "latency_ms": 30929
+      "cost_usd": 0.018014,
+      "cache_hit": false,
+      "cache_read_tokens": 0
     },
     {
       "id": "NW-T-1057",
@@ -448,11 +447,11 @@
         },
         "requires_human": false,
         "escalation_reason": null,
-        "confidence": 0.9
+        "confidence": 0.88
       },
-      "cost_usd": 0.006181,
+      "cost_usd": 0.003091,
       "cache_hit": true,
-      "latency_ms": 33019
+      "cache_read_tokens": 5022
     },
     {
       "id": "NW-T-1058",
@@ -463,9 +462,9 @@
       "message": "My expedition tent was supposed to arrive Friday for a trip that leaves Wednesday morning. It has not shipped. I am flying to Patagonia and I have no shelter. What are my options right now?",
       "triage": {
         "category": "shipping",
-        "urgency": "high",
+        "urgency": "urgent",
         "sentiment": "frustrated",
-        "summary": "Customer's expedition tent never shipped and is needed before a Patagonia trip departing Wednesday; wants options now.",
+        "summary": "Customer's expedition tent hasn't shipped and trip to Patagonia departs Wednesday; wants options now.",
         "entities": {
           "order_ids": [],
           "product_names": [
@@ -473,13 +472,13 @@
           ],
           "requested_remedy": "information"
         },
-        "requires_human": false,
-        "escalation_reason": null,
-        "confidence": 0.55
+        "requires_human": true,
+        "escalation_reason": "Time-critical departure within 48 hours with unshipped order; needs human to expedite or arrange alternative.",
+        "confidence": 0.82
       },
-      "cost_usd": 0.013481,
-      "cache_hit": true,
-      "latency_ms": 34480
+      "cost_usd": 0.018191,
+      "cache_hit": false,
+      "cache_read_tokens": 0
     },
     {
       "id": "NW-T-1059",
@@ -492,7 +491,7 @@
         "category": "other",
         "urgency": "low",
         "sentiment": "neutral",
-        "summary": "Pre-sales sizing question: whether trail pants run closer to a 32 or 34 waist.",
+        "summary": "Pre-sales sizing question: asks whether trail pants run closer to a 32 or 34 waist.",
         "entities": {
           "order_ids": [],
           "product_names": [
@@ -502,11 +501,11 @@
         },
         "requires_human": false,
         "escalation_reason": null,
-        "confidence": 0.83
+        "confidence": 0.72
       },
-      "cost_usd": 0.006536,
+      "cost_usd": 0.003118,
       "cache_hit": true,
-      "latency_ms": 33557
+      "cache_read_tokens": 5022
     },
     {
       "id": "NW-T-1060",
@@ -528,12 +527,12 @@
           "requested_remedy": "refund"
         },
         "requires_human": true,
-        "escalation_reason": "Email-change request from an address that differs from the requested new address requires identity verification per 5.1/5.2; refund reason is unstated so no confident automated resolution.",
-        "confidence": 0.45
+        "escalation_reason": "Email change on file requires identity verification per section 5.1, and the refund reason is unstated, so no confident automated reply is possible.",
+        "confidence": 0.5
       },
-      "cost_usd": 0.011201,
+      "cost_usd": 0.005588,
       "cache_hit": true,
-      "latency_ms": 36699
+      "cache_read_tokens": 5022
     }
   ]
 }

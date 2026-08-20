@@ -12,12 +12,41 @@ import styles from "./styles.module.css";
  * $4,000 budget.
  */
 
-const PRICING = {
-  inputPerMTok: 5.0,
-  outputPerMTok: 25.0,
-  cacheWriteMultiplier: 1.25,
-  cacheReadMultiplier: 0.1,
-};
+/**
+ * Mirrors MODEL_CATALOG in src/config.ts, which is the canonical table.
+ * This file is a static playground component and cannot import from the API
+ * package, so the rows are duplicated here on purpose — check them against
+ * src/config.ts when either moves. Lab 7 adds the model selector that makes
+ * the extra rows reachable from the UI.
+ *
+ * Sonnet 5 is listed at LIST price ($3/$15). Its introductory rate expires,
+ * and a budget built on a promotion breaks the day it does.
+ */
+const PRICING_BY_MODEL = {
+  "claude-opus-5": {
+    inputPerMTok: 5.0,
+    outputPerMTok: 25.0,
+    cacheWriteMultiplier: 1.25,
+    cacheReadMultiplier: 0.1,
+  },
+  "claude-sonnet-5": {
+    inputPerMTok: 3.0,
+    outputPerMTok: 15.0,
+    cacheWriteMultiplier: 1.25,
+    cacheReadMultiplier: 0.1,
+  },
+  "claude-haiku-4-5": {
+    inputPerMTok: 1.0,
+    outputPerMTok: 5.0,
+    cacheWriteMultiplier: 1.25,
+    cacheReadMultiplier: 0.1,
+  },
+} as const;
+
+type ModelKey = keyof typeof PRICING_BY_MODEL;
+
+/** The token counts below were measured on this model. */
+const MEASURED_ON: ModelKey = "claude-opus-5";
 
 /** Measured against claude-opus-5 with this repo's prompts. */
 const MEASURED = {
@@ -74,10 +103,11 @@ function usd(n: number): string {
  * roughly triangularly with turn count rather than linearly. Turn k pays for
  * the prefix plus k units of accumulated variable content.
  */
-function costOnce(route: RouteKey, cached: boolean) {
+function costOnce(route: RouteKey, cached: boolean, model: ModelKey) {
   const { outputTokens, turns } = ROUTES[route];
-  const inRate = PRICING.inputPerMTok / 1_000_000;
-  const outRate = PRICING.outputPerMTok / 1_000_000;
+  const pricing = PRICING_BY_MODEL[model];
+  const inRate = pricing.inputPerMTok / 1_000_000;
+  const outRate = pricing.outputPerMTok / 1_000_000;
 
   let prefixCost = 0;
   let variableCost = 0;
@@ -86,8 +116,8 @@ function costOnce(route: RouteKey, cached: boolean) {
     const isFirstTurn = turn === 1;
     const prefixRate = cached
       ? isFirstTurn
-        ? inRate * PRICING.cacheWriteMultiplier
-        : inRate * PRICING.cacheReadMultiplier
+        ? inRate * pricing.cacheWriteMultiplier
+        : inRate * pricing.cacheReadMultiplier
       : inRate;
 
     prefixCost += MEASURED.cachedPrefixTokens * prefixRate;
@@ -131,9 +161,10 @@ export default function CostExplorer(): ReactNode {
   const [route, setRoute] = useState<RouteKey>("triage");
   const [volume, setVolume] = useState(45_000);
   const [cached, setCached] = useState(true);
+  const [model, setModel] = useState<ModelKey>(MEASURED_ON);
 
-  const warm = useMemo(() => costOnce(route, true), [route]);
-  const cold = useMemo(() => costOnce(route, false), [route]);
+  const warm = useMemo(() => costOnce(route, true, model), [route, model]);
+  const cold = useMemo(() => costOnce(route, false, model), [route, model]);
   const active = cached ? warm : cold;
 
   const monthly = active.total * volume;
@@ -161,6 +192,34 @@ export default function CostExplorer(): ReactNode {
             ))}
           </div>
           <p className={styles.hint}>{ROUTES[route].blurb}</p>
+        </fieldset>
+
+        <fieldset className={styles.field}>
+          <legend>Model</legend>
+          <div className={styles.segmented}>
+            {(Object.keys(PRICING_BY_MODEL) as ModelKey[]).map((key) => (
+              <button
+                key={key}
+                type="button"
+                className={model === key ? styles.segActive : styles.seg}
+                onClick={() => setModel(key)}
+              >
+                {key.replace("claude-", "")}
+              </button>
+            ))}
+          </div>
+          <p className={styles.hint}>
+            {model === MEASURED_ON ? (
+              <>Token counts were measured on this model.</>
+            ) : (
+              <>
+                Prices are this model&rsquo;s; the token counts are still the ones
+                measured on {MEASURED_ON.replace("claude-", "")}. Close enough for
+                a budget, and the accuracy difference is the part this widget
+                cannot show you &mdash; see the model matrix.
+              </>
+            )}
+          </p>
         </fieldset>
 
         <fieldset className={styles.field}>
@@ -309,7 +368,7 @@ export default function CostExplorer(): ReactNode {
           {cached ? (
             <>
               Caching moves the prefix from full rate to{" "}
-              {PRICING.cacheReadMultiplier}x on every request after the first.
+              {PRICING_BY_MODEL[model].cacheReadMultiplier}x on every request after the first.
               Turn caching off and watch the blue segment take over the bar.
             </>
           ) : (
