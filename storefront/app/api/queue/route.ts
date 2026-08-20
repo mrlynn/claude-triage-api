@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { listEscalations, queueStats } from "@/lib/models";
+import { listEscalations, queueStats, clearEscalations } from "@/lib/models";
 import { checkQueueAccess } from "@/lib/queueAuth";
 import { HAS_MONGO } from "@/lib/mongo";
 import { DEMO_QUEUE, demoStats } from "@/lib/demoQueue";
@@ -47,4 +47,28 @@ export async function GET(request: Request) {
 
   const [items, stats] = await Promise.all([listEscalations(), queueStats()]);
   return NextResponse.json({ mode: "live", items, stats });
+}
+
+/**
+ * Empties the live queue. Token required, and not available in demo mode —
+ * there is nothing to clear there, and a destructive control that appears to
+ * work on fixtures teaches the wrong thing about what it does.
+ */
+export async function DELETE(request: Request) {
+  const auth = await checkQueueAccess(request);
+  if (!auth.ok) {
+    return NextResponse.json(
+      { error: auth.reason, detail: "A valid queue token is required." },
+      { status: auth.reason === "unconfigured" ? 503 : 401 },
+    );
+  }
+  if (!HAS_MONGO) {
+    return NextResponse.json(
+      { error: "unconfigured", detail: "No database is configured." },
+      { status: 503 },
+    );
+  }
+
+  const deleted = await clearEscalations();
+  return NextResponse.json({ deleted });
 }

@@ -18,6 +18,10 @@ Written to be followed by someone who did not build the repo.
       [`docs/facilitator/keys.md`](../docs/facilitator/keys.md). Keys cannot be
       created programmatically, so budget ten minutes for a room of 30.
 - [ ] `npm run workshop -- status --label <label>` and confirm it is clean.
+- [ ] If you ran a session yesterday, clear the escalation queue so the board
+      starts empty: open [the queue][q] with your token and use **Clear the
+      queue**. It deletes real submissions and is not recoverable; usage
+      telemetry on `/ops` is unaffected.
 
 **The morning of**
 

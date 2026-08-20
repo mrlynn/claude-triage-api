@@ -2,6 +2,7 @@ import { connection } from "next/server";
 import { Badge } from "@/components/charts";
 import { HAS_MONGO } from "@/lib/mongo";
 import { queueStats } from "@/lib/models";
+import { usageSummary } from "@/lib/telemetry";
 
 /**
  * The first number on this dashboard that comes from the database.
@@ -46,8 +47,9 @@ export default async function LiveQueue() {
   }
 
   let stats: Awaited<ReturnType<typeof queueStats>> | null = null;
+  let usage: Awaited<ReturnType<typeof usageSummary>> = null;
   try {
-    stats = await queueStats();
+    [stats, usage] = await Promise.all([queueStats(), usageSummary(30)]);
   } catch {
     stats = null;
   }
@@ -104,6 +106,80 @@ export default async function LiveQueue() {
         Messages are stored redacted and deleted after 30 days by a TTL index.
         Tickets that did not need a human were never stored at all.
       </p>
+
+      {usage && usage.calls > 0 && (
+        <>
+          <div className="mt-6 border-t border-pine/10 pt-5">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-pine">
+                Model usage, last {usage.days} days
+              </h3>
+              <Badge kind="measured" />
+            </div>
+            <p className="mt-1 text-xs text-pine/60">
+              The same four usage fields the labs read, aggregated over real
+              traffic. Counters only &mdash; one document per day, no per-request
+              log, so there is nothing here to tie back to a visitor.
+            </p>
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-8">
+            <Figure label="Classified" value={usage.calls.toLocaleString()} />
+            <Figure
+              label="Cache hit rate"
+              value={
+                usage.cacheHitRate === null
+                  ? "n/a"
+                  : `${Math.round(usage.cacheHitRate * 100)}%`
+              }
+              note="a flat 0% here means a broken prefix, not a quiet week"
+            />
+            <Figure
+              label="Cost per ticket"
+              value={
+                usage.costPerCallUsd === null
+                  ? "n/a"
+                  : `$${usage.costPerCallUsd.toFixed(4)}`
+              }
+              note={`$${usage.costUsd.toFixed(2)} total`}
+            />
+            <Figure
+              label="Escalated"
+              value={
+                usage.calls > 0
+                  ? `${Math.round((usage.escalated / usage.calls) * 100)}%`
+                  : "n/a"
+              }
+              note={`${usage.escalated} of ${usage.calls}`}
+            />
+            {usage.blocked > 0 && (
+              <Figure
+                label="Rate-limited"
+                value={usage.blocked.toLocaleString()}
+                note="never reached the model, so excluded from cost"
+              />
+            )}
+          </div>
+
+          {usage.categories.length > 0 && (
+            <div className="mt-5">
+              <div className="text-[11px] uppercase tracking-wide text-pine/50">
+                Category mix
+              </div>
+              <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1.5">
+                {usage.categories.map((c) => (
+                  <span key={c.name} className="text-xs text-pine/75">
+                    {c.name}{" "}
+                    <span className="font-mono tabular-nums text-pine/50">
+                      {Math.round((c.count / usage.calls) * 100)}%
+                    </span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </section>
   );
 }
