@@ -1,5 +1,37 @@
 # The Python deltas
 
+## Running it
+
+You need Python 3.11+ and [`uv`](https://docs.astral.sh/uv/). Neither is a
+prerequisite for the course itself — the labs are TypeScript, and this track
+is optional.
+
+```bash
+cd python && uv venv && uv pip install -e .
+```
+
+```bash
+.venv/bin/uvicorn triage.server:app --port 8788
+```
+
+```bash
+.venv/bin/python -m evals.quick
+```
+
+Port 8788 rather than 8787, so this runs beside the TypeScript service.
+Comparing the two is the fastest way to settle "is this the API or is this my
+code?".
+
+Credentials come from the repo root's `.env`, the same file the TypeScript
+half reads. The gold set is shared too — `evals/dataset.jsonl` at the root,
+not a copy. Two copies of a gold set drift, and then you are comparing
+languages rather than measuring either.
+
+Scope: `/v1/triage` and the scoreboard. See
+[what is not here](#what-is-not-here) for why that is deliberate.
+
+---
+
 Read the TypeScript labs. They carry the teaching, and most of what this course
 is about — schema design, calibration, caching, the trust boundary, the batch
 arithmetic — is a property of the API, not of a language.

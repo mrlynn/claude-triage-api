@@ -157,6 +157,26 @@ projector, or Step 6 becomes reading a file.
 
 ---
 
+## If someone asks about Python
+
+There is a parallel implementation of `/v1/triage` and the scoreboard under
+`python/`, and [a deltas page](../python/labs/deltas.md) covering the four
+things that genuinely differ.
+
+Do not send them off to run it mid-lab. It costs the same per run as the
+TypeScript harness, it puts one person on a different runtime while you are
+debugging everyone else's, and the deltas are better read than discovered. Give
+them the page at a break or at the close.
+
+The one worth mentioning out loud, because it lands for everybody regardless of
+language: the first port paraphrased the schema field descriptions instead of
+copying them, dropping one clause from `requires_human`. Everything
+type-checked and ran, and accuracy went 11/12 to 8/12. Restoring one sentence
+restored the score. That is Lab 2's whole thesis, reproduced in a context where
+the mistake is much easier to make.
+
+---
+
 ## If you are running behind
 
 In the order you should cut:

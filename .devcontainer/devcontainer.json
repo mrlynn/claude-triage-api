@@ -1,30 +1,42 @@
 {
   "name": "Claude Triage Labs",
   "image": "mcr.microsoft.com/devcontainers/typescript-node:1-24-bookworm",
-
   "features": {
-    "ghcr.io/devcontainers/features/github-cli:1": {}
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.13"
+    }
   },
-
   "postCreateCommand": "bash .devcontainer/setup.sh",
-
-  "forwardPorts": [8787, 3000, 3001],
+  "forwardPorts": [
+    8787,
+    3000,
+    3001
+  ],
   "portsAttributes": {
-    "8787": { "label": "Triage API", "onAutoForward": "notify" },
-    "3000": { "label": "Northwind storefront", "onAutoForward": "silent" },
-    "3001": { "label": "Course site", "onAutoForward": "silent" }
+    "8787": {
+      "label": "Triage API",
+      "onAutoForward": "notify"
+    },
+    "3000": {
+      "label": "Northwind storefront",
+      "onAutoForward": "silent"
+    },
+    "3001": {
+      "label": "Course site",
+      "onAutoForward": "silent"
+    }
   },
-
   "remoteEnv": {
     "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY}"
   },
-
   "customizations": {
     "vscode": {
       "extensions": [
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
-        "bierner.markdown-mermaid"
+        "bierner.markdown-mermaid",
+        "ms-python.python"
       ],
       "settings": {
         "editor.formatOnSave": false,

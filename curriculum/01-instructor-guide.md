@@ -12,6 +12,16 @@ read JSON. They do **not** assume ML background, prior LLM work, or familiarity
 with Anthropic products. Where LLM-specific vocabulary shows up, it gets defined
 at first use in [`00-concept-map.md`](00-concept-map.md).
 
+**Python-first rooms.** The labs are TypeScript and every learner should work
+through them in TypeScript — the teaching is in the API, not the language, and
+splitting a room across two runtimes doubles the failure modes you have to
+debug from the front. There is a parallel Python implementation of
+`/v1/triage` and the scoreboard, and the right way to use it is as *reading*,
+not as an alternative track: point Python developers at
+[the deltas page](../python/labs/deltas.md) during a break, or at the end. It
+is four differences, and one of them is a mistake worth showing anybody who
+will ever port a schema.
+
 Learners who arrive with prior LLM experience usually arrive with *stale* prior
 experience. `budget_tokens`, assistant prefill, "respond only with JSON"
 prompting, edge-runtime-for-streaming. Surface that early, in the pre-flight

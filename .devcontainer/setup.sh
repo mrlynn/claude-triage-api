@@ -18,6 +18,13 @@ npm ci
 (cd website && npm ci)
 (cd storefront && npm ci)
 
+# The Python track is optional, so uv is installed but no venv is created —
+# a learner who never opens python/ should not wait on a dependency tree they
+# will not use, and `uv venv` takes seconds when they do.
+echo "Installing uv (for the optional Python track)..."
+curl -LsSf https://astral.sh/uv/install.sh | sh >/dev/null 2>&1 || \
+  echo "  uv install failed — the Python track needs it, the labs do not."
+
 # A key is per-learner and never baked into an image. The devcontainer.json
 # forwards ANTHROPIC_API_KEY from the host when one is set; otherwise the
 # learner writes .env themselves, which is Lab setup step one either way.
