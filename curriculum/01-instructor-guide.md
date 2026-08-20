@@ -37,11 +37,24 @@ below. Otherwise it surfaces on its own as a confusing bug in Lab 3.
 | Half day | 3.5 hrs | Lab 0, Labs 1–4, concept map, architecture walkthrough |
 | Full day | 6.5 hrs | Lab 0, Labs 1–6 + assessment + extension time |
 | Day 2 — production | 4 hrs | Labs 7–9: model choice, the trust boundary, and shipping it |
-| Self-paced | ~4 hrs | All labs; solutions unlocked per-lab |
+| Self-paced | ~4 hrs | Day 1 labs; solutions unlocked per-lab |
 
-Day 1 (Lab 0 + Labs 1–6) is the capability spine and stands alone. Day 2 starts
-at [Lab 7](labs/lab-7-choosing-a-model.md) and assumes the scoreboard from Lab 0
+**Day 1 is the course, and Day 2 is optional.** Say this to the room at the
+start, because otherwise a two-day agenda reads as a two-day commitment and
+you lose the people who only had a day.
+
+Labs 0–6 are the enablement asset: the four capabilities, one domain, about
+four hours. Someone who does only Day 1 has learned the Claude API and has a
+working service to show for it. Nothing in Day 1 is a setup for Day 2 that goes
+unpaid if Day 2 never happens.
+
+Day 2 is for people who are going to ship. It is the decisions that only arrive
+once something is real — which model, what happens when the input is hostile,
+what separates a demo from a service — and it assumes the Lab 0 scoreboard
 exists, because every measurement in it is a comparison against that baseline.
+
+Booking only one day is a legitimate choice, and the right one for most
+audiences. Book Day 2 when the room has a project rather than a curiosity.
 
 **Lab 0 is not optional and it is not a warm-up.** It is twenty minutes and it
 establishes the scoreboard every later lab re-runs. Cutting it to save time

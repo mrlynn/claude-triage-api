@@ -46,6 +46,9 @@ Written to be followed by someone who did not build the repo.
 
 Six and a half hours including lunch and two breaks.
 
+**This day stands alone.** If the room only has one day, run this one and stop.
+Nothing here is scaffolding for Day 2 that goes to waste without it.
+
 | Time | Segment | Notes |
 |---|---|---|
 | 0:00–0:20 | **The scenario** | Read [`scenario.md`](scenario.md) beats aloud. The October 2025 incident is the spine of the whole course — spend the time. |
@@ -91,8 +94,9 @@ The tool loop is the first genuinely fiddly thing. Two mitigations:
 
 ## Day 2 — production
 
-Four hours. Assumes Day 1's baseline exists; every measurement is a comparison
-against it.
+Four hours, and **optional**. Book it when the room has a project rather than a
+curiosity — these are the decisions that only arrive once something is real.
+Assumes Day 1's baseline exists; every measurement is a comparison against it.
 
 | Time | Segment | Notes |
 |---|---|---|
