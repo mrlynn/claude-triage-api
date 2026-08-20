@@ -126,6 +126,11 @@ Rolled up, per learner:
 | **Day 2** (Labs 7–9) | `eval:models`, 2 × `eval:redteam`, three queue modes, re-runs | **~$2.50** |
 | **Both days** | | **~$4.00** |
 
+**If anyone works the Python track too, they spend it twice.** It runs the same
+twelve cases against the same model, so `python -m evals.quick` costs what
+`npm run eval:quick` costs. It is optional and most people will read the deltas
+page rather than run it, but a room told to "try both" doubles the Day 1 figure.
+
 **Set the cap at 3× the table, not 1.1×.** A learner who re-runs `eval:models`
 three times while debugging is doing the lab correctly. A cap that stops them
 mid-exercise costs more in room time and morale than the overage costs in

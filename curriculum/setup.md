@@ -49,12 +49,52 @@ server at all.
 | `curl` | `curl --version` | preinstalled on macOS and Linux |
 | `jq` | `jq --version` | `brew install jq` / `apt install jq` / `winget install jqlang.jq` |
 | `git` | `git --version` | [git-scm.com](https://git-scm.com) |
+| *(optional)* Python 3.11+ | `python3 --version` | only for the [Python track](#the-python-track-optional) |
+| *(optional)* `uv` | `uv --version` | `brew install uv` / [astral.sh/uv](https://docs.astral.sh/uv/) |
 
 `jq` is not optional. Every lab pipes JSON through it, and the responses are
 deeply nested enough that reading them raw is genuinely unpleasant.
 
 **Windows:** use WSL2. The labs assume a POSIX shell, and several use
 single-quoted JSON in `curl` bodies that PowerShell quotes differently.
+
+---
+
+## The Python track (optional)
+
+The labs are TypeScript. **You do not need Python for any of them**, and if
+you skip this section nothing later will ask for it.
+
+There is a parallel implementation for people who will build this on FastAPI
+rather than on Hono. It mirrors `/v1/triage` and the scoreboard — enough
+surface to show the four things that genuinely differ between the SDKs, and
+deliberately not more, because the rest of what this course teaches is a
+property of the API rather than of a language.
+
+```bash
+cd python && uv venv && uv pip install -e .
+```
+
+```bash
+.venv/bin/uvicorn triage.server:app --port 8788
+```
+
+```bash
+.venv/bin/python -m evals.quick
+```
+
+Port 8788 rather than 8787, so it runs beside the TypeScript service. That is
+the fastest way to settle "is this the API or is this my code?" — ask both.
+
+It reads the same `data/policies.md` and the same `evals/dataset.jsonl` from
+the repo root. There is one gold set, not two; two copies drift, and then you
+are comparing languages rather than measuring either.
+
+Costs the same per run as the TypeScript harness — it is the same twelve cases
+against the same model. Budget for it if you plan to work through both.
+
+What is actually different is on
+[the Python deltas page](../python/labs/deltas.md).
 
 ---
 

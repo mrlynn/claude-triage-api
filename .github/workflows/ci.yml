@@ -22,6 +22,33 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Whether the paid jobs can run at all. A separate job because the `secrets`
+  # context is not available to a job-level `if:` — it is readable in a step,
+  # so the answer has to be computed in one job and consumed as an output.
+  preflight:
+    name: credentials available?
+    runs-on: ubuntu-latest
+    outputs:
+      has_key: ${{ steps.check.outputs.has_key }}
+    steps:
+      - id: check
+        run: |
+          if [ -n "${{ secrets.ANTHROPIC_API_KEY }}" ]; then
+            echo "has_key=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_key=false" >> "$GITHUB_OUTPUT"
+            {
+              echo "### Evals skipped"
+              echo
+              echo 'No `ANTHROPIC_API_KEY` secret is configured, so the eval gate and'
+              echo 'the red-team gate did not run. Everything that does not need a'
+              echo 'credential still ran and still gates this PR.'
+              echo
+              echo 'Add the secret in Settings → Secrets and variables → Actions to'
+              echo 'turn them on.'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
   checks:
     name: typecheck, builds, snippet drift
     runs-on: ubuntu-latest
@@ -72,8 +99,19 @@ jobs:
   evals:
     name: eval gate + red team
     runs-on: ubuntu-latest
-    # Forks cannot read secrets. Skip rather than fail.
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    needs: preflight
+    # SKIP, never fail, when the credential is absent — whether that is because
+    # this is a fork (forks cannot read secrets) or because nobody has set the
+    # secret yet. A build that goes red for a reason the PR author cannot act
+    # on is how a team learns to ignore red builds, and this job is the one
+    # that gates a real breach.
+    #
+    # The preflight job writes a job summary saying so, because the opposite
+    # failure — evals silently never running and nobody noticing — is worse.
+    if: |
+      needs.preflight.outputs.has_key == 'true' &&
+      (github.event_name != 'pull_request' ||
+       github.event.pull_request.head.repo.full_name == github.repository)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -100,7 +138,10 @@ jobs:
   model-upgrade:
     name: model drift rehearsal
     runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: preflight
+    if: |
+      needs.preflight.outputs.has_key == 'true' &&
+      (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
