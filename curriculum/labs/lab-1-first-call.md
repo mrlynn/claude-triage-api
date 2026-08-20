@@ -29,6 +29,18 @@ By the end you can:
 - Read all four `usage` fields and explain what each one costs
 - Recognize `stop_reason: "max_tokens"` and know what to do about it
 
+```mermaid
+sequenceDiagram
+    participant You
+    participant SDK as Anthropic SDK
+    participant Claude as Claude API
+
+    You->>SDK: messages.create(...)
+    SDK->>Claude: POST /v1/messages
+    Claude-->>SDK: content + usage
+    SDK-->>You: Message object
+```
+
 ---
 
 ## Setup

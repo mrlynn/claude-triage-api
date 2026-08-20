@@ -12,14 +12,13 @@ the schema looks the way it does.
 
 ## Everything is one endpoint
 
-```
-                          POST /v1/messages
-                                 │
-        ┌────────────────┬───────┴────────┬─────────────────┐
-        ▼                ▼                ▼                 ▼
-   output_config       tools           stream          cache_control
-   (shape + effort)  (function        (delivery)      (cost of the
-                      calling)                          prefix)
+```mermaid
+flowchart TB
+    Messages["POST /v1/messages"]
+    Messages --> OutputConfig["output_config<br/>(shape + effort)"]
+    Messages --> Tools["tools<br/>(function calling)"]
+    Messages --> Stream["stream<br/>(delivery)"]
+    Messages --> Cache["cache_control<br/>(cost of the prefix)"]
 ```
 
 Structured outputs, tool use, and streaming are **not three different APIs**.
@@ -59,10 +58,9 @@ Before you build an agent, check all four:
 
 "No" to any of these means drop a tier.
 
-```
-single call  ──▶  workflow (you orchestrate)  ──▶  agent (model orchestrates)
-   cheapest              predictable                    most capable
-   fastest               debuggable                     least predictable
+```mermaid
+flowchart LR
+    A["single call<br/>cheapest · fastest"] --> B["workflow<br/>you orchestrate<br/>predictable · debuggable"] --> C["agent<br/>model orchestrates<br/>most capable · least predictable"]
 ```
 
 In this repo: `/v1/triage` and `/v1/draft` are single calls. `/v1/resolve` is
@@ -73,11 +71,13 @@ the earlier lookups returned.
 
 ## The mental model for cost
 
-```
-   input  =  fresh tokens        ×  1.00
-          +  cache writes        ×  1.25
-          +  cache reads         ×  0.10
-   output =  generated tokens    ×  (output rate, 5× input on Opus 5)
+```mermaid
+flowchart TB
+    Input["input cost"]
+    Input --> Fresh["fresh tokens × 1.00"]
+    Input --> Write["cache writes × 1.25"]
+    Input --> Read["cache reads × 0.10"]
+    Output["output cost"] --> Gen["generated tokens × output rate<br/>(5× input on Opus 5)"]
 ```
 
 Three consequences that drive most real optimization work:

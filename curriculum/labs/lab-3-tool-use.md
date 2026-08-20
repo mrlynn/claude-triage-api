@@ -36,6 +36,22 @@ control surface for whether the model checks its facts.
 - Explain why usage must be summed across turns
 - Cap an agent loop, and know what happens when the cap is hit
 
+```mermaid
+sequenceDiagram
+    participant Route as /v1/resolve
+    participant Claude
+    participant Tools as lookup_order / lookup_customer / search_policy
+
+    loop until done or max_iterations
+        Route->>Claude: messages + tool definitions
+        Claude-->>Route: tool_use blocks
+        Route->>Tools: run each tool
+        Tools-->>Route: tool_result
+        Route->>Claude: tool results
+    end
+    Claude-->>Route: final resolution JSON
+```
+
 ---
 
 ## Step 1 — watch it think

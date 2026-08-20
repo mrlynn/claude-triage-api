@@ -37,6 +37,14 @@ Get that field wrong and you ship the 2024 classifier again.
 - Design an enum that fails safely
 - Measure whether a confidence score carries any information
 
+```mermaid
+flowchart LR
+    Schema["TriageSchema<br/>(Zod)"] --> Format["output_config.format"]
+    Format --> API["Claude API<br/>constrained generation"]
+    API --> Parse["messages.parse()"]
+    Parse --> Typed["typed TriageResult"]
+```
+
 ---
 
 ## Step 1 — see the mechanism

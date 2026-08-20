@@ -28,3 +28,10 @@
   --ifm-color-primary-lightest: #4fddbf;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
+
+/* Mermaid diagrams — center and give breathing room in prose pages */
+.theme-doc-markdown .mermaid {
+  margin: 1.5rem auto;
+  max-width: 100%;
+  text-align: center;
+}

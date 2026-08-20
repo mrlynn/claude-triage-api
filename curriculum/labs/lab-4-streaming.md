@@ -31,6 +31,23 @@ theirs.
 - Handle errors that occur *after* the HTTP status is already 200
 - Abort an upstream stream when the client disconnects
 
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Route as /v1/draft
+    participant Claude
+
+    Client->>Route: POST (SSE)
+    Route-->>Client: HTTP 200 + stream open
+    loop token generation
+        Claude-->>Route: delta
+        Route-->>Client: event: text
+        Route-->>Client: event: thinking
+    end
+    Route-->>Client: event: done (usage, stop_reason)
+    Note over Route,Client: Mid-stream failure → event: error (not a new status code)
+```
+
 ---
 
 ## Step 1 — watch tokens arrive

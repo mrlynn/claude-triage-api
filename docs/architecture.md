@@ -7,28 +7,19 @@ companion to the inline comments, which explain *what* each piece does.
 
 ## The shape of the system
 
-```
-                      ┌──────────────────────────────────────┐
-   HTTP request  ───▶ │  Hono router (src/server.ts)         │
-                      └───────────────┬──────────────────────┘
-                                      │
-              ┌───────────────────────┼───────────────────────┐
-              ▼                       ▼                       ▼
-     ┌─────────────────┐   ┌──────────────────┐   ┌────────────────────┐
-     │ /v1/triage      │   │ /v1/resolve      │   │ /v1/draft          │
-     │ messages.parse  │   │ beta.toolRunner  │   │ messages.stream    │
-     │ + output_config │   │ + 3 Zod tools    │   │ + SSE              │
-     └────────┬────────┘   └─────────┬────────┘   └─────────┬──────────┘
-              │                      │                      │
-              └──────────────────────┼──────────────────────┘
-                                     ▼
-                    ┌─────────────────────────────────┐
-                    │ src/prompts.ts                  │
-                    │  block 0: role + handbook       │  ◀── cache_control
-                    │  block 1: date, channel, email  │      breakpoint
-                    └────────────────┬────────────────┘
-                                     ▼
-                              Claude API (Opus 5)
+```mermaid
+flowchart TB
+    HTTP["HTTP request"] --> Hono["Hono router<br/>(src/server.ts)"]
+
+    Hono --> Triage["/v1/triage<br/>messages.parse + output_config"]
+    Hono --> Resolve["/v1/resolve<br/>beta.toolRunner + 3 Zod tools"]
+    Hono --> Draft["/v1/draft<br/>messages.stream + SSE"]
+
+    Triage --> Prompts
+    Resolve --> Prompts
+    Draft --> Prompts
+
+    Prompts["src/prompts.ts<br/>block 0: role + handbook ◀ cache_control<br/>block 1: date, channel, email"] --> Claude["Claude API (Opus 5)"]
 ```
 
 Every route shares one prompt assembler, one client, one usage accountant, and
@@ -42,10 +33,13 @@ the effect on three different call patterns from one edit.
 
 `src/schemas.ts` defines `TriageSchema` once. It is then used as:
 
-1. the model's output constraint, via `zodOutputFormat()` into
-   `output_config.format`;
-2. the runtime validator, via `messages.parse()`;
-3. the TypeScript type handed to HTTP consumers, via `z.infer`.
+```mermaid
+flowchart LR
+    Schema["TriageSchema<br/>(src/schemas.ts)"]
+    Schema --> Output["output_config.format"]
+    Schema --> Parse["messages.parse()"]
+    Schema --> Types["z.infer → API types"]
+```
 
 **Why this matters.** The most common way teams get burned by LLM JSON is a
 three-layer duplication: a prompt that describes the shape in prose, a
@@ -86,6 +80,17 @@ everything after it.
 
 So `buildSystem()` returns two blocks:
 
+```mermaid
+flowchart TB
+    subgraph prefix["Cached prefix (byte-identical across requests)"]
+        B0["Block 0: role instructions + policy handbook<br/>◀ cache_control breakpoint"]
+    end
+    subgraph volatile["Per-request tail (not cached)"]
+        B1["Block 1: current date, channel, customer email"]
+    end
+    B0 --> B1
+```
+
 | Block | Contents | Varies? | Cached? |
 |---|---|---|---|
 | 0 | role instructions + full policy handbook | never | yes — breakpoint here |
@@ -125,11 +130,14 @@ one entry that thrashes.
 `src/lib/usage.ts` exists because `usage` has four fields and the naive reading
 of it is wrong:
 
-```
-input_tokens                  uncached input       full rate
-cache_creation_input_tokens   written to cache     ~1.25×
-cache_read_input_tokens       served from cache    ~0.1×
-output_tokens                 generated            output rate
+```mermaid
+flowchart LR
+    subgraph input["Input (sum all three)"]
+        Fresh["input_tokens<br/>uncached · full rate"]
+        Write["cache_creation_input_tokens<br/>written to cache · ~1.25×"]
+        Read["cache_read_input_tokens<br/>served from cache · ~0.1×"]
+    end
+    Output["output_tokens<br/>generated · output rate"]
 ```
 
 "Total input" is the sum of the first three. A dashboard that graphs
@@ -178,7 +186,18 @@ cannot tell an outage from a malformed request.
 
 One subtlety specific to `/v1/draft`: once streaming starts, the HTTP status is
 already 200. An upstream failure mid-stream cannot be expressed as a non-2xx
-response, so it is emitted as an in-band `error` event. **Any client consuming
+response, so it is emitted as an in-band `error` event.
+
+```mermaid
+flowchart LR
+    A["Request starts"] --> B["HTTP 200 sent"]
+    B --> C["Stream text / thinking events"]
+    C --> D{"Upstream OK?"}
+    D -->|yes| E["event: done"]
+    D -->|no| F["event: error<br/>(in-band, status stays 200)"]
+```
+
+**Any client consuming
 this route must handle an `error` event, not just a non-2xx status.** This is
 the single most commonly missed piece of streaming integration.
 

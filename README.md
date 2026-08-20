@@ -7,6 +7,13 @@ from**, not just run.
 Four routes, four capabilities, one coherent domain. Each route introduces
 exactly one new idea and builds on the one before it.
 
+```mermaid
+flowchart LR
+    Triage["POST /v1/triage<br/>structured outputs"] --> Resolve["POST /v1/resolve<br/>tool use"]
+    Resolve --> Draft["POST /v1/draft<br/>streaming"]
+    Draft --> Estimate["POST /v1/estimate<br/>token counting"]
+```
+
 ## Three things live here
 
 | | What it is | Where |
@@ -235,6 +242,26 @@ the set is [Lab 6](curriculum/labs/lab-6-evals.md) Q7.
 ---
 
 ## Layout
+
+```mermaid
+flowchart TB
+    subgraph service["THE SERVICE — src/"]
+        Routes["routes/ — one file per capability"]
+        Schemas["schemas.ts — Zod output contract"]
+        Prompts["prompts.ts — cache breakpoints"]
+        Tools["tools/ — fake back office"]
+    end
+    subgraph course["THE COURSE — curriculum/ + website/"]
+        Labs["labs/ + solutions/"]
+        Site["Docusaurus site + playgrounds"]
+    end
+    subgraph storefront["THE SCENARIO — storefront/"]
+        Shop["support form + live triage"]
+        Ops["ops dashboard"]
+    end
+    service --> course
+    service --> storefront
+```
 
 ```
 src/                   THE SERVICE

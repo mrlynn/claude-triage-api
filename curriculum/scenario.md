@@ -269,20 +269,26 @@ not read the handbook. The system exists for this person more than anyone.
 
 Today:
 
-```
-inbound  ->  keyword rules (61%)  ->  human re-triage  ->  queue  ->  agent
+```mermaid
+flowchart LR
+    A[inbound] --> B["keyword rules (61%)"]
+    B --> C[human re-triage]
+    C --> D[queue]
+    D --> E[agent]
 ```
 
 With this service:
 
-```
-inbound  ->  POST /v1/triage      ->  queue  ->  agent
-                    |                            |
-                    +-> requires_human? ---------+
-                    |
-             POST /v1/resolve  (recommendation + trace, agent approves)
-                    |
-             POST /v1/draft    (reply draft, agent edits and sends)
+```mermaid
+flowchart TB
+    A[inbound] --> B["POST /v1/triage"]
+    B --> C[queue]
+    C --> D[agent]
+    B -->|requires_human?| D
+    B --> E["POST /v1/resolve<br/>recommendation + trace"]
+    E --> D
+    B --> F["POST /v1/draft<br/>reply draft"]
+    F --> D
 ```
 
 The human never leaves the loop. The routing read goes away.

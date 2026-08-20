@@ -35,6 +35,18 @@ roughly ten times what you planned. Nobody notices until finance does.
 - Decide where a breakpoint belongs
 - Reason about when caching *loses* money
 
+```mermaid
+flowchart TB
+    subgraph render["API render order (prefix must match byte-for-byte)"]
+        Tools["tools array"]
+        System["system blocks"]
+        Messages["messages"]
+    end
+    Tools --> System --> Messages
+    System --> B0["Block 0: role + handbook<br/>◀ cache_control breakpoint"]
+    System --> B1["Block 1: date, channel, email"]
+```
+
 ---
 
 ## Step 1 — a cold call and a warm one

@@ -18,13 +18,16 @@ Labs 2, 3, and 5 have you edit a file and immediately re-hit an endpoint, so you
 will bounce between them constantly. A learner who tries to do both in one pane
 gets stuck within five minutes.
 
-```
-┌─────────────────────────┬─────────────────────────┐
-│  pane 1                 │  pane 2                 │
-│  npm run dev            │  curl ...               │
-│  (leave it running)     │  npm run eval           │
-│                         │  npx tsx scratch/...    │
-└─────────────────────────┴─────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph pane1["pane 1"]
+        P1["npm run dev<br/>(leave it running)"]
+    end
+    subgraph pane2["pane 2"]
+        P2["curl ..."]
+        P3["npm run eval"]
+        P4["npx tsx scratch/..."]
+    end
 ```
 
 Lab 1 is the exception. It runs standalone scripts with `npx tsx` and needs no

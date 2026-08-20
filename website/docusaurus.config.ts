@@ -70,8 +70,11 @@ const config: Config = {
     // things like <customer_message> and bare braces that MDX would try to
     // parse as JSX and reject.
     format: "detect",
+    mermaid: true,
     hooks: { onBrokenMarkdownLinks: "throw" },
   },
+
+  themes: ["@docusaurus/theme-mermaid"],
 
   i18n: { defaultLocale: "en", locales: ["en"] },
 

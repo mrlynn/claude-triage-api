@@ -34,6 +34,15 @@ eval run against this repo scored 58%, and five of six failures were wrong
 - Detect a miscalibrated confidence score
 - Write a gold case that actually discriminates
 
+```mermaid
+flowchart TB
+    Dataset["evals/dataset.jsonl<br/>(12 gold cases)"]
+    Dataset --> Deterministic["Deterministic scorer<br/>category, urgency, flags"]
+    Dataset --> Judge["LLM-as-judge<br/>tone rubric on drafts"]
+    Deterministic --> Gate["CI gate ≥ 80% accuracy"]
+    Judge --> Report["Variance report<br/>(not a gate)"]
+```
+
 ---
 
 ## Step 1 — run it
