@@ -1,13 +1,46 @@
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
-import Link from "next/link";
 import "./globals.css";
 import SiteHeader from "@/components/SiteHeader";
 
+/*
+  Most arrivals here are cold — a link in a feed, no context. The card the
+  feed renders is the whole first impression, and until now there was no
+  openGraph block at all, so LinkedIn scraped a fragment of the shop copy and
+  the post read as an ad for outdoor gear.
+
+  So the card sells the demo, not the fiction: the title says the shop is not
+  real and the description says what actually happens if you click. The page
+  itself can then keep its in-world voice, because the framing already landed.
+*/
+const DESCRIPTION =
+  "A fictional gear shop with a real support desk behind it. File a complaint and watch Claude read it, rank it, and decide whether a human sees it.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL("https://northwind-outfitters.vercel.app"),
   title: "Northwind Outfitters",
-  description:
-    "Technical outdoor gear, guaranteed for the life of the gear. A fictional storefront built for the Claude API triage workshop.",
+  description: DESCRIPTION,
+  openGraph: {
+    title: "A shop that isn't real. Its support desk is.",
+    description: DESCRIPTION,
+    url: "/",
+    siteName: "Northwind Outfitters",
+    type: "website",
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        alt: "Northwind Outfitters — a fictional shop whose support desk runs a live Claude classifier.",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "A shop that isn't real. Its support desk is.",
+    description: DESCRIPTION,
+    images: ["/og.png"],
+  },
 };
 
 export default function RootLayout({

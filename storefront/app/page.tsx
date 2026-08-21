@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { PRODUCTS, usd } from "@/lib/products";
 import ProductArt from "@/components/ProductArt";
+import TryClassifier from "@/components/TryClassifier";
 import { gearImage } from "@/lib/gear-images";
 
 export default function Home() {
@@ -78,6 +79,15 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/*
+        Directly under the hero, above the merchandise. The order is the
+        argument: the shop establishes that this is a real-feeling place, and
+        then the very next thing breaks the fourth wall and hands the visitor
+        the actual demo. Putting it below the product grid would bury it under
+        the one section a cold arrival has no reason to read.
+      */}
+      <TryClassifier />
 
       <section>
         <div className="mb-5 flex items-baseline justify-between">
