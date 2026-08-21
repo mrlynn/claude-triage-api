@@ -263,7 +263,7 @@ Have 2–3 spare keys on hand. Someone's will not work.
 Worth five minutes at the end of Lab 8, and it lands better than any slide
 about human-in-the-loop.
 
-1. Open the storefront's [support form](https://northwind-outfitters.vercel.app/support)
+1. Open the storefront's [support form](https://northwind.mlynn.dev/support)
    and submit something a human must handle. The reliable one is a casually
    worded injury report — *"the bottle lining flaked and my kid swallowed a
    bit, probably nothing"* — because it is the October 2025 incident from the
@@ -299,7 +299,7 @@ message is redacted — expand the message on a card and show the
 - **Timing.** Step 1 alone is ~6 minutes of wall clock and about $0.55 per
   learner — by far the most expensive command in the course. On a shared key,
   run the three modes once on the projector and have the room read the
-  [batch planner](https://claude-triage-labs.vercel.app/playground/batch)
+  [batch planner](https://triage.mlynn.dev/playground/batch)
   instead.
 
 ## Knowledge checks
@@ -338,7 +338,7 @@ Use these when a group finishes early or the room goes quiet:
 ## Grading the assessment
 
 [`assessment.md`](assessment.md) has 16 questions, and there is an auto-scored
-version at [/assessment](https://claude-triage-labs.vercel.app/assessment)
+version at [/assessment](https://triage.mlynn.dev/assessment)
 that marks sections 1 and 2 and walks learners through self-assessing section
 3. Suggested weighting:
 

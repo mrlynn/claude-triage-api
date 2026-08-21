@@ -4,7 +4,7 @@
 test judgment, not recall.
 
 **There is an auto-scored version at
-[/assessment](https://claude-triage-labs.vercel.app/assessment).** Sections 1
+[/assessment](https://triage.mlynn.dev/assessment).** Sections 1
 and 2 are marked automatically with an explanation on every answer. Section 3
 is not machine-marked, because turning a design-judgment question into four
 options tests recall of one opinion rather than reasoning — those are written

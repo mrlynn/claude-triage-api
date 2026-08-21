@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Layout from "@theme/Layout";
+import { storefront } from "../../urls";
 import Link from "@docusaurus/Link";
 import Heading from "@theme/Heading";
 import InjectionLab from "@site/src/components/InjectionLab";
@@ -34,7 +35,7 @@ export default function InjectionPage(): ReactNode {
           the same rule the service uses, so the structural half of the defence
           is shown with full fidelity. For the behavioural half you need a
           model: the{" "}
-          <Link to="https://northwind-outfitters.vercel.app/playground/injection">
+          <Link to={storefront("/playground/injection")}>
             live playground on the storefront
           </Link>{" "}
           really classifies, defences on or off.

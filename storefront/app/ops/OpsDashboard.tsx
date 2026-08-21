@@ -1,4 +1,5 @@
 "use client";
+import { LABS_URL, labs } from "@/lib/links";
 
 import Link from "next/link";
 import {
@@ -315,14 +316,14 @@ export default function OpsDashboard() {
       <p className="mt-8 text-sm text-pine/65">
         The system behind these numbers is documented at{" "}
         <a
-          href="https://claude-triage-labs.vercel.app"
+          href={LABS_URL}
           className="underline underline-offset-2"
         >
           the Claude API triage labs
         </a>
         . For who Priya is and why these four metrics,{" "}
         <a
-          href="https://claude-triage-labs.vercel.app/docs/scenario"
+          href={labs("/docs/scenario")}
           className="underline underline-offset-2"
         >
           read the scenario

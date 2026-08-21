@@ -5,7 +5,8 @@ import Heading from "@theme/Heading";
 
 import styles from "./index.module.css";
 
-const STOREFRONT = "https://northwind-outfitters.vercel.app";
+import { STOREFRONT_URL as STOREFRONT } from "../urls";
+
 
 /**
  * The landing page assumes nothing.

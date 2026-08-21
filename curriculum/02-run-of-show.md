@@ -39,10 +39,10 @@ Written to be followed by someone who did not build the repo.
       something in it when you demo it on Day 2 and you are not typing into
       silence.
 
-[sf]: https://northwind-outfitters.vercel.app/support
-[inj]: https://northwind-outfitters.vercel.app/playground/injection
-[q]: https://northwind-outfitters.vercel.app/queue
-[ops]: https://northwind-outfitters.vercel.app/ops
+[sf]: https://northwind.mlynn.dev/support
+[inj]: https://northwind.mlynn.dev/playground/injection
+[q]: https://northwind.mlynn.dev/queue
+[ops]: https://northwind.mlynn.dev/ops
 
 ---
 
@@ -212,8 +212,8 @@ about $0.95 of the $4.00 between them, and both are better watched together
 anyway. Point the room at the [model matrix][mm] and [batch planner][bp], which
 render checked-in results from real runs.
 
-[mm]: https://claude-triage-labs.vercel.app/playground/models
-[bp]: https://claude-triage-labs.vercel.app/playground/batch
+[mm]: https://triage.mlynn.dev/playground/models
+[bp]: https://triage.mlynn.dev/playground/batch
 
 ---
 

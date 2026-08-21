@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { labs } from "@/lib/links";
 
 /**
  * The teaching surface.
@@ -51,7 +52,7 @@ export const STAGE_META: Record<
     sub: "Frozen block, then volatile block",
     lab: {
       label: "Lab 5",
-      href: "https://claude-triage-labs.vercel.app/docs/labs/lab-5-prompt-caching",
+      href: labs("/docs/labs/lab-5-prompt-caching"),
     },
   },
   schema: {
@@ -59,7 +60,7 @@ export const STAGE_META: Record<
     sub: "A schema, not a please-return-JSON",
     lab: {
       label: "Lab 2",
-      href: "https://claude-triage-labs.vercel.app/docs/labs/lab-2-structured-outputs",
+      href: labs("/docs/labs/lab-2-structured-outputs"),
     },
   },
   model: {
@@ -67,7 +68,7 @@ export const STAGE_META: Record<
     sub: "The only slow thing here",
     lab: {
       label: "Lab 1",
-      href: "https://claude-triage-labs.vercel.app/docs/labs/lab-1-first-call",
+      href: labs("/docs/labs/lab-1-first-call"),
     },
   },
   parse: {
@@ -79,7 +80,7 @@ export const STAGE_META: Record<
     sub: "Four usage fields, not one",
     lab: {
       label: "Lab 5",
-      href: "https://claude-triage-labs.vercel.app/docs/labs/lab-5-prompt-caching",
+      href: labs("/docs/labs/lab-5-prompt-caching"),
     },
   },
   persist: {
@@ -87,7 +88,7 @@ export const STAGE_META: Record<
     sub: "Only when requires_human is true",
     lab: {
       label: "Lab 8",
-      href: "https://claude-triage-labs.vercel.app/docs/labs/lab-8-trust-boundary",
+      href: labs("/docs/labs/lab-8-trust-boundary"),
     },
   },
 };

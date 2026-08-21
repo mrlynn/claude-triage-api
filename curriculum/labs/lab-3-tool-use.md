@@ -25,7 +25,7 @@ control surface for whether the model checks its facts.
 ---
 
 > **Step through the loop first.** The
-> [agentic loop stepper](https://claude-triage-labs.vercel.app/playground/trace)
+> [agentic loop stepper](https://triage.mlynn.dev/playground/trace)
 > walks a real three-turn run and shows the usage trap in Step 3 visually. No
 > key, no server.
 
