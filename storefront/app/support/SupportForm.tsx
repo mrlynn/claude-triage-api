@@ -8,6 +8,7 @@ import Pipeline, {
   type StageId,
 } from "@/components/Pipeline";
 import FlowDiagram from "@/components/FlowDiagram";
+import { labs } from "@/lib/links";
 
 /**
  * The closed loop.
@@ -298,7 +299,7 @@ export default function SupportForm() {
                 ? "That cache hit is the policy handbook being read from cache instead of paid for again. It is most of the input on every request."
                 : "First call, so the handbook was written to cache. The next one costs about a fifth as much."}{" "}
               <a
-                href="https://claude-triage-labs.vercel.app/playground/queue"
+                href={labs("/playground/queue")}
                 className="underline underline-offset-2"
               >
                 See where a ticket like yours lands in the queue

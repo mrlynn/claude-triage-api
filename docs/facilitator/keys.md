@@ -145,8 +145,8 @@ If you are running a large room on a shared budget, the two levers are:
    together than run alone — the red-team output invites discussion, and Lab 9's
    three-way comparison is a table everyone should read at the same moment.
 2. **Point them at the playgrounds.** The
-   [model matrix](https://claude-triage-labs.vercel.app/playground/models) and
-   [batch planner](https://claude-triage-labs.vercel.app/playground/batch)
+   [model matrix](https://triage.mlynn.dev/playground/models) and
+   [batch planner](https://triage.mlynn.dev/playground/batch)
    render checked-in results from real runs, so the numbers are the same ones
    they would have produced.
 

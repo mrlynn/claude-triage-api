@@ -21,9 +21,9 @@ flowchart LR
 | | What it is | Where |
 |---|---|---|
 | **The service** | `src/` — the Claude API reference implementation the whole course is about. Runs locally; not deployed. | this repo |
-| **The course** | `website/` — Docusaurus site: scenario, setup, ten labs with inline knowledge checks, solutions, instructor guide, auto-scored assessment, and seven interactive playgrounds. | [claude-triage-labs.vercel.app](https://claude-triage-labs.vercel.app) |
+| **The course** | `website/` — Docusaurus site: scenario, setup, ten labs with inline knowledge checks, solutions, instructor guide, auto-scored assessment, and seven interactive playgrounds. | [triage.mlynn.dev](https://triage.mlynn.dev) |
 | **The Python track** | `python/` — the same service on FastAPI, plus [what is actually different](python/labs/deltas.md). Four differences, all of them found by porting rather than recalled. | this repo |
-| **The scenario, made real** | `storefront/` — Next.js shop for the fictional company. Browse the gear, file a support ticket, watch your own words get classified live, then try to break the classifier. Escalated tickets land in a reviewer queue you can read without a credential; Priya's ops dashboard sits on top. | [northwind-outfitters.vercel.app](https://northwind-outfitters.vercel.app) |
+| **The scenario, made real** | `storefront/` — Next.js shop for the fictional company. Browse the gear, file a support ticket, watch your own words get classified live, then try to break the classifier. Escalated tickets land in a reviewer queue you can read without a credential; Priya's ops dashboard sits on top. | [northwind.mlynn.dev](https://northwind.mlynn.dev) |
 
 **Start with [the scenario](curriculum/scenario.md).** The domain is a real
 company with a real problem: 4,100 support tickets a week, manual triage as the

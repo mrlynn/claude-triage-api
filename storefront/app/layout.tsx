@@ -2,6 +2,7 @@ import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import "./globals.css";
 import SiteHeader from "@/components/SiteHeader";
+import { LABS_URL, SITE_URL, labs } from "@/lib/links";
 
 /*
   Most arrivals here are cold — a link in a feed, no context. The card the
@@ -17,7 +18,7 @@ const DESCRIPTION =
   "A fictional gear shop with a real support desk behind it. File a complaint and watch Claude read it, rank it, and decide whether a human sees it.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://northwind-outfitters.vercel.app"),
+  metadataBase: new URL(SITE_URL),
   title: "Northwind Outfitters",
   description: DESCRIPTION,
   openGraph: {
@@ -62,7 +63,7 @@ export default function RootLayout({
           </span>
           <span className="sm:hidden">Fictional shop &mdash; </span>
           <a
-            href="https://claude-triage-labs.vercel.app"
+            href={LABS_URL}
             className="underline underline-offset-2 hover:text-white"
           >
             Claude API triage workshop
@@ -105,14 +106,14 @@ export default function RootLayout({
               Northwind Outfitters does not exist. It is the scenario behind a
               workshop on building with the Claude API &mdash; read{" "}
               <a
-                href="https://claude-triage-labs.vercel.app/docs/scenario"
+                href={labs("/docs/scenario")}
                 className="underline underline-offset-2"
               >
                 who they are and why
               </a>
               , take{" "}
               <a
-                href="https://claude-triage-labs.vercel.app/docs/labs/lab-1-first-call"
+                href={labs("/docs/labs/lab-1-first-call")}
                 className="underline underline-offset-2"
               >
                 the labs

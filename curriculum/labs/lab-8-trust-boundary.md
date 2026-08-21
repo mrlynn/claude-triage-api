@@ -30,7 +30,7 @@ control.
 ---
 
 > **Try to break the live one.** The
-> [injection playground](https://northwind-outfitters.vercel.app/playground/injection)
+> [injection playground](https://northwind.mlynn.dev/playground/injection)
 > runs real payloads against the deployed classifier, with the defences
 > switchable so you can watch the difference.
 
@@ -241,9 +241,9 @@ reads and nothing scores.
 
 Then go and look at what the boundary work made possible. `requires_human` now
 routes: the storefront's `persist` stage writes flagged tickets to a
-[reviewer queue](https://northwind-outfitters.vercel.app/queue), redacted, with
+[reviewer queue](https://northwind.mlynn.dev/queue), redacted, with
 a 30-day TTL — and the
-[ops dashboard](https://northwind-outfitters.vercel.app/ops) carries its first
+[ops dashboard](https://northwind.mlynn.dev/ops) carries its first
 figure sourced from a database rather than from a constants file. A control is
 only worth building if something downstream acts on it.
 

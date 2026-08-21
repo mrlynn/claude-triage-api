@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import SupportForm from "./SupportForm";
+import { labs } from "@/lib/links";
 
 export const metadata = { title: "Support | Northwind Outfitters" };
 
@@ -32,7 +33,7 @@ export default function SupportPage() {
         <p className="mt-2">
           That is four of the six labs, in one form submission.{" "}
           <a
-            href="https://claude-triage-labs.vercel.app/docs/labs/lab-2-structured-outputs"
+            href={labs("/docs/labs/lab-2-structured-outputs")}
             className="underline underline-offset-2"
           >
             Lab 2 builds this schema.

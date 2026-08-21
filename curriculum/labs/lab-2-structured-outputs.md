@@ -24,9 +24,9 @@ Get that field wrong and you ship the 2024 classifier again.
 ---
 
 > **See what the fields are for.** The
-> [inbound queue](https://claude-triage-labs.vercel.app/playground/queue) runs
+> [inbound queue](https://triage.mlynn.dev/playground/queue) runs
 > this schema over twenty tickets and sorts a real support queue with the
-> result, and the [Northwind storefront](https://northwind-outfitters.vercel.app/support) runs it live on
+> result, and the [Northwind storefront](https://northwind.mlynn.dev/support) runs it live on
 > anything you type. Every classification in both came from the code you are
 > about to edit.
 

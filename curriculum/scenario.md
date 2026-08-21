@@ -15,7 +15,7 @@ in the same inbox as "do you ship to Canada," written in the same tone, often
 with the same subject line. Somebody has to notice.
 
 You can try this yourself. The
-[inbound queue](https://claude-triage-labs.vercel.app/playground/queue) shows
+[inbound queue](https://triage.mlynn.dev/playground/queue) shows
 twenty real tickets as an agent sees them, unsorted. One is a parent reporting
 that their child got sick. See how long it takes you to find it.
 
@@ -46,7 +46,7 @@ it.
 
 ## The company
 
-**You can visit them.** [northwind-outfitters.vercel.app](https://northwind-outfitters.vercel.app)
+**You can visit them.** [northwind.mlynn.dev](https://northwind.mlynn.dev)
 is a working storefront: the catalog, the warranty terms, a fake order
 history, and a support form that runs the real triage service on whatever you
 type into it. Everything below is easier to hold once you have looked at the
@@ -196,7 +196,7 @@ an explicit calibration instruction rather than a bare `z.number()`.
 These are the non-negotiables the design had to live inside.
 
 **Budget.** Priya has roughly $4,000 a month for this. There is an
-[interactive model of this](https://claude-triage-labs.vercel.app/playground/cost)
+[interactive model of this](https://triage.mlynn.dev/playground/cost)
 if you would rather move the numbers than read them. At peak that is about
 45,000 tickets, which is a hair under nine cents per ticket end to end. The
 cached prefix — role instructions plus the full handbook — measures about 3,400
@@ -235,7 +235,7 @@ the labs measure what they measure.
 - **Agent-hours on triage.** The number she wants to move to zero so those
   hours go to actually resolving things.
 
-Her dashboard is at [northwind-outfitters.vercel.app/ops](https://northwind-outfitters.vercel.app/ops). The
+Her dashboard is at [northwind.mlynn.dev/ops](https://northwind.mlynn.dev/ops). The
 twelve-month history there is invented and labelled as such; the unit
 economics, the eval accuracy and the category mix are real.
 

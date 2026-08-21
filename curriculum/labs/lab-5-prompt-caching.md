@@ -24,8 +24,8 @@ roughly ten times what you planned. Nobody notices until finance does.
 ---
 
 > **Try it without setting anything up.** The
-> [cost explorer](https://claude-triage-labs.vercel.app/playground/cost) and
-> [spot the cache bug](https://claude-triage-labs.vercel.app/playground/cache)
+> [cost explorer](https://triage.mlynn.dev/playground/cost) and
+> [spot the cache bug](https://triage.mlynn.dev/playground/cache)
 > are interactive versions of Steps 1, 2 and 5. No key, no server.
 
 ## Objectives

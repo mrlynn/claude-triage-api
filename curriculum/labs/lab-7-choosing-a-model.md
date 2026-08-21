@@ -28,7 +28,7 @@ thing in this lab, and you will measure it yourself in Step 3.
 ---
 
 > **See the matrix without running it.** The
-> [model matrix playground](https://claude-triage-labs.vercel.app/playground/models)
+> [model matrix playground](https://triage.mlynn.dev/playground/models)
 > renders a checked-in run, including the per-case disagreement grid.
 
 ## Objectives

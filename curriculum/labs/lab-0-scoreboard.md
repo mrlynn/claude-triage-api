@@ -31,7 +31,7 @@ meet it in minute five rather than in Lab 6.
 
 > **See the queue this scores against.** The twenty tickets in
 > [`data/inbound-queue.json`](../../data/inbound-queue.json) are real inputs to
-> this service, and the [queue playground](https://claude-triage-labs.vercel.app/playground/queue)
+> this service, and the [queue playground](https://triage.mlynn.dev/playground/queue)
 > shows them before and after triage.
 
 ## Objectives

@@ -2,6 +2,7 @@
 
 import { useState, type SyntheticEvent } from "react";
 import Link from "next/link";
+import { labs } from "@/lib/links";
 
 /**
  * The homepage's answer to "what is this and why should I care".
@@ -258,7 +259,7 @@ export default function TryClassifier() {
                 )}
                 <p>
                   <a
-                    href="https://claude-triage-labs.vercel.app/docs/labs/lab-2-structured-outputs"
+                    href={labs("/docs/labs/lab-2-structured-outputs")}
                     className="underline underline-offset-2"
                   >
                     Build this yourself
