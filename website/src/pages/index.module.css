@@ -134,3 +134,104 @@
     display: none;
   }
 }
+
+/* --- Hero additions -------------------------------------------------------
+   The hero now carries an eyebrow above the headline and a quieter third path
+   below the buttons, so the two-button row stays a genuine choice of two
+   rather than a row of three competing calls to action. */
+
+.heroEyebrow {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ifm-color-primary);
+  margin-bottom: 0.9rem;
+}
+
+.heroFoot {
+  margin: 1.5rem 0 0;
+  font-size: 0.9rem;
+  color: var(--ifm-color-emphasis-600);
+}
+
+/* --- The three doors ------------------------------------------------------
+   Equal-height tiles with the button pinned to the bottom: the time budgets
+   are the thing being compared, and a ragged row of buttons makes the reader
+   compare tile heights instead. */
+
+.doorGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: 1rem;
+}
+
+.door {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--ifm-toc-border-color);
+  border-radius: var(--ifm-global-radius);
+  padding: 1.5rem;
+  background: var(--ifm-background-color);
+}
+
+.doorBudget {
+  align-self: flex-start;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ifm-color-primary);
+  border: 1px solid var(--ifm-color-primary);
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.doorTitle {
+  font-size: 1.2rem;
+  margin-bottom: 0.6rem;
+}
+
+.doorBody {
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  /* Pushes the footer down so every button in the row shares a baseline. */
+  flex: 1 1 auto;
+}
+
+.doorFoot {
+  margin-top: 1.25rem;
+}
+
+.doorNote {
+  display: block;
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  color: var(--ifm-color-emphasis-600);
+}
+
+/* --- Playground tiles -----------------------------------------------------
+   A .card that is itself the link, rather than a card containing one. The
+   whole tile is the target, which on touch is the difference between a tap
+   that works and a tap that misses. */
+
+.cardLink {
+  composes: card;
+  display: block;
+  color: var(--ifm-font-color-base);
+  text-decoration: none;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.cardLink:hover {
+  text-decoration: none;
+  border-color: var(--ifm-color-primary);
+  background: var(--ifm-hover-overlay);
+}
+
+.sectionFoot {
+  margin: 1.5rem 0 0;
+  font-size: 0.95rem;
+}
