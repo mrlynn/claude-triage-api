@@ -69,9 +69,30 @@ export interface ProposalView {
 
 export type AssistantEvent =
   | { type: "text"; text: string }
+  | { type: "tool"; name: string; label: string }
   | { type: "proposal"; proposal: ProposalView }
   | { type: "error"; detail: string }
   | { type: "done"; turns: number };
+
+/**
+ * What each tool is called while it runs.
+ *
+ * The first turn of almost every conversation is a tool call, not prose —
+ * `find_learning_step` is described as something to call before naming any
+ * lab. So the honest stream begins with several seconds during which the model
+ * is working and emitting no text, which renders as a chat box that has hung.
+ *
+ * The support pipeline solved this by narrating its stages (Lab 4). Same idea:
+ * say what is happening rather than leaving a spinner to imply it. The label
+ * is sent from here so the two clients do not each keep their own copy of this
+ * mapping and drift apart.
+ */
+const TOOL_LABELS: Record<string, string> = {
+  find_learning_step: "Finding the right lab…",
+  get_current_context: "Checking where you are…",
+  get_support_policy: "Checking the support policy…",
+  propose_support_action: "Preparing a proposal…",
+};
 
 interface ProposalDoc {
   _id: string;
@@ -277,9 +298,20 @@ export async function* runAssistant(input: RunInput): AsyncGenerator<AssistantEv
     // runner resolve that turn and decide whether to run a tool and continue.
     for await (const stream of runner) {
       turns++;
+      // Tools for the PREVIOUS turn ran while the runner was between yields,
+      // so anything they queued is drained here — before this turn's text,
+      // rather than after the whole conversation has finished.
+      while (pending.length) yield pending.shift()!;
+
       for await (const event of stream) {
         if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
           yield { type: "text", text: event.delta.text };
+        }
+        // Announced from the stream itself, so it arrives as the model decides
+        // to call the tool rather than after the tool has already returned.
+        if (event.type === "content_block_start" && event.content_block.type === "tool_use") {
+          const name = event.content_block.name;
+          yield { type: "tool", name, label: TOOL_LABELS[name] ?? "Working…" };
         }
       }
 
