@@ -107,6 +107,14 @@
   --ifm-color-info-contrast-foreground: #2b4a40;
 }
 
+.nw-assistant { position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 50; }
+.nw-assistant__launcher { border: 0; border-radius: 999px; background: var(--nw-pine); color: var(--nw-bone); padding: .8rem 1.05rem; font-weight: 700; box-shadow: 0 10px 28px rgba(31,61,51,.28); cursor: pointer; }
+.nw-assistant__panel { width: min(24rem, calc(100vw - 2rem)); height: min(38rem, calc(100vh - 2rem)); display: flex; flex-direction: column; margin-bottom: .75rem; border: 1px solid rgba(31,61,51,.2); border-radius: .75rem; overflow: hidden; background: var(--ifm-background-color); box-shadow: 0 16px 42px rgba(0,0,0,.28); }
+.nw-assistant__panel header { display: flex; justify-content: space-between; align-items: center; padding: .75rem 1rem; background: var(--nw-pine); color: var(--nw-bone); }.nw-assistant__panel header button { color: inherit; background: transparent; border: 0; font-size: 1.3rem; cursor: pointer; }
+.nw-assistant__body { flex: 1; overflow-y: auto; padding: 1rem; font-size: .88rem; }.nw-assistant__body > button { border: 1px solid rgba(31,61,51,.2); background: transparent; border-radius: .25rem; padding: .4rem; cursor: pointer; }
+.nw-assistant__message { padding: .6rem .7rem; border-radius: .45rem; white-space: pre-wrap; }.nw-assistant__message--user { margin-left: 2.5rem; background: var(--nw-pine); color: var(--nw-bone); }.nw-assistant__message--assistant { margin-right: 1rem; background: var(--ifm-color-emphasis-100); }
+.nw-assistant__panel form { border-top: 1px solid rgba(31,61,51,.15); padding: .65rem; }.nw-assistant__panel textarea { width: 100%; min-height: 3rem; resize: vertical; }.nw-assistant__panel form button { margin-top: .4rem; border: 0; background: var(--nw-pine); color: var(--nw-bone); padding: .35rem .7rem; border-radius: .2rem; }.nw-assistant__panel form a { margin-left: .75rem; font-size: .75rem; }
+
 /* ----------------------------------------------------------------- dark -- */
 
 /*

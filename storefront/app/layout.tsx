@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import SiteHeader from "@/components/SiteHeader";
 import { LABS_URL, SITE_URL, labs } from "@/lib/links";
+import AssistantChat from "@/components/AssistantChat";
 
 /*
   Most arrivals here are cold — a link in a feed, no context. The card the
@@ -129,6 +130,7 @@ export default function RootLayout({
             </p>
           </div>
         </footer>
+        <AssistantChat />
       </body>
     </html>
   );

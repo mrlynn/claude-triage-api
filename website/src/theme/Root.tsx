@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Analytics } from "@vercel/analytics/react";
+import AssistantDock from "@site/src/components/AssistantDock";
 
 /**
  * Wraps every page. Docusaurus has no root layout to edit, so `theme/Root` is
@@ -17,6 +18,7 @@ export default function Root({ children }: { children: ReactNode }): ReactNode {
     <>
       {children}
       <Analytics />
+      <AssistantDock />
     </>
   );
 }
