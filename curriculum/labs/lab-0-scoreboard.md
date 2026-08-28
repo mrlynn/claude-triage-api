@@ -1,6 +1,11 @@
-# Lab 0 — Build the scoreboard first
+# Lab 0 — Establish your evaluation baseline
 
 **Time:** 20 minutes · **Prerequisites:** [Setup](../setup.md) complete
+
+> **What this is:** an evaluation baseline is a recorded “before” measurement
+> for your AI feature. You will run a small, hand-labelled test set, save its
+> result, and use it to tell whether a later prompt or model change actually
+> helped. It is not a competition and it does not grade you.
 
 ## Why this matters
 
@@ -126,7 +131,7 @@ That is not the model being unreliable. That is the model being unsure exactly
 where a careful human would also be unsure — which is the property that makes
 `confidence` useful for threshold routing rather than decorative.
 
-Now find the *other* case that flips. Run the scoreboard twice more.
+Now find the *other* case that flips. Run the baseline evaluation twice more.
 
 **Q4.** This repo scores between 10/12 and 12/12 across runs with nothing
 changed. `eval-11` flips at ~0.46 confidence; `eval-03` flips at ~0.71. One of

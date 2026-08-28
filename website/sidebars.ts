@@ -12,6 +12,7 @@ const sidebars: SidebarsConfig = {
     "scenario",
     "setup",
     "concept-map",
+    "glossary",
     {
       type: "category",
       label: "Labs",

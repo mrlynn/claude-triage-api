@@ -49,6 +49,7 @@ const PAGES = [
   { source: "curriculum/scenario.md", out: "scenario", position: 2 },
   { source: "curriculum/setup.md", out: "setup", position: 3 },
   { source: "curriculum/00-concept-map.md", out: "concept-map", position: 4 },
+  { source: "curriculum/glossary.md", out: "glossary", position: 5 },
   { source: "curriculum/labs/lab-0-scoreboard.md", out: "labs/lab-0-scoreboard", position: 0 },
   { source: "curriculum/labs/lab-1-first-call.md", out: "labs/lab-1-first-call", position: 1 },
   { source: "curriculum/labs/lab-2-structured-outputs.md", out: "labs/lab-2-structured-outputs", position: 2 },
@@ -79,6 +80,52 @@ const PAGES = [
 
 /** repo-relative source path -> site route */
 const routeBySource = new Map(PAGES.map((p) => [p.source, `/docs/${p.out}`]));
+
+// First useful mention per concept gets a glossary link. This is intentionally
+// conservative: a glossary should be a handrail for a newcomer, not turn
+// every paragraph into a chain of blue links. Fenced/inline code, headings,
+// and links already authored in the curriculum are parked before this runs.
+const GLOSSARY_TERMS = [
+  ["Messages API", "messages-api"],
+  ["System prompt", "system-prompt"],
+  ["prompt caching", "prompt-caching"],
+  ["structured outputs", "structured-outputs--schema"],
+  ["content blocks?", "content-block"],
+  ["tool trace", "tool-trace"],
+  ["tool use", "tool-use"],
+  ["prompt injection", "prompt-injection--untrusted-input"],
+  ["untrusted input", "prompt-injection--untrusted-input"],
+  ["rate limit", "rate-limit"],
+  ["context window", "context-window"],
+  ["streaming", "streaming--sse"],
+  ["SSE", "streaming--sse"],
+  ["guardrails?", "guardrail"],
+  ["usage", "usage-and-cost"],
+  ["schemas?", "structured-outputs--schema"],
+  ["tokens?", "token"],
+  ["models?", "model"],
+  ["SDK", "sdk"],
+  ["API", "api"],
+  ["Anthropic", "anthropic"],
+  ["Claude", "claude"],
+  ["evals?", "evaluation--eval"],
+];
+
+function addGlossaryLinks(body, page) {
+  if (page.source === "curriculum/glossary.md") return body;
+  const linked = new Set();
+  return body.split("\n").map((line) => {
+    if (/^\s*(#|<!--)/.test(line)) return line;
+    for (const [term, anchor] of GLOSSARY_TERMS) {
+      if (linked.has(anchor)) continue;
+      const pattern = new RegExp(`\\b(${term})\\b`, "i");
+      if (!pattern.test(line)) continue;
+      line = line.replace(pattern, (match) => `[${match}](/docs/glossary#${anchor})`);
+      linked.add(anchor);
+    }
+    return line;
+  }).join("\n");
+}
 
 /** Turn a link found inside `sourceFile` into a site-appropriate href. */
 function rewriteLink(href, sourceFile) {
@@ -134,11 +181,25 @@ function transform(page) {
     return `@@FENCE${fences.length - 1}@@`;
   });
 
+  const links = [];
   body = body.replace(/\[([^\]]*)\]\(([^)]+)\)/g, (whole, text, href) => {
-    if (/^(https?:|mailto:|\/)/.test(href)) return whole;
-    return `[${text}](${rewriteLink(href, page.source)})`;
+    const rewritten = /^(https?:|mailto:|\/)/.test(href)
+      ? whole
+      : `[${text}](${rewriteLink(href, page.source)})`;
+    links.push(rewritten);
+    return `@@LINK${links.length - 1}@@`;
   });
 
+  const inlineCode = [];
+  body = body.replace(/`[^`]+`/g, (m) => {
+    inlineCode.push(m);
+    return `@@INLINE${inlineCode.length - 1}@@`;
+  });
+
+  body = addGlossaryLinks(body, page);
+
+  body = body.replace(/@@LINK(\d+)@@/g, (_, i) => links[Number(i)]);
+  body = body.replace(/@@INLINE(\d+)@@/g, (_, i) => inlineCode[Number(i)]);
   body = body.replace(/@@FENCE(\d+)@@/g, (_, i) => fences[Number(i)]);
 
   const frontmatter = [

@@ -6,7 +6,8 @@ surprises you.
 This page is the *technical* map. For the domain — who Northwind Outfitters is,
 why they need this, and what happens when it gets a message wrong — read
 [the scenario](scenario.md) first. It is the shorter path to understanding why
-the schema looks the way it does.
+the schema looks the way it does. New to these terms? Keep the
+[plain-English glossary](glossary.md) open as you read.
 
 ---
 
@@ -183,6 +184,6 @@ Three consequences that drive most real optimization work:
 | Let Claude query your systems | [Lab 3](labs/lab-3-tool-use.md) |
 | Stream to a UI | [Lab 4](labs/lab-4-streaming.md) |
 | Cut your bill | [Lab 5](labs/lab-5-prompt-caching.md) |
-| Put a number on the board before you start | [Lab 0](labs/lab-0-scoreboard.md) |
+| Record a before-measurement before you start | [Lab 0: evaluation baseline](labs/lab-0-scoreboard.md) |
 | Know if any of it works | [Lab 6](labs/lab-6-evals.md) |
 | Understand why the code is shaped this way | [../docs/architecture.md](../docs/architecture.md) |

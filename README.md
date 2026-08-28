@@ -61,7 +61,7 @@ learned the Claude API and has a working service to show for it.
 
 | Lab | Topic | Time |
 |---|---|---|
-| [0](curriculum/labs/lab-0-scoreboard.md) | Build the scoreboard first | 20 min |
+| [0](curriculum/labs/lab-0-scoreboard.md) | Establish your evaluation baseline | 20 min |
 | [1](curriculum/labs/lab-1-first-call.md) | Your first call, and reading `usage` | 20 min |
 | [2](curriculum/labs/lab-2-structured-outputs.md) | Structured outputs and schema design | 35 min |
 | [3](curriculum/labs/lab-3-tool-use.md) | Tool use and the agentic loop | 45 min |
@@ -125,6 +125,17 @@ To run the service:
 ```bash
 npm run dev
 ```
+
+To run the whole learning environment (API, course site, and Northwind
+storefront) together:
+
+```bash
+npm run dev:all
+```
+
+It uses `http://localhost:8787` for the API, `http://localhost:3001` for the
+course, and `http://localhost:3002` for the storefront. Override a port with
+`API_PORT`, `COURSE_PORT`, or `STOREFRONT_PORT` when needed.
 
 ```bash
 curl -s localhost:8787/v1/triage -H 'content-type: application/json' -d '{
@@ -214,7 +225,7 @@ silently declines to cache, with no error.
 npm run eval:quick
 ```
 
-The scoreboard: deterministic scoring only, about a minute and $0.09 warm.
+The baseline evaluation: deterministic scoring only, about a minute and $0.09 warm.
 It compares against the checked-in [`evals/baseline.json`](evals/baseline.json)
 and names the cases that moved, which is the number [Lab
 0](curriculum/labs/lab-0-scoreboard.md) puts on the board before any prompt

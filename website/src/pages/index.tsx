@@ -49,7 +49,8 @@ const ROUTES = [
 ];
 
 const LABS = [
-  { to: "/docs/labs/lab-0-scoreboard", n: 1, title: "Your first call, and reading usage", time: "20 min" },
+  { to: "/docs/labs/lab-0-scoreboard", n: 0, title: "Establish your evaluation baseline", time: "20 min" },
+  { to: "/docs/labs/lab-1-first-call", n: 1, title: "Your first call, and reading usage", time: "20 min" },
   { to: "/docs/labs/lab-2-structured-outputs", n: 2, title: "Structured outputs and schema design", time: "35 min" },
   { to: "/docs/labs/lab-3-tool-use", n: 3, title: "Tool use and the agentic loop", time: "45 min" },
   { to: "/docs/labs/lab-4-streaming", n: 4, title: "Streaming and SSE", time: "30 min" },
@@ -75,10 +76,10 @@ const DOORS = [
   },
   {
     budget: "20 minutes",
-    title: "Take the pieces apart",
-    body: "Break the classifier with a prompt injection. Step an agentic loop one tool call at a time. Find the cache bug that quietly doubles a bill. All of it runs in the page.",
-    cta: "Open a playground",
-    to: "/playground",
+    title: "Start from zero",
+    body: "Make one small Claude API request, change it, and learn what a model, message, response, and token actually are before building anything bigger.",
+    cta: "Make your first request",
+    to: "/start",
     note: "Nothing to install. No key.",
   },
   {
@@ -136,9 +137,9 @@ function Hero() {
           </Link>
           <Link
             className="button button--secondary button--lg"
-            to="/docs/labs/lab-0-scoreboard"
+            to="/start"
           >
-            Start Lab 1
+            Start from zero
           </Link>
         </div>
         <p className={styles.heroFoot}>

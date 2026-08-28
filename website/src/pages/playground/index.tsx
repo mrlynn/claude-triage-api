@@ -7,6 +7,13 @@ import { STOREFRONT_URL, storefront } from "../../urls";
 
 const TOOLS = [
   {
+    to: "/mission",
+    title: "Northwind learning mission",
+    blurb:
+      "Make five consequential architecture decisions, predict what changes, then uncover the evidence-backed cost, latency, cache, and safety picture.",
+    lab: "Start here",
+  },
+  {
     to: storefront("/support"),
     title: "The Northwind storefront",
     blurb:

@@ -9,6 +9,7 @@
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",
+    "dev:all": "node scripts/dev-all.mjs",
     "start": "tsx src/server.ts",
     "typecheck": "tsc --noEmit",
     "check:snippets": "tsx scripts/check-snippets.ts",

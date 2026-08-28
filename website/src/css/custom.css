@@ -234,6 +234,35 @@ div[class^="codeBlockContainer"] pre {
   color: inherit;
 }
 
+/* A link in teaching prose must announce itself before a learner happens to
+   hover it. Colour alone is a weak signal; the short, offset underline keeps
+   paragraphs readable while making definitions and next steps discoverable. */
+.markdown a:not(.hash-link) {
+  color: var(--ifm-color-primary-dark);
+  font-weight: 600;
+  text-decoration-line: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 55%, transparent);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.16em;
+}
+
+.markdown a:not(.hash-link):hover {
+  color: var(--ifm-color-primary-darkest);
+  text-decoration-thickness: 2px;
+}
+
+html[data-theme="dark"] .markdown a:not(.hash-link) {
+  color: var(--ifm-color-primary-light);
+}
+
+.markdown a:not(.hash-link):focus-visible,
+.navbar__link:focus-visible,
+.menu__link:focus-visible {
+  border-radius: 2px;
+  outline: 3px solid var(--nw-ember);
+  outline-offset: 3px;
+}
+
 /* Mermaid diagrams — center and give breathing room in prose pages */
 .theme-doc-markdown .mermaid {
   margin: 1.5rem auto;

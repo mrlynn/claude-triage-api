@@ -116,6 +116,8 @@ const config: Config = {
         { type: "doc", docId: "scenario", position: "left", label: "Scenario" },
         { type: "doc", docId: "setup", position: "left", label: "Setup" },
         { type: "doc", docId: "concept-map", position: "left", label: "Concepts" },
+        { to: "/start", position: "left", label: "Start from zero" },
+        { type: "doc", docId: "glossary", position: "left", label: "Glossary" },
         {
           type: "docSidebar",
           sidebarId: "courseSidebar",
@@ -124,6 +126,7 @@ const config: Config = {
         },
         { type: "doc", docId: "architecture", position: "left", label: "Architecture" },
         { to: "/playground", position: "left", label: "Playground" },
+        { to: "/mission", position: "left", label: "Mission" },
         { to: "/assessment", position: "left", label: "Assessment" },
         {
           href: STOREFRONT_URL,
@@ -150,9 +153,11 @@ const config: Config = {
             { label: "Visit the storefront", href: STOREFRONT_URL },
             { label: "Setup", to: "/docs/setup" },
             { label: "Concept map", to: "/docs/concept-map" },
+            { label: "Glossary", to: "/docs/glossary" },
             { label: "Lab 1", to: "/docs/labs/lab-1-first-call" },
             { label: "Assessment", to: "/assessment" },
             { label: "Playground", to: "/playground" },
+            { label: "Northwind mission", to: "/mission" },
           ],
         },
         {
