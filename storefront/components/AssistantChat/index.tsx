@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type Message = { role: "user" | "assistant"; text: string; links?: { label: string; href: string }[] };
 type Proposal = { id: string; action: string; amountUsd?: number; rationale: string; expiresInSeconds: number };
@@ -19,25 +19,50 @@ export default function AssistantChat({ fullPage = false, initialProduct, initia
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const suggestions = useMemo(() => initialProduct ? ["What is the return policy?", `Help with ${initialProduct}`] : ["Where should I start?", "Explain this demo", "I need help with an order"], [initialProduct]);
 
+  const session = useRef<Promise<unknown> | null>(null);
+
+  /**
+   * Start the session once and KEEP the promise, so `send` can await the same
+   * one. The message route answers 401 `session_required` without the cookie,
+   * and nothing else stops a visitor clicking a suggested question before the
+   * fire-and-forget request below has come back.
+   */
+  function ensureSession(): Promise<unknown> {
+    session.current ??= fetch("/api/assistant/session", { method: "POST", credentials: "include" }).catch(() => undefined);
+    return session.current;
+  }
+
   useEffect(() => {
     // The dock must never make the shop fail to render when the optional
     // assistant runtime has not been configured locally.
-    fetch("/api/assistant/session", { method: "POST", credentials: "include" })
-      .catch(() => undefined);
+    ensureSession();
   }, []);
 
   async function send(value = input) {
     const message = value.trim(); if (!message || pending) return;
-    setMessages((prior) => [...prior, { role: "user", text: message }]); setInput(""); setPending(true);
+    setMessages((prior) => [...prior, { role: "user", text: message }, { role: "assistant", text: "" }]); setInput(""); setPending(true);
+    // Every exit path REPLACES the placeholder rather than appending after it.
+    // An empty assistant bubble renders as "Thinking…", so a failure that left
+    // one behind read as a request still in flight — forever.
+    const settle = (text: string) => setMessages((prior) => [...prior.slice(0, -1), { role: "assistant", text }]);
     try {
+      await ensureSession();
       const response = await fetch("/api/assistant/message", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message, surface: "storefront", context: { path: location.pathname, title: document.title, product: initialProduct, orderId: initialOrderId, progress: courseProgress() } }) });
-      if (!response.body) throw new Error("No assistant response");
-      const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = ""; let answer = "";
-      setMessages((prior) => [...prior, { role: "assistant", text: "" }]);
-      for (;;) { const { done, value } = await reader.read(); if (done) break; buffer += decoder.decode(value, { stream: true }); const frames = buffer.split("\n\n"); buffer = frames.pop() ?? "";
-        for (const frame of frames) { const raw = frame.split("\n").find((line) => line.startsWith("data: "))?.slice(6); if (!raw) continue; const event = JSON.parse(raw); if (event.type === "text") { answer += event.text; setMessages((prior) => [...prior.slice(0, -1), { role: "assistant", text: answer }]); } if (event.type === "proposal") setProposal(event.proposal); }
+      if (!response.ok || !response.body) {
+        // Name the failure. `assistant_unavailable` (the runtime is unreachable)
+        // and a 404 (these routes are not deployed) are different problems, and
+        // neither is diagnosable from a bubble that just sits there.
+        const detail = await response.json().catch(() => null);
+        settle(detail?.detail ?? detail?.error ?? `The assistant is unavailable (HTTP ${response.status}).`);
+        return;
       }
-    } catch { setMessages((prior) => [...prior, { role: "assistant", text: "I can’t reach the assistant right now. Please try again shortly." }]); }
+      const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = ""; let answer = "";
+      for (;;) { const { done, value } = await reader.read(); if (done) break; buffer += decoder.decode(value, { stream: true }); const frames = buffer.split("\n\n"); buffer = frames.pop() ?? "";
+        for (const frame of frames) { const raw = frame.split("\n").find((line) => line.startsWith("data: "))?.slice(6); if (!raw) continue; const event = JSON.parse(raw); if (event.type === "text") { answer += event.text; settle(answer); } if (event.type === "error") { answer ||= event.detail ?? "The assistant could not complete that request."; settle(answer); } if (event.type === "proposal") setProposal(event.proposal); }
+      }
+      // A stream that closes having said nothing is still a failure.
+      if (!answer) settle("The assistant returned no answer. Please try again.");
+    } catch { settle("I can’t reach the assistant right now. Please try again shortly."); }
     finally { setPending(false); }
   }
 
