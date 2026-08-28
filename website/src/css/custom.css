@@ -132,7 +132,7 @@
 .nw-assistant__controls { display: flex; align-items: center; gap: .5rem; margin-top: .4rem; }
 .nw-assistant__controls button { border: 0; background: var(--nw-pine); color: var(--nw-bone); padding: .35rem .7rem; border-radius: .2rem; cursor: pointer; }
 .nw-assistant__controls button:disabled { opacity: .4; cursor: default; }
-.nw-assistant__mic { background: transparent !important; color: inherit !important; border: 1px solid rgba(31,61,51,.25) !important; }
+.nw-assistant__mic { display: inline-flex; align-items: center; gap: .35rem; font-size: .75rem; background: transparent !important; color: inherit !important; border: 1px solid rgba(31,61,51,.25) !important; }
 .nw-assistant__mic--on { border-color: var(--nw-ember) !important; color: var(--nw-ember) !important; }
 .nw-assistant__controls a { margin-left: auto; font-size: .75rem; }
 

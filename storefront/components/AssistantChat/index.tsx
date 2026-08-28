@@ -5,6 +5,32 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AssistantMarkdown from "@/components/AssistantMarkdown";
 import { useSpeechInput } from "./useSpeechInput";
 
+/**
+ * Line art rather than the 🎙 emoji, which renders as a full-colour studio
+ * microphone on most platforms and sits at a completely different visual
+ * weight from everything around it. This inherits `currentColor`, so it picks
+ * up the button's own state styling instead of fighting it.
+ */
+function MicIcon() {
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="9" y="2" width="6" height="11" rx="3" />
+      <path d="M5 10v1a7 7 0 0 0 14 0v-1" />
+      <line x1="12" y1="18" x2="12" y2="22" />
+    </svg>
+  );
+}
+
 type Message = { role: "user" | "assistant"; text: string };
 type Proposal = { id: string; action: string; amountUsd?: number; rationale: string; expiresInSeconds: number };
 type Props = { fullPage?: boolean; initialProduct?: string; initialOrderId?: string };
@@ -343,13 +369,14 @@ export default function AssistantChat({ fullPage = false, initialProduct, initia
               aria-pressed={voice.listening}
               aria-label={voice.listening ? "Stop dictating" : "Dictate a question"}
               title={voice.listening ? "Stop dictating" : "Dictate a question"}
-              className={`rounded border px-2 py-1.5 text-sm ${
+              className={`flex items-center gap-1.5 rounded border px-2 py-1.5 text-sm ${
                 voice.listening
                   ? "border-ember bg-ember/15 text-ember"
                   : "border-pine/25 text-pine hover:border-spruce"
               }`}
             >
-              {voice.listening ? "● Listening" : "🎙"}
+              <MicIcon />
+              {voice.listening && <span className="text-xs">Listening</span>}
             </button>
           )}
 

@@ -9,6 +9,31 @@ function assistantApi(): string {
   return window.location.hostname === "localhost" ? "http://localhost:3002" : "https://northwind.mlynn.dev";
 }
 
+/**
+ * Line art rather than the 🎙 emoji, which renders as a full-colour studio
+ * microphone and sits at a completely different visual weight from everything
+ * around it. Inherits `currentColor`, so it follows the button's own state.
+ */
+function MicIcon() {
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="9" y="2" width="6" height="11" rx="3" />
+      <path d="M5 10v1a7 7 0 0 0 14 0v-1" />
+      <line x1="12" y1="18" x2="12" y2="22" />
+    </svg>
+  );
+}
+
 type Chat = { role: "user" | "assistant"; text: string };
 
 export default function AssistantDock() {
@@ -224,7 +249,8 @@ export default function AssistantDock() {
                   aria-label={voice.listening ? "Stop dictating" : "Dictate a question"}
                   className={voice.listening ? "nw-assistant__mic nw-assistant__mic--on" : "nw-assistant__mic"}
                 >
-                  {voice.listening ? "● Listening" : "🎙"}
+                  <MicIcon />
+                  {voice.listening && <span>Listening</span>}
                 </button>
               )}
               <a href="https://northwind.mlynn.dev/assistant">Open full page</a>
