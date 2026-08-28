@@ -9,11 +9,20 @@ this exists.
 | `northwind-mark.svg` | Primary. Dark badge, on light grounds. Also the source for site favicons. |
 | `northwind-mark-inverted.svg` | Light badge, on dark grounds. |
 | `northwind-mark-mono.svg` | One colour, no badge. Inherits `currentColor` when inlined. |
+| `northwind-assistant.svg` | Ask Northwind's avatar. The mark with a speech tail. Dark badge, on light grounds. |
+| `northwind-assistant-inverted.svg` | The same, light badge, on dark grounds — including on the Pine launcher and panel header. |
 
 Favicons for the course site (`website/static/img/favicon.*`) and the
 storefront (`storefront/app/favicon.ico`, `icon.svg`, `apple-icon.png`) are
 generated from `northwind-mark.svg` so the tab icon matches the mark on
 [/brand](https://triage.mlynn.dev/brand).
+
+The assistant avatar is the mark, unmodified — same 64 box, same 15 radius,
+same three summit paths — with a tail swept off the bottom edge. Ask Northwind
+is Northwind speaking, so it wears a speech bubble rather than getting a mascot
+of its own. It carries to about 22px; below that the snowline notch closes up
+and the tail is the only thing still doing work, so prefer the plain mark at
+favicon sizes.
 
 The mark is two overlapping summits with a snowline notch, set in a rounded
 badge. It was picked over three alternatives because it is the only one that

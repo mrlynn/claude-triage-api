@@ -4,6 +4,7 @@ import Link from "@docusaurus/Link";
 import Heading from "@theme/Heading";
 import NorthwindLogo, {
   NorthwindMark,
+  NorthwindAssistantMark,
 } from "@site/src/components/NorthwindLogo";
 
 const PALETTE = [
@@ -134,6 +135,70 @@ export default function BrandPage(): ReactNode {
               <p style={{ margin: "0.75rem 0 0", fontSize: "0.82rem" }}>
                 Mono, follows currentColor
               </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="margin-top--lg">
+          <Heading as="h2">Ask Northwind</Heading>
+          <p>
+            The assistant is not a separate brand. It is the mark — same badge,
+            same summits — with a tail swept off the bottom edge, so the thing
+            answering you is visibly Northwind rather than a mascot bolted on.
+            It carries to about 22px; below that, use the plain mark.
+          </p>
+          <div
+            style={{
+              display: "flex",
+              gap: "1rem",
+              flexWrap: "wrap",
+              alignItems: "stretch",
+            }}
+          >
+            <div
+              style={{
+                padding: "1.5rem",
+                borderRadius: "var(--ifm-global-radius)",
+                border: "1px solid var(--ifm-toc-border-color)",
+                textAlign: "center",
+              }}
+            >
+              <NorthwindAssistantMark size={64} />
+              <p style={{ margin: "0.75rem 0 0", fontSize: "0.82rem" }}>
+                Avatar, on light
+              </p>
+            </div>
+            <div
+              style={{
+                padding: "1.5rem",
+                borderRadius: "var(--ifm-global-radius)",
+                background: "#12211c",
+                textAlign: "center",
+              }}
+            >
+              <NorthwindAssistantMark size={64} variant="inverted" />
+              <p style={{ margin: "0.75rem 0 0", fontSize: "0.82rem", color: "#EAF2EE" }}>
+                Inverted, on dark and on the Pine launcher
+              </p>
+            </div>
+            <div
+              style={{
+                padding: "1.5rem",
+                borderRadius: "var(--ifm-global-radius)",
+                border: "1px solid var(--ifm-toc-border-color)",
+                textAlign: "center",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                gap: "0.6rem",
+              }}
+            >
+              <span style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                <NorthwindAssistantMark size={22} variant="theme" />
+                <NorthwindAssistantMark size={18} variant="theme" />
+                <NorthwindAssistantMark size={14} variant="theme" />
+              </span>
+              <p style={{ margin: 0, fontSize: "0.82rem" }}>22, 18, 14 — where it stops working</p>
             </div>
           </div>
         </section>

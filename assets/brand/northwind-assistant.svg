@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 74" width="64" height="74" role="img" aria-labelledby="nw-title-assistant">
+  <title id="nw-title-assistant">Ask Northwind</title>
+  <!-- northwind-mark.svg's badge, unchanged — same 64 box, same 15 radius —
+       with a tail swept off the bottom edge. The summits below are copied
+       verbatim from the mark rather than rescaled, so the avatar and the
+       favicon are the same drawing. The mark is the brand; this is the brand
+       talking. -->
+  <path d="M15 0 H49 A15 15 0 0 1 64 15 V49 A15 15 0 0 1 49 64 H30 L13 74 L19 64 H15 A15 15 0 0 1 0 49 V15 A15 15 0 0 1 15 0 Z" fill="#1F3D33"/>
+  <path d="M42 26 L58 47 H30 Z" fill="#5C9A86"/>
+  <path d="M26 16 L44 47 H8 Z" fill="#F2EDE4"/>
+  <path d="M26 16 L32 26 L28.5 25 L26 28 L23 24.5 L20 26 Z" fill="#1F3D33"/>
+</svg>
