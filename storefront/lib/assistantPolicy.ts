@@ -49,6 +49,20 @@ export function withinAuthority(action: Pick<SupportAction, "action" | "amountUs
 }
 
 /**
+ * The one line a reviewer reads on the queue board.
+ *
+ * An assistant-filed row has no triage summary, because no classifier ran on
+ * that path. This says what was agreed and — the part that matters on a board
+ * people skim — that nothing has actually been issued. The assistant proposes;
+ * a human still has to do the thing.
+ */
+export function actionSummary(action: SupportAction): string {
+  if (action.action === "escalation") return "Escalation — needs a human decision.";
+  const amount = typeof action.amountUsd === "number" ? ` of $${action.amountUsd.toFixed(2)}` : "";
+  return `Customer confirmed a ${action.action}${amount}. Nothing has been issued — this row is the request to action it.`;
+}
+
+/**
  * The action as policy allows it, which is not always the action requested.
  *
  * Rewriting rather than throwing keeps the conversation going: the customer

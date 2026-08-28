@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { cors, sessionId } from "@/lib/assistant";
 import { runAssistant } from "@/lib/assistantAgent";
+import { checkLimits, clientIp } from "@/lib/ratelimit";
 
 /**
  * One exchange with Ask Northwind, streamed.
@@ -51,6 +52,35 @@ export async function POST(request: Request) {
 
   const id = sessionId(request);
   if (!id) return cors(request, Response.json({ error: "session_required" }, { status: 401 }));
+
+  // The support form has been rate limited since it existed; this route was
+  // not, which made the chat box the cheapest way to spend the project's key.
+  // One conversation is up to six model calls, so it gets its own window
+  // rather than sharing the form's — neither surface should be able to
+  // exhaust the other.
+  const verdict = await checkLimits(clientIp(request.headers), "assistant");
+  if (!verdict.ok) {
+    // "unconfigured" means no database, so no counter, so no spend ceiling —
+    // the limiter fails closed in production by design. Reporting that as
+    // "you are going too fast" would send someone to wait out a minute for a
+    // deployment problem that a minute does not fix.
+    const unconfigured = verdict.reason === "unconfigured";
+    return cors(
+      request,
+      Response.json(
+        {
+          error: unconfigured ? "unconfigured" : "rate_limited",
+          detail: unconfigured
+            ? "Ask Northwind is not configured on this deployment."
+            : "Ask Northwind is busy from your connection. Try again in a minute.",
+        },
+        {
+          status: unconfigured ? 503 : 429,
+          headers: unconfigured ? {} : { "Retry-After": String(verdict.retryAfterSec) },
+        },
+      ),
+    );
+  }
 
   const encoder = new TextEncoder();
   const body = new ReadableStream<Uint8Array>({

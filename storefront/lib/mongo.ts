@@ -123,9 +123,9 @@ export async function ensureIndexes(): Promise<void> {
       db
         .collection("assistant_proposals")
         .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, name: "ttl" }),
-      db
-        .collection("assistant_cases")
-        .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, name: "ttl" }),
+      // A confirmed proposal becomes a row in `escalations`, which already has
+      // its own retention above. There is no third collection: the assistant
+      // files onto the same queue the support form feeds.
     ]);
   })();
   await indexReady;

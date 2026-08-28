@@ -8,8 +8,12 @@ turning a chat box into a second, unbounded product.
 Build **Ask Northwind**, one assistant available in both the course and the
 fictional storefront. On the course it finds the learner's next step and links
 to the canonical lab. In the shop it may investigate a support problem, but it
-may only *propose* an outcome. A separate request records a simulated refund,
-replacement, or escalation after the person confirms it.
+may only *propose* an outcome. When the person confirms, a separate request
+files a real ticket onto the same reviewer queue the support form feeds.
+
+Note where the write lives. The agent has no tool that opens a ticket — giving
+it one would put the write back on the model's say-so, which is the thing this
+whole arrangement exists to prevent. The confirmation is the write.
 
 ## What you will learn
 
@@ -70,8 +74,11 @@ wrong size.** Reach for the Agent SDK when you want what it brings; reach for
 3. Request a $900 refund. The result is an escalation, not an approved refund —
    and it is an escalation because `underAuthority` rewrote it, not because the
    model was persuasive about policy.
-4. Confirm a valid proposed action twice. The first records one simulated case;
-   the second is rejected, and would be even if both arrived at once.
+4. Confirm a valid proposed action twice. The first files one ticket and hands
+   back its id; the second is rejected, and would be even if both arrived at
+   once. Open `/queue` with a token and the ticket is there, marked as having
+   come from the assistant rather than the form — no invented category or
+   confidence score, because no classifier ran on that path.
 5. Open the other site. The same anonymous session is available for seven days,
    and no raw support message was stored at any point.
 

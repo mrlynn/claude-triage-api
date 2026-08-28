@@ -7,8 +7,10 @@ import { MODEL } from "./triage";
 import { pricingFor } from "./pricing.generated";
 import { getDb, ensureIndexes, HAS_MONGO } from "./mongo";
 import { recordCall } from "./telemetry";
-import { sanitizeToolOutput, wrapUntrusted } from "./untrusted";
-import { SUPPORT_POLICY, underAuthority, withinAuthority, type SupportAction } from "./assistantPolicy";
+import { redactPII, sanitizeToolOutput, wrapUntrusted } from "./untrusted";
+import { checkLimits } from "./ratelimit";
+import { insertEscalation } from "./models";
+import { SUPPORT_POLICY, actionSummary, underAuthority, withinAuthority, type SupportAction } from "./assistantPolicy";
 import { findJourney, JOURNEY } from "./assistantJourney";
 
 /**
@@ -108,14 +110,6 @@ interface SessionDoc {
   surface: AssistantSurface;
   progress: string[];
   updatedAt: Date;
-  expiresAt: Date;
-}
-
-interface CaseDoc {
-  _id: string;
-  proposalId: string;
-  action: SupportAction;
-  createdAt: Date;
   expiresAt: Date;
 }
 
@@ -355,8 +349,8 @@ export async function* runAssistant(input: RunInput): AsyncGenerator<AssistantEv
 }
 
 export type ConfirmResult =
-  | { ok: true; action: SupportAction }
-  | { ok: false; reason: "not_found" | "outside_authority" | "unavailable" };
+  | { ok: true; action: SupportAction; ticketId: string }
+  | { ok: false; reason: "not_found" | "outside_authority" | "unavailable" | "rate_limited" };
 
 /**
  * Confirms a proposal, once.
@@ -371,8 +365,16 @@ export type ConfirmResult =
  * policy. The proposal stays consumed even when rejected: a refused
  * confirmation must not be replayable.
  */
-export async function confirmProposal(sessionId: string, proposalId: string): Promise<ConfirmResult> {
+export async function confirmProposal(sessionId: string, proposalId: string, ip: string): Promise<ConfirmResult> {
   if (!HAS_MONGO) return { ok: false, reason: "unavailable" };
+
+  // BEFORE the claim, so a rate-limited confirmation does not burn the
+  // proposal it was not allowed to act on. This board is public and appears in
+  // demos; a chat box that can append to it needs the same budget the support
+  // form has had all along.
+  const verdict = await checkLimits(ip, "assistant");
+  if (!verdict.ok) return { ok: false, reason: "rate_limited" };
+
   await ensureIndexes();
   const db = await getDb();
 
@@ -384,12 +386,31 @@ export async function confirmProposal(sessionId: string, proposalId: string): Pr
   if (!proposal) return { ok: false, reason: "not_found" };
   if (!withinAuthority(proposal.action)) return { ok: false, reason: "outside_authority" };
 
-  await db.collection<CaseDoc>("assistant_cases").insertOne({
-    _id: randomUUID(),
-    proposalId,
-    action: proposal.action,
-    createdAt: new Date(),
-    expiresAt: new Date(Date.now() + ASSISTANT_RETENTION_MS),
+  // The confirmed action becomes a row on the SAME queue the support form
+  // feeds. It used to land in an `assistant_cases` collection that nothing
+  // read — which is the failure this repo already names elsewhere: a flag
+  // nobody routes on is a comment.
+  //
+  // The rationale is model-authored rather than typed by the customer, but it
+  // is redacted anyway. The model just read their message, and "it only
+  // repeats what it was told" is exactly how a card number reaches a database.
+  const { text, redactions } = redactPII(proposal.action.rationale);
+  const ticketId = await insertEscalation({
+    channel: "assistant",
+    message_redacted: `${actionSummary(proposal.action)}\n\n${text}`,
+    redactions,
+    source: "assistant",
+    assistant: {
+      proposalId,
+      action: proposal.action.action,
+      amountUsd: proposal.action.amountUsd,
+      rationale: text,
+    },
+    model: MODEL,
+    // The conversation's cost was already recorded to /ops when it happened.
+    // Charging it again here would double-count it.
+    cost_usd: 0,
   });
-  return { ok: true, action: proposal.action };
+
+  return { ok: true, action: proposal.action, ticketId };
 }

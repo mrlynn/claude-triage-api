@@ -33,6 +33,32 @@ import type { TriageResult } from "./triage";
 
 export type EscalationStatus = "new" | "claimed" | "resolved" | "dismissed";
 
+/**
+ * Which path produced a row.
+ *
+ * OPTIONAL RATHER THAN DEFAULTED, because rows written before the assistant
+ * could file anything genuinely do not know, and back-filling them with
+ * "form" would be inventing a fact to avoid a `?`. Absent reads as the form.
+ */
+export type EscalationSource = "form" | "assistant";
+
+/**
+ * What the assistant proposed and a customer confirmed.
+ *
+ * A queue row from the assistant carries this INSTEAD of a triage block, not
+ * as well as one. No classifier ran on this path — the assistant investigated,
+ * proposed, and a human agreed — and synthesising a `category` and a
+ * `confidence` to fill the shape would put a number on the board that nothing
+ * computed. An empty column is honest; a fabricated one is not.
+ */
+export interface AssistantTicket {
+  proposalId: string;
+  action: "refund" | "replacement" | "escalation";
+  amountUsd?: number;
+  /** The model's stated policy basis, redacted like any other stored text. */
+  rationale: string;
+}
+
 export interface EscalationDoc {
   /** Human-quotable, e.g. NW-Q-4817. Shown to the customer on submit. */
   _id: string;
@@ -45,7 +71,11 @@ export interface EscalationDoc {
    */
   message_redacted: string;
   redactions: Redaction[];
-  triage: TriageResult;
+  /** Present on form-submitted rows: the classification that routed it here. */
+  triage?: TriageResult;
+  source?: EscalationSource;
+  /** Present on assistant-filed rows, in place of `triage`. */
+  assistant?: AssistantTicket;
   status: EscalationStatus;
   claimed_by?: string;
   claimed_at?: Date;

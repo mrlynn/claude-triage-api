@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { SUPPORT_POLICY, underAuthority, withinAuthority } from "./assistantPolicy";
+import { SUPPORT_POLICY, actionSummary, underAuthority, withinAuthority } from "./assistantPolicy";
 import { JOURNEY, findJourney } from "./assistantJourney";
 
 /**
@@ -33,6 +33,19 @@ test("an escalation carries no amount and is always in policy", () => {
 test("a negative or non-finite amount is outside authority", () => {
   assert.equal(withinAuthority({ action: "refund", amountUsd: Number.NaN }), false);
   assert.equal(withinAuthority({ action: "refund", amountUsd: -5 }), false);
+});
+
+test("a filed ticket says nothing was actually issued", () => {
+  // The row lands on the same board as a real support escalation, so it has to
+  // be unambiguous that the assistant proposed and a human still has to act.
+  const summary = actionSummary({ action: "refund", amountUsd: 50, rationale: "Late delivery." });
+  assert.match(summary, /\$50\.00/);
+  assert.match(summary, /Nothing has been issued/);
+});
+
+test("an escalation summary does not invent an amount", () => {
+  const summary = actionSummary({ action: "escalation", rationale: "Above authority." });
+  assert.equal(summary.includes("$"), false);
 });
 
 test("learning retrieval returns canonical Lab 3 for tool-use questions", () => {
