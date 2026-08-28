@@ -67,6 +67,18 @@ export default function AssistantChat({ fullPage = false, initialProduct, initia
   const scroller = useRef<HTMLDivElement | null>(null);
   const box = useRef<HTMLTextAreaElement | null>(null);
   const voiceBase = useRef("");
+  /**
+   * Whether the transcript should follow new content.
+   *
+   * Tracked from the scroll event rather than measured in the effect, because
+   * by the time an effect runs React has already painted the new message — so
+   * `scrollHeight` includes it, the distance to the bottom looks huge, and a
+   * "am I near the bottom" test computed there concludes the reader had
+   * scrolled away. That is backwards: it declines to scroll exactly when
+   * something new has arrived. This ref answers the question from the last
+   * position the reader actually chose.
+   */
+  const stick = useRef(true);
 
   /**
    * Start the session once and KEEP the promise, so `send` can await the same
@@ -87,13 +99,11 @@ export default function AssistantChat({ fullPage = false, initialProduct, initia
     ensureSession();
   }, []);
 
-  // Follow the answer as it streams. Anchored to the bottom only — a reader
-  // who has scrolled up to re-read something is not dragged back down.
+  // Follow new content, unless the reader has deliberately scrolled up to
+  // re-read something — in which case they are not dragged back down.
   useEffect(() => {
     const el = scroller.current;
-    if (!el) return;
-    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
-    if (nearBottom) el.scrollTop = el.scrollHeight;
+    if (el && stick.current) el.scrollTop = el.scrollHeight;
   }, [messages, status, proposal]);
 
   useEffect(() => {
@@ -116,6 +126,9 @@ export default function AssistantChat({ fullPage = false, initialProduct, initia
     const message = value.trim();
     if (!message || pending) return;
 
+    // Sending is an explicit request to see the bottom. Whatever the reader was
+    // looking at before, they want their own question now.
+    stick.current = true;
     setMessages((prior) => [...prior, { role: "user", text: message }, { role: "assistant", text: "" }]);
     setInput("");
     if (box.current) box.current.style.height = "auto";
@@ -257,6 +270,14 @@ export default function AssistantChat({ fullPage = false, initialProduct, initia
 
       <div
         ref={scroller}
+        // Re-evaluated on every scroll, including the programmatic ones: after
+        // an auto-scroll the reader is at the bottom, so this stays true and
+        // the transcript keeps following. Scrolling up sets it false and the
+        // following stops until they come back down.
+        onScroll={(event) => {
+          const el = event.currentTarget;
+          stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+        }}
         // Announced politely so a screen reader hears the answer arrive rather
         // than being interrupted on every streamed token.
         aria-live="polite"

@@ -51,6 +51,16 @@ export default function AssistantDock() {
   const scroller = useRef<HTMLDivElement | null>(null);
   const box = useRef<HTMLTextAreaElement | null>(null);
   const voiceBase = useRef("");
+  /**
+   * Whether the transcript should follow new content.
+   *
+   * Tracked from the scroll event rather than measured in the effect: by the
+   * time an effect runs React has already painted the new message, so
+   * `scrollHeight` includes it and a "near the bottom" test computed there
+   * concludes the reader had scrolled away — declining to scroll exactly when
+   * something new arrived.
+   */
+  const stick = useRef(true);
 
   /**
    * Start the session once and KEEP the promise, so `send` can await the same
@@ -72,11 +82,10 @@ export default function AssistantDock() {
     ensureSession();
   }, []);
 
-  // Follow the answer as it streams, unless the reader has scrolled up.
+  // Follow new content, unless the reader has deliberately scrolled up.
   useEffect(() => {
     const el = scroller.current;
-    if (!el) return;
-    if (el.scrollHeight - el.scrollTop - el.clientHeight < 120) el.scrollTop = el.scrollHeight;
+    if (el && stick.current) el.scrollTop = el.scrollHeight;
   }, [chat, status]);
 
   useEffect(() => {
@@ -93,6 +102,9 @@ export default function AssistantDock() {
     const message = text.trim();
     if (!message || busy) return;
 
+    // Sending is an explicit request to see the bottom. Whatever the reader was
+    // looking at before, they want their own question now.
+    stick.current = true;
     setChat((items) => [...items, { role: "user", text: message }, { role: "assistant", text: "" }]);
     setInput("");
     if (box.current) box.current.style.height = "auto";
@@ -183,7 +195,18 @@ export default function AssistantDock() {
             </button>
           </header>
 
-          <div className="nw-assistant__body" ref={scroller} aria-live="polite" aria-atomic="false">
+          <div
+            className="nw-assistant__body"
+            ref={scroller}
+            // Re-evaluated on every scroll, including programmatic ones: after
+            // an auto-scroll the reader is at the bottom, so this stays true.
+            onScroll={(event) => {
+              const el = event.currentTarget;
+              stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+            }}
+            aria-live="polite"
+            aria-atomic="false"
+          >
             {chat.length === 0 && (
               <>
                 <p>I can explain this page, find the right next lab, or help with the fictional Northwind store.</p>
