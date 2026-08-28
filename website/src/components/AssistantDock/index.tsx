@@ -1,32 +1,61 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import AssistantMarkdown from "@site/src/components/AssistantMarkdown";
+import { useSpeechInput } from "./useSpeechInput";
 
 function assistantApi(): string {
   // The course and storefront run on separate local ports in `npm run dev:all`.
   // Production uses the shared Northwind origin; never attempt a production
   // cross-origin call while a learner is running the workshop locally.
-  return window.location.hostname === "localhost"
-    ? "http://localhost:3002"
-    : "https://northwind.mlynn.dev";
+  return window.location.hostname === "localhost" ? "http://localhost:3002" : "https://northwind.mlynn.dev";
 }
+
+/**
+ * Line art rather than the 🎙 emoji, which renders as a full-colour studio
+ * microphone and sits at a completely different visual weight from everything
+ * around it. Inherits `currentColor`, so it follows the button's own state.
+ */
+function MicIcon() {
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="9" y="2" width="6" height="11" rx="3" />
+      <path d="M5 10v1a7 7 0 0 0 14 0v-1" />
+      <line x1="12" y1="18" x2="12" y2="22" />
+    </svg>
+  );
+}
+
 type Chat = { role: "user" | "assistant"; text: string };
 
 export default function AssistantDock() {
-  const [open, setOpen] = useState(false); const [input, setInput] = useState(""); const [chat, setChat] = useState<Chat[]>([]); const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [input, setInput] = useState("");
+  const [chat, setChat] = useState<Chat[]>([]);
+  const [busy, setBusy] = useState(false);
   // What the agent is doing while it is not yet saying anything. The first
   // turn is almost always a tool call, so without this the panel sits on
   // "Thinking…" through the part of the request that takes the longest.
   const [status, setStatus] = useState<string | null>(null);
+
   const session = useRef<Promise<unknown> | null>(null);
+  const abort = useRef<AbortController | null>(null);
+  const scroller = useRef<HTMLDivElement | null>(null);
+  const box = useRef<HTMLTextAreaElement | null>(null);
+  const voiceBase = useRef("");
 
   /**
-   * Start the session once and KEEP the promise.
-   *
-   * The message route answers 401 `session_required` without the cookie, and
-   * the effect below does not block the first click — so a learner who clicks
-   * the suggested question immediately used to race the session into a 401.
-   * Awaiting the same promise in `send` closes that window without making the
-   * dock wait on the network before it will render.
+   * Start the session once and KEEP the promise, so `send` can await the same
+   * one. The message route answers 401 `session_required` without the cookie,
+   * and the panel's suggested question is clickable immediately.
    */
   function ensureSession(): Promise<unknown> {
     session.current ??= fetch(`${assistantApi()}/api/assistant/session`, {
@@ -38,38 +67,200 @@ export default function AssistantDock() {
 
   useEffect(() => {
     // Session creation is an enhancement, not a prerequisite for reading a
-    // lab. A local course server should remain usable when its companion shop
-    // or private agent runtime is not running.
+    // lab. A local course server should remain usable when the companion shop
+    // is not running.
     ensureSession();
   }, []);
 
+  // Follow the answer as it streams, unless the reader has scrolled up.
+  useEffect(() => {
+    const el = scroller.current;
+    if (!el) return;
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 120) el.scrollTop = el.scrollHeight;
+  }, [chat, status]);
+
+  useEffect(() => {
+    if (open) box.current?.focus();
+  }, [open]);
+
+  const onTranscript = useCallback((text: string) => setInput(voiceBase.current + text), []);
+  const onVoiceStart = useCallback(() => {
+    voiceBase.current = input.trim() ? `${input.trim()} ` : "";
+  }, [input]);
+  const voice = useSpeechInput({ onStart: onVoiceStart, onTranscript });
+
   async function send(text = input) {
-    if (!text.trim() || busy) return;
-    setChat((items) => [...items, { role: "user", text }, { role: "assistant", text: "" }]);
-    setInput(""); setBusy(true);
+    const message = text.trim();
+    if (!message || busy) return;
+
+    setChat((items) => [...items, { role: "user", text: message }, { role: "assistant", text: "" }]);
+    setInput("");
+    if (box.current) box.current.style.height = "auto";
+    setBusy(true);
+
     // Every exit path REPLACES the placeholder. An empty assistant bubble
-    // renders as "Thinking…", so any path that leaves one behind is a spinner
-    // that never resolves — which is what a failed request used to look like.
-    // Settling also clears the tool status: once there are words in the bubble,
-    // "Finding the right lab…" is describing something that already happened.
-    const settle = (message: string) => { setStatus(null); setChat((items) => [...items.slice(0, -1), { role: "assistant", text: message }]); };
+    // renders as "Thinking…", so a failure that left one behind read as a
+    // request still in flight — forever.
+    const settle = (value: string) => {
+      setStatus(null);
+      setChat((items) => [...items.slice(0, -1), { role: "assistant", text: value }]);
+    };
+
+    const controller = new AbortController();
+    abort.current = controller;
+    let answer = "";
+
     try {
       await ensureSession();
-      const response = await fetch(`${assistantApi()}/api/assistant/message`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text, surface: "course", context: { path: location.pathname, title: document.title, progress: [] } }) });
+      const response = await fetch(`${assistantApi()}/api/assistant/message`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          message,
+          surface: "course",
+          context: { path: location.pathname, title: document.title, progress: [] },
+        }),
+      });
+
       if (!response.ok || !response.body) {
-        // Say WHICH failure it is. A storefront without the assistant routes
-        // deployed (404) and a storefront that cannot reach the agent runtime
-        // (503) are different problems with the same symptom, and neither is
-        // diagnosable from a bubble that just sits there.
         const detail = await response.json().catch(() => null);
         settle(detail?.detail ?? detail?.error ?? `Ask Northwind is unavailable (HTTP ${response.status}).`);
         return;
       }
-      const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = ""; let answer = "";
-      for (;;) { const { done, value } = await reader.read(); if (done) break; buffer += decoder.decode(value, { stream: true }); const frames = buffer.split("\n\n"); buffer = frames.pop() ?? ""; for (const frame of frames) { const raw = frame.split("\n").find((line) => line.startsWith("data: "))?.slice(6); if (!raw) continue; const event = JSON.parse(raw); if (event.type === "text") { answer += event.text; settle(answer); } if (event.type === "tool") setStatus(event.label); if (event.type === "error") { answer ||= event.detail ?? "The assistant could not complete that request."; settle(answer); } } }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const frames = buffer.split("\n\n");
+        buffer = frames.pop() ?? "";
+        for (const frame of frames) {
+          const raw = frame.split("\n").find((line) => line.startsWith("data: "))?.slice(6);
+          if (!raw) continue;
+          const event = JSON.parse(raw);
+          if (event.type === "text") {
+            answer += event.text;
+            settle(answer);
+          }
+          if (event.type === "tool") setStatus(event.label);
+          if (event.type === "error") {
+            answer ||= event.detail ?? "The assistant could not complete that request.";
+            settle(answer);
+          }
+        }
+      }
       // A stream that closes having said nothing is still a failure.
       if (!answer) settle("The assistant returned no answer. Please try again.");
-    } catch { settle("I can’t reach Ask Northwind right now."); } finally { setBusy(false); setStatus(null); }
+    } catch (error) {
+      // Stopping is a choice, not a fault. Keep whatever had already arrived.
+      if ((error as Error)?.name === "AbortError") settle(answer || "Stopped.");
+      else settle("I can’t reach Ask Northwind right now.");
+    } finally {
+      setBusy(false);
+      setStatus(null);
+      abort.current = null;
+    }
   }
-  return <div className={open ? "nw-assistant nw-assistant--open" : "nw-assistant"}>{open && <div className="nw-assistant__panel"><header><strong>Ask Northwind</strong><button onClick={() => setOpen(false)} aria-label="Close">×</button></header><div className="nw-assistant__body">{chat.length === 0 && <><p>I can explain this page, find the right next lab, or help with the fictional Northwind store.</p><button onClick={() => send("What should I do next in the course?")}>What should I do next?</button></>}{chat.map((item, i) => <div className={`nw-assistant__message nw-assistant__message--${item.role}`} key={i}>{item.role === "assistant" ? (item.text ? <AssistantMarkdown>{item.text}</AssistantMarkdown> : <span className="nw-assistant__status">{status ?? "Thinking…"}</span>) : item.text}</div>)}</div><form onSubmit={(event) => { event.preventDefault(); send(); }}><textarea value={input} onChange={(event) => setInput(event.target.value)} placeholder="Ask a question…" maxLength={2000}/><button disabled={busy || !input.trim()}>{busy ? "Thinking…" : "Send"}</button><a href="https://northwind.mlynn.dev/assistant">Open full page</a></form></div>}<button className="nw-assistant__launcher" onClick={() => setOpen(!open)}>{open ? "Close" : "Ask Northwind"}</button></div>;
+
+  return (
+    <div
+      className={open ? "nw-assistant nw-assistant--open" : "nw-assistant"}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") setOpen(false);
+      }}
+    >
+      {open && (
+        <div className="nw-assistant__panel">
+          <header>
+            <strong>Ask Northwind</strong>
+            <button onClick={() => setOpen(false)} aria-label="Close">
+              ×
+            </button>
+          </header>
+
+          <div className="nw-assistant__body" ref={scroller} aria-live="polite" aria-atomic="false">
+            {chat.length === 0 && (
+              <>
+                <p>I can explain this page, find the right next lab, or help with the fictional Northwind store.</p>
+                <button onClick={() => send("What should I do next in the course?")}>What should I do next?</button>
+              </>
+            )}
+            {chat.map((item, i) => (
+              <div className={`nw-assistant__message nw-assistant__message--${item.role}`} key={i}>
+                {item.role === "assistant" ? (
+                  item.text ? (
+                    <AssistantMarkdown>{item.text}</AssistantMarkdown>
+                  ) : (
+                    <span className="nw-assistant__status">{status ?? "Thinking…"}</span>
+                  )
+                ) : (
+                  item.text
+                )}
+              </div>
+            ))}
+          </div>
+
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              send();
+            }}
+          >
+            <textarea
+              ref={box}
+              value={input}
+              onChange={(event) => {
+                setInput(event.target.value);
+                event.target.style.height = "auto";
+                event.target.style.height = `${Math.min(event.target.scrollHeight, 160)}px`;
+              }}
+              onKeyDown={(event) => {
+                // Enter sends; Shift+Enter is a newline. Skipped while an IME
+                // is composing, or picking a candidate in Japanese or Chinese
+                // would submit the half-finished word instead of accepting it.
+                if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+                  event.preventDefault();
+                  send();
+                }
+              }}
+              placeholder={voice.listening ? "Listening…" : "Ask a question…  (Enter to send)"}
+              maxLength={2000}
+            />
+            <div className="nw-assistant__controls">
+              {busy ? (
+                <button type="button" onClick={() => abort.current?.abort()}>
+                  Stop
+                </button>
+              ) : (
+                <button type="submit" disabled={!input.trim()}>
+                  Send
+                </button>
+              )}
+              {voice.supported && (
+                <button
+                  type="button"
+                  onClick={voice.toggle}
+                  aria-pressed={voice.listening}
+                  aria-label={voice.listening ? "Stop dictating" : "Dictate a question"}
+                  className={voice.listening ? "nw-assistant__mic nw-assistant__mic--on" : "nw-assistant__mic"}
+                >
+                  <MicIcon />
+                  {voice.listening && <span>Listening</span>}
+                </button>
+              )}
+              <a href="https://northwind.mlynn.dev/assistant">Open full page</a>
+            </div>
+          </form>
+        </div>
+      )}
+      <button className="nw-assistant__launcher" onClick={() => setOpen(!open)}>
+        {open ? "Close" : "Ask Northwind"}
+      </button>
+    </div>
+  );
 }
