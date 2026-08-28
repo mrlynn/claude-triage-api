@@ -1,59 +1,81 @@
 # Lab 10 — Ask Northwind
 
-You have shipped a support API. Now give the learner a way to ask for help
-without turning a chat box into a second, unbounded product.
+You have shipped a support API. Now give people a way to ask for help without
+turning a chat box into a second, unbounded product.
 
 ## The capstone
 
 Build **Ask Northwind**, one assistant available in both the course and the
-fictional storefront. On the course it should find the learner's next step and
-link to the canonical lab. In the store it may investigate a support problem,
-but it must only propose an outcome. A separate server endpoint records a
-simulated refund, replacement, or escalation after the person confirms it.
+fictional storefront. On the course it finds the learner's next step and links
+to the canonical lab. In the shop it may investigate a support problem, but it
+may only *propose* an outcome. A separate request records a simulated refund,
+replacement, or escalation after the person confirms it.
 
 ## What you will learn
 
-- Run Anthropic's Agent SDK in an isolated service rather than a browser or a
-  serverless request handler.
-- Give an agent narrow, typed MCP tools instead of filesystem or shell access.
+- Run an agentic loop with `messages.toolRunner` — the same loop as Lab 3, with
+  the turn cap and usage accounting that Lab 3 explains.
+- Give an agent narrow, typed tools rather than broad capability.
 - Carry only minimal, trusted page context across two sites.
-- Stream a conversation, bound turns and costs, and persist anonymous sessions
+- Stream a conversation, bound turns and cost, and persist anonymous sessions
   for a short, explicit retention period.
 - Treat confirmation and authority as application code, not model behaviour.
 
 ## The boundary
 
-The course and shop call the storefront facade. It sets an opaque, httpOnly
-seven-day session cookie for `.mlynn.dev`, checks the allowed origins, and
-forwards the request to the private agent runtime. The browser never sees an
-Anthropic key or the agent-service credential.
+The course and the shop both call the storefront's `/api/assistant/*` routes.
+They set an opaque, httpOnly seven-day session cookie for `.mlynn.dev`, check
+the allowed origins, and run the loop server-side. The browser never sees an
+Anthropic key.
 
-The runtime disables built-in tools. Its only MCP tools are `find_learning_step`
-and `get_current_context`, plus `get_support_policy` and
-`propose_support_action` on the storefront. Customer text is untrusted data,
-never instructions — it arrives wrapped by the same `wrapUntrusted` you built
-in Lab 8, because an agent holding tools is a worse place to lose that argument
-than a single classification call. The agent has six turns; it may explain,
-look up, and propose, but it cannot mutate a record itself.
+The agent's whole surface is `find_learning_step` and `get_current_context`,
+plus `get_support_policy` and `propose_support_action` on the storefront. The
+course surface is not *told* to avoid support actions — it is not given the
+tools. Withholding a capability is a stronger guarantee than instructing a
+model not to use one.
 
-Note what `propose_support_action` does with a refund above the ceiling: it
-does not reject the call, it records an escalation. Authority is re-derived in
-application code both when the proposal is written and again when it is
-confirmed, so the outcome is the same whether the model understood the policy
-or not.
+Customer text arrives wrapped by the same `wrapUntrusted` you built in Lab 8,
+and so does every tool result: `get_current_context` returns a page title the
+browser supplied, and instruction-shaped text in a tool result arrives wearing
+the authority of a system-provided fact. That is the second-order injection
+people forget after carefully escaping the user's own message.
+
+## Sizing the dependency
+
+This assistant does not use Anthropic's Agent SDK, and the reason is the most
+portable lesson in the lab.
+
+The Agent SDK is built for an agent that reads and edits a real filesystem,
+runs shell commands, carries memory across sessions, and dispatches subagents.
+It ships a ~213MB native binary and spawns `/bin/bash`, so it needs an
+isolated, containerised runtime — it cannot live in a serverless function,
+which caps at 250MB and has a read-only filesystem.
+
+An earlier version of this lab did exactly that, and configured the SDK with
+`tools: []`, `settingSources: []` and memory disabled — switching off
+everything the SDK exists to provide, then using what remained as a loop over
+four typed functions. That loop is `messages.toolRunner`. The container, the
+cloud account and the second deployment bought nothing this assistant uses.
+
+**When you find yourself disabling most of a dependency, the dependency is the
+wrong size.** Reach for the Agent SDK when you want what it brings; reach for
+`toolRunner` when you want a model to call four functions of yours.
 
 ## Check your work
 
-1. From Lab 4, ask what to do next. The assistant links to the next relevant
-   canonical course page rather than inventing a path.
+1. From Lab 4, ask what to do next. The assistant links to a real course page
+   rather than inventing a path — the href comes from the tool, not the model.
 2. Ask a storefront support question containing an instruction to reveal its
-   tools. It refuses the instruction and remains in role.
-3. Request a $900 refund. The result is an escalation, not an approved refund.
-4. Confirm a valid proposed action twice. The first confirmation records one
-   simulated case; the second is rejected.
-5. Open the other site. The same anonymous session remains available for seven
-   days, but no raw support message is retained beyond that boundary.
+   tools. It stays in role.
+3. Request a $900 refund. The result is an escalation, not an approved refund —
+   and it is an escalation because `underAuthority` rewrote it, not because the
+   model was persuasive about policy.
+4. Confirm a valid proposed action twice. The first records one simulated case;
+   the second is rejected, and would be even if both arrived at once.
+5. Open the other site. The same anonymous session is available for seven days,
+   and no raw support message was stored at any point.
 
-> **Why a separate service?** The Agent SDK supervises a Claude subprocess and
-> stores session state. It needs an isolated, containerized runtime; a
-> serverless storefront route is a facade, not the agent host.
+> **Why does confirmation re-check the policy?** Because a stored proposal is
+> not evidence that it was ever within policy. Re-deriving authority on the
+> confirming request is what makes the check useful when the model was
+> mistaken, or when someone talked it into something fifteen minutes ago.

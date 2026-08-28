@@ -32,6 +32,19 @@ export function wrapUntrusted(text: string, tag = "customer_message"): string {
   return `<${tag}>\n${escaped}\n</${tag}>`;
 }
 
+/**
+ * Neutralizes instruction-shaped text found in TOOL OUTPUT.
+ *
+ * Tool results are not trusted either. The assistant's `get_current_context`
+ * returns a page title the browser supplied, and anything instruction-shaped in
+ * it would arrive wearing the authority of a system-provided fact rather than
+ * of a customer message. That is the second-order injection people forget
+ * about after carefully escaping the user's own input.
+ */
+export function sanitizeToolOutput(text: string): string {
+  return text.replace(/</g, "&lt;");
+}
+
 /** Luhn, so a card number redacts and an order id does not. */
 function passesLuhn(digits: string): boolean {
   let sum = 0;

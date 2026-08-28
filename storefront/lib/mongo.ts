@@ -109,6 +109,23 @@ export async function ensureIndexes(): Promise<void> {
       db
         .collection("usage_daily")
         .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, name: "ttl" }),
+
+      // Ask Northwind. All three expire on a date the document carries, so the
+      // seven-day retention the capstone promises is enforced by the database
+      // rather than by a sentence in a lab. Sessions record which surface
+      // someone is on and how far through the course they are — never what
+      // they typed — so there is no message here to expire, by construction.
+      db
+        .collection("assistant_sessions")
+        .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, name: "ttl" }),
+      // Proposals carry a much shorter expiry of their own (15 minutes), set
+      // per document. This index is what actually deletes them afterwards.
+      db
+        .collection("assistant_proposals")
+        .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, name: "ttl" }),
+      db
+        .collection("assistant_cases")
+        .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, name: "ttl" }),
     ]);
   })();
   await indexReady;

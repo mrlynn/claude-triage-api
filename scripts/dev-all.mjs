@@ -12,8 +12,7 @@ import net from "node:net";
 const SERVICES = [
   { name: "api", color: "\x1b[36m", port: process.env.API_PORT ?? "8787", command: "npm", args: ["run", "dev"], env: { PORT: process.env.API_PORT ?? "8787" } },
   { name: "course", color: "\x1b[35m", port: process.env.COURSE_PORT ?? "3001", command: "npm", args: ["--prefix", "website", "run", "start", "--", "--port", process.env.COURSE_PORT ?? "3001"], env: {} },
-  { name: "store", color: "\x1b[33m", port: process.env.STOREFRONT_PORT ?? "3002", command: "npm", args: ["--prefix", "storefront", "run", "dev", "--", "--port", process.env.STOREFRONT_PORT ?? "3002"], env: { ASSISTANT_ORIGIN: `http://localhost:${process.env.AGENT_PORT ?? "8790"}`, ASSISTANT_RUNTIME_TOKEN: process.env.ASSISTANT_RUNTIME_TOKEN ?? "northwind-local-agent" } },
-  { name: "agent", color: "\x1b[32m", port: process.env.AGENT_PORT ?? "8790", command: "npm", args: ["--prefix", "agent-runtime", "run", "dev"], env: { PORT: process.env.AGENT_PORT ?? "8790", ASSISTANT_RUNTIME_TOKEN: process.env.ASSISTANT_RUNTIME_TOKEN ?? "northwind-local-agent" } },
+  { name: "store", color: "\x1b[33m", port: process.env.STOREFRONT_PORT ?? "3002", command: "npm", args: ["--prefix", "storefront", "run", "dev", "--", "--port", process.env.STOREFRONT_PORT ?? "3002"], env: {} },
 ];
 
 const reset = "\x1b[0m";
@@ -60,7 +59,6 @@ console.log("\nNorthwind development environment");
 console.log(`  API:        http://localhost:${SERVICES[0].port}`);
 console.log(`  Course:     http://localhost:${SERVICES[1].port}`);
 console.log(`  Storefront: http://localhost:${SERVICES[2].port}`);
-console.log(`  Assistant: http://localhost:${SERVICES[3].port}`);
 console.log("  Press Ctrl-C to stop all services.\n");
 
 for (const service of SERVICES) {
