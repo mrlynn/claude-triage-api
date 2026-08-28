@@ -77,7 +77,28 @@ const config: Config = {
     hooks: { onBrokenMarkdownLinks: "throw" },
   },
 
-  themes: ["@docusaurus/theme-mermaid"],
+  themes: [
+    "@docusaurus/theme-mermaid",
+    [
+      // Offline search. Algolia DocSearch needs an application to a crawler
+      // service and a live public URL; this builds a lunr index at build time
+      // and ships it with the static site, so it works on Vercel, on GitHub
+      // Pages, and on a laptop with no network.
+      "@easyops-cn/docusaurus-search-local",
+      {
+        // Docs are only half the site. /start, /mission, /assessment and
+        // /playground are React pages, and two of them just moved behind a
+        // navbar dropdown — search is now how people find them.
+        indexPages: true,
+        indexBlog: false,
+        docsRouteBasePath: "docs",
+        hashed: true,
+        highlightSearchTermsOnTargetPage: true,
+        searchResultLimits: 8,
+        searchResultContextMaxLength: 60,
+      },
+    ],
+  ],
 
   i18n: { defaultLocale: "en", locales: ["en"] },
 
@@ -111,23 +132,44 @@ const config: Config = {
     colorMode: { defaultMode: "dark", respectPrefersColorScheme: true },
     navbar: {
       title: "Claude Triage API",
+      // Labs run long; give the reader the vertical space back.
+      hideOnScroll: true,
+      // Eleven flat items outgrew the bar and stopped being scannable. The
+      // three things a reader clicks mid-course — Labs, Playground,
+      // Assessment — stay one click away; the read-once pages move into
+      // dropdowns, where the docs sidebar already carries them anyway.
       items: [
-        { type: "doc", docId: "intro", position: "left", label: "Overview" },
-        { type: "doc", docId: "scenario", position: "left", label: "Scenario" },
-        { type: "doc", docId: "setup", position: "left", label: "Setup" },
-        { type: "doc", docId: "concept-map", position: "left", label: "Concepts" },
-        { to: "/start", position: "left", label: "Start from zero" },
-        { type: "doc", docId: "glossary", position: "left", label: "Glossary" },
         {
-          type: "docSidebar",
-          sidebarId: "courseSidebar",
+          type: "dropdown",
           position: "left",
-          label: "Labs",
+          label: "Start here",
+          items: [
+            { type: "doc", docId: "intro", label: "Overview" },
+            { type: "doc", docId: "scenario", label: "Scenario" },
+            { type: "doc", docId: "setup", label: "Setup" },
+            { to: "/start", label: "Start from zero" },
+          ],
         },
-        { type: "doc", docId: "architecture", position: "left", label: "Architecture" },
+        // Not `type: docSidebar` — that resolves to the sidebar's first doc,
+        // which is intro, the same page as "Start here > Overview". The labs
+        // category has its own generated index; point at that instead.
+        { to: "/docs/labs", position: "left", label: "Labs" },
         { to: "/playground", position: "left", label: "Playground" },
-        { to: "/mission", position: "left", label: "Mission" },
+        {
+          type: "dropdown",
+          position: "left",
+          label: "Reference",
+          items: [
+            { type: "doc", docId: "concept-map", label: "Concepts" },
+            { type: "doc", docId: "glossary", label: "Glossary" },
+            { type: "doc", docId: "architecture", label: "Architecture" },
+            { to: "/mission", label: "Mission" },
+          ],
+        },
         { to: "/assessment", position: "left", label: "Assessment" },
+        // Explicit, so search sits ahead of the two outbound links rather
+        // than auto-appending past the colour-mode toggle at the far edge.
+        { type: "search", position: "right" },
         {
           href: STOREFRONT_URL,
           position: "right",
