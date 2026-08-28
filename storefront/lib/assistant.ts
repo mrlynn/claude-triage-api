@@ -2,11 +2,14 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 
+/**
+ * Session identity and cross-origin rules for Ask Northwind.
+ *
+ * The agent itself runs in `assistantAgent.ts`, in this app. This file is only
+ * the part that decides WHO is asking and WHETHER their origin may ask.
+ */
 export const ASSISTANT_COOKIE = "northwind_assistant";
-export const ASSISTANT_ORIGIN = process.env.ASSISTANT_ORIGIN ?? "https://agent.northwind.mlynn.dev";
 const SEVEN_DAYS = 60 * 60 * 24 * 7;
-
-export type AssistantSurface = "storefront" | "course";
 
 export function sessionId(request: Request): string | undefined {
   return request.headers
@@ -44,11 +47,4 @@ export function cors(request: Request, response: Response): Response {
     response.headers.set("Vary", "Origin");
   }
   return response;
-}
-
-export function runtimeHeaders(): Headers {
-  const headers = new Headers({ "Content-Type": "application/json" });
-  const key = process.env.ASSISTANT_RUNTIME_TOKEN;
-  if (key) headers.set("Authorization", `Bearer ${key}`);
-  return headers;
 }
