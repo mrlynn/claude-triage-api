@@ -11,6 +11,10 @@
 /scripts
 /evals
 /data
+# The Agent SDK runtime is a private container with its own Dockerfile. Neither
+# Vercel project builds or serves it, and it carries its own lockfile and
+# node_modules — so it is upload weight in both, and nothing more.
+/agent-runtime
 # The Python track is participant-only: nothing here is installed or executed
 # by any Vercel build. Excluded per-subdirectory rather than as a bare
 # /python, because python/labs/deltas.md IS published as a doc and sync-docs

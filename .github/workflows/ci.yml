@@ -64,6 +64,13 @@ jobs:
       # file must still match it. This is what makes the manual sweeps of
       # Phases 1-3 the last manual sweeps.
       - run: npm run check:snippets
+      # The agent runtime deploys as a container rather than through Vercel, so
+      # nothing else in this pipeline would notice it breaking. Its tests are
+      # the authority and escaping rules from Lab 10 — pure functions, no
+      # credential, no network — so they belong in the unpaid half.
+      - name: agent runtime typecheck and tests
+        run: npm ci && npm run typecheck && npm test
+        working-directory: agent-runtime
       - name: website build
         run: npm ci && npm run build
         working-directory: website

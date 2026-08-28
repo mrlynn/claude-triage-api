@@ -28,10 +28,19 @@ seven-day session cookie for `.mlynn.dev`, checks the allowed origins, and
 forwards the request to the private agent runtime. The browser never sees an
 Anthropic key or the agent-service credential.
 
-The runtime disables built-in tools. Its only MCP tools are `find_learning_step`,
-`get_current_context`, and (on the storefront) `get_support_policy`. Customer
-text is untrusted data, never instructions. The agent has six turns; it may
-explain, look up, and propose, but it cannot mutate a record itself.
+The runtime disables built-in tools. Its only MCP tools are `find_learning_step`
+and `get_current_context`, plus `get_support_policy` and
+`propose_support_action` on the storefront. Customer text is untrusted data,
+never instructions — it arrives wrapped by the same `wrapUntrusted` you built
+in Lab 8, because an agent holding tools is a worse place to lose that argument
+than a single classification call. The agent has six turns; it may explain,
+look up, and propose, but it cannot mutate a record itself.
+
+Note what `propose_support_action` does with a refund above the ceiling: it
+does not reject the call, it records an escalation. Authority is re-derived in
+application code both when the proposal is written and again when it is
+confirmed, so the outcome is the same whether the model understood the policy
+or not.
 
 ## Check your work
 
