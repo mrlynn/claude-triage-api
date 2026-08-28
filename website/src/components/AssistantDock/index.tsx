@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import AssistantMarkdown from "@site/src/components/AssistantMarkdown";
 
 function assistantApi(): string {
   // The course and storefront run on separate local ports in `npm run dev:all`.
@@ -12,6 +13,10 @@ type Chat = { role: "user" | "assistant"; text: string };
 
 export default function AssistantDock() {
   const [open, setOpen] = useState(false); const [input, setInput] = useState(""); const [chat, setChat] = useState<Chat[]>([]); const [busy, setBusy] = useState(false);
+  // What the agent is doing while it is not yet saying anything. The first
+  // turn is almost always a tool call, so without this the panel sits on
+  // "Thinking…" through the part of the request that takes the longest.
+  const [status, setStatus] = useState<string | null>(null);
   const session = useRef<Promise<unknown> | null>(null);
 
   /**
@@ -45,7 +50,9 @@ export default function AssistantDock() {
     // Every exit path REPLACES the placeholder. An empty assistant bubble
     // renders as "Thinking…", so any path that leaves one behind is a spinner
     // that never resolves — which is what a failed request used to look like.
-    const settle = (message: string) => setChat((items) => [...items.slice(0, -1), { role: "assistant", text: message }]);
+    // Settling also clears the tool status: once there are words in the bubble,
+    // "Finding the right lab…" is describing something that already happened.
+    const settle = (message: string) => { setStatus(null); setChat((items) => [...items.slice(0, -1), { role: "assistant", text: message }]); };
     try {
       await ensureSession();
       const response = await fetch(`${assistantApi()}/api/assistant/message`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text, surface: "course", context: { path: location.pathname, title: document.title, progress: [] } }) });
@@ -59,10 +66,10 @@ export default function AssistantDock() {
         return;
       }
       const reader = response.body.getReader(); const decoder = new TextDecoder(); let buffer = ""; let answer = "";
-      for (;;) { const { done, value } = await reader.read(); if (done) break; buffer += decoder.decode(value, { stream: true }); const frames = buffer.split("\n\n"); buffer = frames.pop() ?? ""; for (const frame of frames) { const raw = frame.split("\n").find((line) => line.startsWith("data: "))?.slice(6); if (!raw) continue; const event = JSON.parse(raw); if (event.type === "text") { answer += event.text; settle(answer); } if (event.type === "error") { answer ||= event.detail ?? "The assistant could not complete that request."; settle(answer); } } }
+      for (;;) { const { done, value } = await reader.read(); if (done) break; buffer += decoder.decode(value, { stream: true }); const frames = buffer.split("\n\n"); buffer = frames.pop() ?? ""; for (const frame of frames) { const raw = frame.split("\n").find((line) => line.startsWith("data: "))?.slice(6); if (!raw) continue; const event = JSON.parse(raw); if (event.type === "text") { answer += event.text; settle(answer); } if (event.type === "tool") setStatus(event.label); if (event.type === "error") { answer ||= event.detail ?? "The assistant could not complete that request."; settle(answer); } } }
       // A stream that closes having said nothing is still a failure.
       if (!answer) settle("The assistant returned no answer. Please try again.");
-    } catch { settle("I can’t reach Ask Northwind right now."); } finally { setBusy(false); }
+    } catch { settle("I can’t reach Ask Northwind right now."); } finally { setBusy(false); setStatus(null); }
   }
-  return <div className={open ? "nw-assistant nw-assistant--open" : "nw-assistant"}>{open && <div className="nw-assistant__panel"><header><strong>Ask Northwind</strong><button onClick={() => setOpen(false)} aria-label="Close">×</button></header><div className="nw-assistant__body">{chat.length === 0 && <><p>I can explain this page, find the right next lab, or help with the fictional Northwind store.</p><button onClick={() => send("What should I do next in the course?")}>What should I do next?</button></>}{chat.map((item, i) => <p className={`nw-assistant__message nw-assistant__message--${item.role}`} key={i}>{item.text || "Thinking…"}</p>)}</div><form onSubmit={(event) => { event.preventDefault(); send(); }}><textarea value={input} onChange={(event) => setInput(event.target.value)} placeholder="Ask a question…" maxLength={2000}/><button disabled={busy || !input.trim()}>{busy ? "Thinking…" : "Send"}</button><a href="https://northwind.mlynn.dev/assistant">Open full page</a></form></div>}<button className="nw-assistant__launcher" onClick={() => setOpen(!open)}>{open ? "Close" : "Ask Northwind"}</button></div>;
+  return <div className={open ? "nw-assistant nw-assistant--open" : "nw-assistant"}>{open && <div className="nw-assistant__panel"><header><strong>Ask Northwind</strong><button onClick={() => setOpen(false)} aria-label="Close">×</button></header><div className="nw-assistant__body">{chat.length === 0 && <><p>I can explain this page, find the right next lab, or help with the fictional Northwind store.</p><button onClick={() => send("What should I do next in the course?")}>What should I do next?</button></>}{chat.map((item, i) => <div className={`nw-assistant__message nw-assistant__message--${item.role}`} key={i}>{item.role === "assistant" ? (item.text ? <AssistantMarkdown>{item.text}</AssistantMarkdown> : <span className="nw-assistant__status">{status ?? "Thinking…"}</span>) : item.text}</div>)}</div><form onSubmit={(event) => { event.preventDefault(); send(); }}><textarea value={input} onChange={(event) => setInput(event.target.value)} placeholder="Ask a question…" maxLength={2000}/><button disabled={busy || !input.trim()}>{busy ? "Thinking…" : "Send"}</button><a href="https://northwind.mlynn.dev/assistant">Open full page</a></form></div>}<button className="nw-assistant__launcher" onClick={() => setOpen(!open)}>{open ? "Close" : "Ask Northwind"}</button></div>;
 }
