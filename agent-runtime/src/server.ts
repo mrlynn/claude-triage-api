@@ -57,6 +57,11 @@ async function stream(input: Input, write: (event: unknown) => void) {
 
 function authorized(req: import("node:http").IncomingMessage) { return TOKEN && req.headers.authorization === `Bearer ${TOKEN}`; }
 const server = createServer(async (req, res) => {
+  // Public and unauthenticated, deliberately. It reports nothing a caller could
+  // not learn by connecting, and it means a fresh deploy can be verified with
+  // one curl before any token is wired up — otherwise a healthy service and a
+  // mismatched ASSISTANT_RUNTIME_TOKEN both answer 401 and look identical.
+  if (req.method === "GET" && req.url === "/healthz") { res.writeHead(200, { "Content-Type": "application/json" }).end(JSON.stringify({ status: "ok", storage: mongo ? "configured" : "absent" })); return; }
   if (!authorized(req)) { res.writeHead(401).end(); return; }
   const chunks: Buffer[] = []; for await (const chunk of req) chunks.push(Buffer.from(chunk));
   // Answer 400 rather than throwing. An exception here escapes the async
@@ -91,4 +96,19 @@ const server = createServer(async (req, res) => {
   }
   res.writeHead(404).end();
 });
-setupIndexes().then(() => server.listen(PORT));
+// Bind FIRST, then create indexes.
+//
+// As a precondition of `listen`, `setupIndexes` made a wrong or briefly
+// unreachable MONGODB_URI fatal: it awaits a Mongo connection, the rejection
+// had no catch, nothing bound the port, and Node exited. On a container host
+// that is a failed startup probe and a rolled-back deploy whose real cause is
+// buried in the logs — and it made a MISCONFIGURED database strictly worse
+// than an absent one, which the service otherwise handles by degrading.
+//
+// Index creation stays loud rather than silent: the TTL indexes are what
+// enforce the seven-day retention the lab promises, so losing them is a
+// correctness problem even while the assistant keeps answering.
+server.listen(PORT, () => {
+  console.log(`agent-runtime listening on ${PORT}`);
+  setupIndexes().catch((error) => console.error("TTL index setup FAILED — retention is not enforced until this succeeds:", error));
+});
