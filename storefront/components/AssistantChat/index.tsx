@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AssistantMarkdown from "@/components/AssistantMarkdown";
+import NorthwindAssistantMark from "@/components/NorthwindAssistantMark";
 import { useSpeechInput } from "./useSpeechInput";
 
 /**
@@ -237,8 +238,9 @@ export default function AssistantChat({ fullPage = false, initialProduct, initia
     return (
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-5 right-5 z-50 rounded-full bg-pine px-5 py-3 text-sm font-semibold text-bone shadow-xl hover:bg-spruce"
+        className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full bg-pine px-5 py-3 text-sm font-semibold text-bone shadow-xl hover:bg-spruce"
       >
+        <NorthwindAssistantMark size={18} variant="inverted" />
         Ask Northwind
       </button>
     );
@@ -257,9 +259,12 @@ export default function AssistantChat({ fullPage = false, initialProduct, initia
       aria-label="Ask Northwind assistant"
     >
       <header className="flex items-center justify-between bg-pine px-4 py-3 text-bone">
-        <div>
-          <strong>Ask Northwind</strong>
-          <p className="text-xs text-bone/70">Workshop guide · fictional support</p>
+        <div className="flex items-center gap-2.5">
+          <NorthwindAssistantMark size={26} variant="inverted" className="shrink-0" />
+          <div>
+            <strong>Ask Northwind</strong>
+            <p className="text-xs text-bone/70">Workshop guide · fictional support</p>
+          </div>
         </div>
         {!fullPage && (
           <button onClick={() => setOpen(false)} aria-label="Close assistant">
@@ -305,24 +310,24 @@ export default function AssistantChat({ fullPage = false, initialProduct, initia
         )}
 
         {messages.map((message, index) => (
-          <div
-            key={index}
-            className={
-              message.role === "user"
-                ? "ml-8 rounded-lg bg-pine p-3 text-sm text-bone"
-                : "mr-5 rounded-lg border border-pine/15 bg-white/50 p-3 text-sm text-pine"
-            }
-          >
-            {message.role === "assistant" ? (
-              message.text ? (
-                <AssistantMarkdown>{message.text}</AssistantMarkdown>
-              ) : (
-                <span className="opacity-70">{status ?? "Thinking…"}</span>
-              )
-            ) : (
-              message.text
-            )}
-          </div>
+          message.role === "user" ? (
+            <div key={index} className="ml-8 rounded-lg bg-pine p-3 text-sm text-bone">
+              {message.text}
+            </div>
+          ) : (
+            // The mark sits outside the bubble so its tail points at the text
+            // rather than into it.
+            <div key={index} className="mr-5 flex items-start gap-2">
+              <NorthwindAssistantMark size={22} className="mt-0.5 shrink-0" />
+              <div className="min-w-0 flex-1 rounded-lg border border-pine/15 bg-white/50 p-3 text-sm text-pine">
+                {message.text ? (
+                  <AssistantMarkdown>{message.text}</AssistantMarkdown>
+                ) : (
+                  <span className="opacity-70">{status ?? "Thinking…"}</span>
+                )}
+              </div>
+            </div>
+          )
         ))}
 
         {proposal && (
