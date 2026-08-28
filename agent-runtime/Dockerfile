@@ -1,4 +1,4 @@
-FROM node:22-slim
+FROM node:24-slim
 WORKDIR /app
 COPY package.json package-lock.json* ./
 # `ci` over `install`: the lockfile is committed, and a production image that
