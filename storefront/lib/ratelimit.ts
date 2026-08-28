@@ -40,6 +40,10 @@ const IP_WINDOW_MS = 10 * 60 * 1000;
 const SCOPES = {
   support: Number(process.env.SUPPORT_IP_LIMIT ?? 5),
   injection: Number(process.env.INJECTION_IP_LIMIT ?? 8),
+  // Ask Northwind, on its own window. A conversation is several model calls
+  // rather than one, and it can now put a row on a public board, so it needs a
+  // budget of its own — and must not be able to exhaust the support form's.
+  assistant: Number(process.env.ASSISTANT_IP_LIMIT ?? 12),
   // Token probing, not spending. A higher ceiling than the paid surfaces
   // because a facilitator refreshing the board during a session is normal
   // traffic — the point is a floor under brute force, not a tight budget.

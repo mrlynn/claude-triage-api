@@ -18,7 +18,8 @@ interface Escalation {
   channel: string;
   message_redacted: string;
   redactions: { kind: string; at: number }[];
-  triage: {
+  /** Form-submitted rows only. No classifier runs on the assistant path. */
+  triage?: {
     category: string;
     urgency: string;
     sentiment: string;
@@ -26,6 +27,14 @@ interface Escalation {
     requires_human: boolean;
     escalation_reason: string | null;
     confidence: number;
+  };
+  source?: "form" | "assistant";
+  /** Assistant-filed rows only, in place of `triage`. */
+  assistant?: {
+    proposalId: string;
+    action: string;
+    amountUsd?: number;
+    rationale: string;
   };
   status: Status;
   claimed_by?: string;
@@ -260,29 +269,55 @@ export default function QueueBoard() {
                       </span>
                     </div>
 
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <Chip>{item.triage.category}</Chip>
-                      <span
-                        className={`rounded px-2 py-1 text-xs ${
-                          URGENCY_STYLE[item.triage.urgency] ?? "bg-pine/10 text-pine/70"
-                        }`}
-                      >
-                        {item.triage.urgency}
-                      </span>
-                      <Chip>{item.triage.sentiment}</Chip>
-                    </div>
+                    {/* A row carries a triage block or an assistant block, never
+                        both. The two paths reach this board differently: the form
+                        classifies and routes, the assistant proposes and a customer
+                        confirms. Rendering the same chips for both would imply a
+                        classification that never ran. */}
+                    {item.triage && (
+                      <>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <Chip>{item.triage.category}</Chip>
+                          <span
+                            className={`rounded px-2 py-1 text-xs ${
+                              URGENCY_STYLE[item.triage.urgency] ?? "bg-pine/10 text-pine/70"
+                            }`}
+                          >
+                            {item.triage.urgency}
+                          </span>
+                          <Chip>{item.triage.sentiment}</Chip>
+                        </div>
 
-                    <p className="mt-3 text-sm text-pine/85">{item.triage.summary}</p>
+                        <p className="mt-3 text-sm text-pine/85">{item.triage.summary}</p>
 
-                    {item.triage.escalation_reason && (
-                      <p className="mt-2 border-l-2 border-ember pl-3 text-xs text-pine/70">
-                        {item.triage.escalation_reason}
-                      </p>
+                        {item.triage.escalation_reason && (
+                          <p className="mt-2 border-l-2 border-ember pl-3 text-xs text-pine/70">
+                            {item.triage.escalation_reason}
+                          </p>
+                        )}
+                      </>
+                    )}
+
+                    {item.assistant && (
+                      <>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <Chip>Ask Northwind</Chip>
+                          <Chip>{item.assistant.action}</Chip>
+                          {typeof item.assistant.amountUsd === "number" && (
+                            <Chip>${item.assistant.amountUsd.toFixed(2)}</Chip>
+                          )}
+                        </div>
+
+                        <p className="mt-3 text-sm text-pine/85">
+                          Customer confirmed this with the assistant. Nothing has been
+                          issued — this row is the request to action it.
+                        </p>
+                      </>
                     )}
 
                     <details className="mt-3">
                       <summary className="cursor-pointer text-xs text-pine/60">
-                        Customer message (redacted)
+                        {item.assistant ? "Assistant rationale (redacted)" : "Customer message (redacted)"}
                       </summary>
                       <p className="mt-2 whitespace-pre-wrap rounded bg-pine/5 p-3 font-mono text-[11px] leading-relaxed text-pine/80">
                         {item.message_redacted}
@@ -297,8 +332,8 @@ export default function QueueBoard() {
                     </details>
 
                     <p className="mt-3 font-mono text-[11px] tabular-nums text-pine/50">
-                      conf {item.triage.confidence.toFixed(2)} · ${item.cost_usd.toFixed(4)} ·{" "}
-                      {item.model}
+                      {item.triage ? `conf ${item.triage.confidence.toFixed(2)} · ` : ""}
+                      ${item.cost_usd.toFixed(4)} · {item.model}
                       {item.claimed_by ? ` · ${item.claimed_by}` : ""}
                     </p>
 
