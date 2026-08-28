@@ -56,6 +56,12 @@
   --nw-bone: #f2ede4;
   --nw-ember: #d9642a;
 
+  /* The assistant mark paints from these so one inline SVG follows the colour
+     mode. On Bone the pine badge carries; on the dark panel it disappears
+     into the ground, so the badge and the front summit trade places. */
+  --nw-assistant-badge: #1f3d33;
+  --nw-assistant-front: #f2ede4;
+
   --ifm-background-color: var(--nw-bone);
   /* Cards and code blocks lift off the ground with white at low alpha, which
      is the storefront's `bg-white/40` panel idiom rather than a second flat
@@ -108,15 +114,24 @@
 }
 
 .nw-assistant { position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 50; }
-.nw-assistant__launcher { border: 0; border-radius: 999px; background: var(--nw-pine); color: var(--nw-bone); padding: .8rem 1.05rem; font-weight: 700; box-shadow: 0 10px 28px rgba(31,61,51,.28); cursor: pointer; }
+.nw-assistant__launcher { display: inline-flex; align-items: center; gap: .45rem; border: 0; border-radius: 999px; background: var(--nw-pine); color: var(--nw-bone); padding: .8rem 1.05rem; font-weight: 700; box-shadow: 0 10px 28px rgba(31,61,51,.28); cursor: pointer; }
 .nw-assistant__panel { width: min(24rem, calc(100vw - 2rem)); height: min(38rem, calc(100vh - 2rem)); display: flex; flex-direction: column; margin-bottom: .75rem; border: 1px solid rgba(31,61,51,.2); border-radius: .75rem; overflow: hidden; background: var(--ifm-background-color); box-shadow: 0 16px 42px rgba(0,0,0,.28); }
+.nw-assistant__title { display: inline-flex; align-items: center; gap: .45rem; }
 .nw-assistant__panel header { display: flex; justify-content: space-between; align-items: center; padding: .75rem 1rem; background: var(--nw-pine); color: var(--nw-bone); }.nw-assistant__panel header button { color: inherit; background: transparent; border: 0; font-size: 1.3rem; cursor: pointer; }
 .nw-assistant__body { flex: 1; overflow-y: auto; padding: 1rem; font-size: .88rem; }.nw-assistant__body > button { border: 1px solid rgba(31,61,51,.2); background: transparent; border-radius: .25rem; padding: .4rem; cursor: pointer; }
 .nw-assistant__message { padding: .6rem .7rem; border-radius: .45rem; }
+/* The assistant turn is a row: mark, then bubble. The mark sits outside the
+   tinted block so the tail points at the text rather than into it. */
+.nw-assistant__message--assistant { display: flex; align-items: flex-start; gap: .5rem; padding-left: 0; background: none; }
+.nw-assistant__message--assistant > :not(.nw-assistant__avatar) { flex: 1; min-width: 0; padding: .6rem .7rem; border-radius: .45rem; background: var(--ifm-color-emphasis-100); }
+/* display:block on the svg too — as an inline element it reserves descender
+   space below the tail, which pushes the mark off the first line of text. */
+.nw-assistant__avatar { flex: none; margin-top: .15rem; }
+.nw-assistant__avatar svg { display: block; }
 /* pre-wrap on the USER's turn only. The assistant's is rendered markdown, where
    preserving source newlines double-spaces every list and paragraph. */
 .nw-assistant__message--user { margin-left: 2.5rem; background: var(--nw-pine); color: var(--nw-bone); white-space: pre-wrap; }
-.nw-assistant__message--assistant { margin-right: 1rem; background: var(--ifm-color-emphasis-100); }
+.nw-assistant__message--assistant { margin-right: 1rem; }
 .nw-assistant__status { opacity: .7; font-style: italic; }
 .nw-assistant__md > :last-child { margin-bottom: 0; }
 .nw-assistant__md p { margin-bottom: .5rem; }
@@ -165,6 +180,9 @@ html[data-theme="dark"] {
      unstyled site with a green link colour. */
   --ifm-background-color: #12211c;
   --ifm-background-surface-color: #182b24;
+
+  --nw-assistant-badge: #f2ede4;
+  --nw-assistant-front: #1f3d33;
 
   --ifm-font-color-base: #eaf2ee;
   --ifm-heading-color: #f4f8f6;
@@ -321,8 +339,8 @@ article mark {
   border-radius: 0.15em;
 }
 
-[data-theme="dark"] .search-result-match,
-[data-theme="dark"] article mark {
+html[data-theme="dark"] .search-result-match,
+html[data-theme="dark"] article mark {
   background: rgba(92, 154, 134, 0.32);
   color: var(--nw-bone);
 }
@@ -341,6 +359,6 @@ article mark {
   outline: none;
 }
 
-[data-theme="dark"] .navbar__search-input {
+html[data-theme="dark"] .navbar__search-input {
   background-color: rgba(242, 237, 228, 0.08);
 }

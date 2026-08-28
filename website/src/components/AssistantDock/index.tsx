@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import AssistantMarkdown from "@site/src/components/AssistantMarkdown";
 import { useSpeechInput } from "./useSpeechInput";
+import { NorthwindAssistantMark } from "@site/src/components/NorthwindLogo";
 
 function assistantApi(): string {
   // The course and storefront run on separate local ports in `npm run dev:all`.
@@ -189,7 +190,10 @@ export default function AssistantDock() {
       {open && (
         <div className="nw-assistant__panel">
           <header>
-            <strong>Ask Northwind</strong>
+            <span className="nw-assistant__title">
+              <NorthwindAssistantMark size={20} variant="inverted" />
+              <strong>Ask Northwind</strong>
+            </span>
             <button onClick={() => setOpen(false)} aria-label="Close">
               ×
             </button>
@@ -215,6 +219,11 @@ export default function AssistantDock() {
             )}
             {chat.map((item, i) => (
               <div className={`nw-assistant__message nw-assistant__message--${item.role}`} key={i}>
+                {item.role === "assistant" && (
+                  <span className="nw-assistant__avatar" aria-hidden="true">
+                    <NorthwindAssistantMark size={22} variant="theme" />
+                  </span>
+                )}
                 {item.role === "assistant" ? (
                   item.text ? (
                     <AssistantMarkdown>{item.text}</AssistantMarkdown>
@@ -282,7 +291,14 @@ export default function AssistantDock() {
         </div>
       )}
       <button className="nw-assistant__launcher" onClick={() => setOpen(!open)}>
-        {open ? "Close" : "Ask Northwind"}
+        {open ? (
+          "Close"
+        ) : (
+          <>
+            <NorthwindAssistantMark size={18} variant="inverted" />
+            Ask Northwind
+          </>
+        )}
       </button>
     </div>
   );
