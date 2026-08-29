@@ -54,6 +54,7 @@ const PAGES = [
   { source: "curriculum/setup.md", out: "setup", position: 3 },
   { source: "curriculum/00-concept-map.md", out: "concept-map", position: 4 },
   { source: "curriculum/glossary.md", out: "glossary", position: 5 },
+  { source: "curriculum/next-steps.md", out: "next-steps", position: 6, title: "Where this goes next" },
   { source: "curriculum/labs/lab-0-scoreboard.md", out: "labs/lab-0-scoreboard", position: 0 },
   { source: "curriculum/labs/lab-1-first-call.md", out: "labs/lab-1-first-call", position: 1 },
   { source: "curriculum/labs/lab-2-structured-outputs.md", out: "labs/lab-2-structured-outputs", position: 2 },
