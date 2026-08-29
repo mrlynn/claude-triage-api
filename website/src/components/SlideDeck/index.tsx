@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import useBaseUrl from "@docusaurus/useBaseUrl";
 import { SLIDES } from "@site/src/data/talk";
+import { connect, type Message } from "./sync";
 import styles from "./styles.module.css";
 
 /**
@@ -17,9 +19,11 @@ import styles from "./styles.module.css";
  *    fits on a laptop fits on the projector. Sizing off the viewport instead
  *    would reflow the deck the moment it hits a different screen.
  *
- * 3. THE NOTES ARE FOR ONE PERSON. They render in-frame under the slide
- *    rather than in a synced second window: one surface, nothing to desync,
- *    and on a mirrored projector you simply close the panel. `S` toggles.
+ * 3. THE NOTES ARE FOR ONE PERSON. `S` opens them in-frame, which is the
+ *    right answer on one screen. On a mirrored projector it is the wrong one
+ *    — the room reads your notes with you — so `P` moves them into a second
+ *    window that stays in step with this one. See sync.ts for how the two
+ *    windows agree, and PresenterView.tsx for what the second one shows.
  */
 
 /** Keys that advance. PageDown/PageUp are what most presenter clickers send. */
@@ -45,6 +49,12 @@ export default function SlideDeck(): ReactNode {
   const [isFullscreen, setFullscreen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
+  // The `hello` responder is registered once and must not close over a stale
+  // index, and re-subscribing the channel on every slide change would drop
+  // messages mid-flight. A ref is the cheap correct answer.
+  const indexRef = useRef(0);
+  indexRef.current = index;
+
   const go = useCallback((next: number) => {
     setIndex(Math.min(Math.max(next, 0), SLIDES.length - 1));
   }, []);
@@ -69,6 +79,86 @@ export default function SlideDeck(): ReactNode {
   const toggleFullscreen = useCallback(() => {
     if (document.fullscreenElement) void document.exitFullscreen();
     else void rootRef.current?.requestFullscreen().catch(() => {});
+  }, []);
+
+  /**
+   * The presenter window is opened with explicit dimensions because a plain
+   * `window.open(url)` in most browsers produces a TAB, and a tab is useless
+   * here — the whole point is a second surface visible at the same time as
+   * the deck. Passing any size feature forces a real window.
+   */
+  const presenterUrl = useBaseUrl("/talk/presenter");
+  const presenterRef = useRef<Window | null>(null);
+  const [presenterBlocked, setPresenterBlocked] = useState(false);
+
+  const openPresenter = useCallback(() => {
+    const existing = presenterRef.current;
+    if (existing && !existing.closed) {
+      existing.focus();
+      return;
+    }
+    const width = Math.min(1100, Math.round(window.screen.availWidth * 0.62));
+    const height = Math.min(760, Math.round(window.screen.availHeight * 0.72));
+    const opened = window.open(
+      presenterUrl,
+      "nw-talk-presenter",
+      `popup=yes,width=${width},height=${height},left=40,top=40`,
+    );
+    presenterRef.current = opened;
+    setPresenterBlocked(!opened);
+    // Notes in two places at once is the failure this feature exists to fix:
+    // if the presenter window is up, the projector must not be showing them.
+    if (opened) setNotesOpen(false);
+  }, [presenterUrl]);
+
+  /**
+   * The deck is the only writer of the slide index. It publishes on every
+   * change and answers `hello`, which is what lets a presenter window opened
+   * (or reloaded) at any point catch up without the deck tracking who is
+   * listening.
+   */
+  const link = useRef<ReturnType<typeof connect> | null>(null);
+
+  useEffect(() => {
+    const conn = connect((msg: Message) => {
+      if (msg.type === "hello") {
+        conn.publish({ index: indexRef.current, total: SLIDES.length, at: Date.now() });
+      } else if (msg.type === "goto") {
+        setIndex(Math.min(Math.max(msg.index, 0), SLIDES.length - 1));
+      } else if (msg.type === "step") {
+        setIndex((i) => Math.min(Math.max(i + msg.delta, 0), SLIDES.length - 1));
+      }
+    });
+    link.current = conn;
+    return () => {
+      conn.close();
+      link.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    link.current?.publish({ index, total: SLIDES.length, at: Date.now() });
+  }, [index]);
+
+  /**
+   * A heartbeat, so the presenter window can tell "nothing has changed" from
+   * "nobody is there".
+   *
+   * The presenter could infer this from its own polling instead, and did at
+   * first — but a browser throttles timers in an occluded window, so a
+   * presenter window sitting behind something else would slow its own polling
+   * and conclude the deck had died. Putting the pulse in the deck moves it to
+   * the window that is, by definition, the one on screen.
+   */
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      link.current?.publish({
+        index: indexRef.current,
+        total: SLIDES.length,
+        at: Date.now(),
+      });
+    }, 2000);
+    return () => window.clearInterval(id);
   }, []);
 
   useEffect(() => {
@@ -101,12 +191,14 @@ export default function SlideDeck(): ReactNode {
         setNotesOpen((open) => !open);
       } else if (event.key === "f" || event.key === "F") {
         toggleFullscreen();
+      } else if (event.key === "p" || event.key === "P") {
+        openPresenter();
       }
     }
 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [toggleFullscreen]);
+  }, [toggleFullscreen, openPresenter]);
 
   const slide = SLIDES[index];
   const remaining = SLIDES.slice(index + 1).reduce((n, s) => n + s.minutes, 0);
@@ -178,11 +270,30 @@ export default function SlideDeck(): ReactNode {
         <button
           type="button"
           className={styles.toggle}
+          onClick={openPresenter}
+          title="Notes, next slide and a clock, in their own window"
+        >
+          Presenter view <kbd>P</kbd>
+        </button>
+        <button
+          type="button"
+          className={styles.toggle}
           onClick={toggleFullscreen}
         >
           {isFullscreen ? "Exit" : "Full screen"} <kbd>F</kbd>
         </button>
       </nav>
+
+      {presenterBlocked && (
+        <p className={styles.blocked} role="status">
+          The browser blocked the presenter window. Allow pop-ups for this site
+          and press <kbd>P</kbd> again — or open{" "}
+          <a href={presenterUrl} target="_blank" rel="noreferrer">
+            the notes window
+          </a>{" "}
+          yourself; it will find the deck on its own.
+        </p>
+      )}
 
       {/* Rendered always, hidden when closed: toggling must not reflow the
           frame above it mid-sentence. Visible in fullscreen too — `S` doing
@@ -202,8 +313,9 @@ export default function SlideDeck(): ReactNode {
         </header>
         <div className={styles.notesBody}>{slide.notes}</div>
         <footer>
-          <kbd>←</kbd> <kbd>→</kbd> move · <kbd>S</kbd> notes · <kbd>F</kbd> full
-          screen · <kbd>Home</kbd> <kbd>End</kbd> jump
+          <kbd>←</kbd> <kbd>→</kbd> move · <kbd>S</kbd> notes · <kbd>P</kbd>{" "}
+          presenter window · <kbd>F</kbd> full screen · <kbd>Home</kbd>{" "}
+          <kbd>End</kbd> jump
         </footer>
       </aside>
     </div>

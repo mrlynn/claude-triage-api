@@ -59,9 +59,17 @@ Nothing here is scaffolding for Day 2 that goes to waste without it.
 | 0:20–0:35 | **Concept map** | Everything is one endpoint. Four capabilities are four parameters. |
 
 Both opening segments have a deck: **[slideshow mode](https://triage.mlynn.dev/talk)**,
-eight slides with speaker notes on each. Arrow keys or a clicker move it, `S`
-opens the notes, `F` goes full screen. It is unlisted — no navbar entry — so
-open it by URL before the room arrives.
+nine slides with speaker notes on each. Arrow keys or a clicker move it, `S`
+opens the notes in the page, `F` goes full screen. It is unlisted — no navbar
+entry — so open it by URL before the room arrives.
+
+**If you are mirroring to a projector, press `P` first.** It opens the notes in
+a second window — notes, the next slide, and a clock — that stays in step with
+the deck and can drive it with the arrow keys. Put that window on the laptop,
+put the deck full screen on the projector, and the room stops reading your
+notes over your shoulder. Allow pop-ups for the site beforehand; the deck says
+so if the browser blocks it, and `/talk/presenter` opens the same window by
+hand.
 | 0:35–0:55 | **Lab 0** | Not optional. See below. |
 | 0:55–1:15 | Lab 1 | |
 | 1:15–1:50 | Lab 2 | The conceptual spine. Never cut. |

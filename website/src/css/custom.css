@@ -362,3 +362,20 @@ html[data-theme="dark"] article mark {
 html[data-theme="dark"] .navbar__search-input {
   background-color: rgba(242, 237, 228, 0.08);
 }
+
+/*
+ * The presenter window (/talk/presenter) drops the site navbar.
+ *
+ * Docusaurus's Layout always renders it, and the class is applied to <body>
+ * by the page itself. Sixty pixels of site chrome is a real cost in a window
+ * whose entire job is to show four things at a glance in a dim room — and
+ * there is nowhere in that window you would want to navigate to.
+ */
+body.nw-presenter .navbar { display: none; }
+body.nw-presenter [class*="docusaurus-mt-lg"],
+body.nw-presenter main { margin: 0; }
+
+/* And the assistant launcher. It is fixed to the bottom-right, where this
+   window keeps its slide controls, and a chat button has no job in a pane
+   somebody is reading from while they talk. */
+body.nw-presenter .nw-assistant { display: none; }

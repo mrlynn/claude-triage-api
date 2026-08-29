@@ -470,6 +470,16 @@
 
 .dot[data-current] { background: var(--nw-ember); border-color: var(--nw-ember); }
 
+.blocked {
+  margin: 0;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--nw-ember);
+  border-radius: 0.4rem;
+  background: var(--ifm-color-warning-contrast-background);
+  color: var(--ifm-color-warning-contrast-foreground);
+  font-size: 0.85rem;
+}
+
 .notes {
   border: 1px solid var(--ifm-color-emphasis-300);
   border-left: 3px solid var(--nw-spruce);
