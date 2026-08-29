@@ -238,7 +238,7 @@ export default function AssistantChat({ fullPage = false, initialProduct, initia
     return (
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full bg-pine px-5 py-3 text-sm font-semibold text-bone shadow-xl hover:bg-spruce"
+        className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom,0px))] right-5 z-50 flex items-center gap-2 rounded-full bg-pine px-5 py-3 text-sm font-semibold text-bone shadow-xl hover:bg-spruce"
       >
         <NorthwindAssistantMark size={18} variant="inverted" />
         Ask Northwind
@@ -254,11 +254,21 @@ export default function AssistantChat({ fullPage = false, initialProduct, initia
       className={
         fullPage
           ? "mx-auto max-w-3xl"
-          : "fixed bottom-5 right-5 z-50 flex h-[min(620px,calc(100vh-2.5rem))] w-[min(390px,calc(100vw-2rem))] flex-col overflow-hidden rounded-xl border border-pine/20 bg-bone shadow-2xl"
+          : // A phone gets a full-screen sheet, not a floating card. Two reasons:
+            // a 390px panel on a 375px screen is a card with a sliver of dead
+            // page around it, and `h-[...100vh]` is measured against the LARGE
+            // viewport on mobile browsers — the one with the URL bar collapsed
+            // — so the composer ends up underneath the browser chrome. `dvh`
+            // tracks the visible area instead, and `top-0 h-[100dvh]` beats
+            // `inset-0` here because a fixed element's `bottom` resolves
+            // against that same large viewport.
+            "fixed inset-x-0 top-0 z-50 flex h-[100dvh] flex-col overflow-hidden bg-bone " +
+            "dock:inset-x-auto dock:top-auto dock:bottom-5 dock:right-5 dock:h-[min(620px,calc(100dvh-2.5rem))] " +
+            "dock:w-[min(390px,calc(100vw-2rem))] dock:rounded-xl dock:border dock:border-pine/20 dock:shadow-2xl"
       }
       aria-label="Ask Northwind assistant"
     >
-      <header className="flex items-center justify-between bg-pine px-4 py-3 text-bone">
+      <header className="flex items-center justify-between bg-pine px-4 py-3 text-bone pt-[calc(0.75rem+env(safe-area-inset-top,0px))] dock:pt-3">
         <div className="flex items-center gap-2.5">
           <NorthwindAssistantMark size={26} variant="inverted" className="shrink-0" />
           <div>
@@ -346,7 +356,7 @@ export default function AssistantChat({ fullPage = false, initialProduct, initia
           event.preventDefault();
           send();
         }}
-        className="border-t border-pine/15 p-3"
+        className="border-t border-pine/15 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] dock:pb-3"
       >
         <textarea
           ref={box}
@@ -367,7 +377,7 @@ export default function AssistantChat({ fullPage = false, initialProduct, initia
           maxLength={2000}
           rows={1}
           placeholder={voice.listening ? "Listening…" : "Ask a question…  (Enter to send)"}
-          className="w-full resize-none rounded border border-pine/25 bg-white/60 p-2 text-sm"
+          className="w-full resize-none rounded border border-pine/25 bg-white/60 p-2 text-base dock:text-sm"
         />
         <div className="mt-2 flex items-center gap-2">
           {pending ? (

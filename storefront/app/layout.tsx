@@ -1,5 +1,5 @@
 import { Analytics } from "@vercel/analytics/next";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import SiteHeader from "@/components/SiteHeader";
 import { LABS_URL, SITE_URL, labs } from "@/lib/links";
@@ -17,6 +17,18 @@ import AssistantChat from "@/components/AssistantChat";
 */
 const DESCRIPTION =
   "A fictional gear shop with a real support desk behind it. File a complaint and watch Claude read it, rank it, and decide whether a human sees it.";
+
+/*
+ * viewport-fit=cover is what makes `env(safe-area-inset-*)` resolve to
+ * anything other than 0 on a notched iPhone. Without it the assistant sheet's
+ * composer sits under the home indicator and its header under the notch, and
+ * the padding that is supposed to prevent that quietly evaluates to zero.
+ */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

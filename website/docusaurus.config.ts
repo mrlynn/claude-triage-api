@@ -123,6 +123,32 @@ const config: Config = {
     ],
   ],
 
+  /*
+   * viewport-fit=cover is what makes `env(safe-area-inset-*)` resolve to
+   * anything but 0 on a notched iPhone. Without it the assistant sheet's
+   * safe-area padding is real CSS that silently evaluates to nothing, and the
+   * composer sits under the home indicator.
+   *
+   * THIS LEAVES TWO VIEWPORT METAS IN THE HEAD, which is worth knowing before
+   * someone "tidies" it. Docusaurus emits its own unconditionally and offers
+   * no supported way to replace it — `headTags` can only append. Browsers
+   * merge duplicate viewport metas with later declarations winning, so this
+   * one takes effect; it is a workaround for a gap in the theme rather than
+   * an oversight. Verified in the built HTML, but the inset values themselves
+   * can only be confirmed on real hardware — a desktop browser always reports
+   * 0 for safe-area insets, so this is the one change here that no emulator
+   * can prove.
+   */
+  headTags: [
+    {
+      tagName: "meta",
+      attributes: {
+        name: "viewport",
+        content: "width=device-width, initial-scale=1, viewport-fit=cover",
+      },
+    },
+  ],
+
   themeConfig: {
     // Every page shared from here rendered the stock Docusaurus card, which
     // told a reader in a feed that this was somebody's generic docs site.
