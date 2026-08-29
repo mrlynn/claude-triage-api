@@ -115,6 +115,142 @@
   font-size: clamp(0.65rem, 1.5cqw, 1rem) !important;
 }
 
+/* ------------------------------------------------------------------ media */
+
+/*
+ * A photograph filling the slide. The image is absolutely positioned rather
+ * than set as a background so it stays a real <img> with real alt text — a
+ * background-image is invisible to anyone reading the deck with a screen
+ * reader, and these slides are also a page on a docs site.
+ */
+.backdrop { position: absolute; inset: 0; display: flex; }
+
+.backdropImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The scrim. Pine rather than black: the deck stays inside the brand, and a
+   projector that lifts the black point still leaves the type at contrast. */
+.backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    rgba(31, 61, 51, 0.88) 0%,
+    rgba(31, 61, 51, 0.78) 45%,
+    rgba(31, 61, 51, 0.42) 100%
+  );
+}
+
+.backdropBody {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 2cqw;
+  padding: 5cqw 6cqw;
+  width: 100%;
+}
+
+/* Fixed light colours, not tokens: this text sits on a photograph in both
+   colour modes, so it must not follow the theme. */
+.backdropBody h1,
+.backdropBody h2 { color: #f2ede4; }
+.backdropBody .lead { color: rgba(242, 237, 228, 0.92); }
+.backdropBody .eyebrow { color: #5c9a86; }
+.backdropBody .byline { color: rgba(242, 237, 228, 0.7); }
+
+.credit {
+  position: absolute;
+  /* Left, not right: the slide counter owns the other corner. */
+  left: 1.6cqw;
+  bottom: 1.4cqw;
+  z-index: 2;
+  font-size: clamp(0.45rem, 1cqw, 0.7rem);
+  letter-spacing: 0.04em;
+  color: rgba(242, 237, 228, 0.62);
+  text-shadow: 0 1px 3px rgba(31, 61, 51, 0.6);
+}
+
+.photo {
+  position: relative;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9cqw;
+  min-width: 0;
+}
+
+.photo img {
+  display: block;
+  width: 100%;
+  border-radius: 0.5cqw;
+  object-fit: cover;
+  aspect-ratio: 4 / 3;
+}
+
+/* On a photo panel the credit sits under the image, not over it — there is no
+   scrim here to keep it legible. */
+.photo .credit {
+  position: static;
+  color: var(--ifm-color-emphasis-500);
+  text-shadow: none;
+}
+
+.photo figcaption,
+.shot figcaption {
+  font-size: clamp(0.5rem, 1.25cqw, 0.85rem);
+  line-height: 1.4;
+  color: var(--ifm-color-emphasis-600);
+}
+
+/*
+ * A screenshot, framed to read as a window rather than a photograph. The room
+ * has to know at a glance that this is a screen they could open themselves.
+ */
+.shot { margin: 0; display: flex; flex-direction: column; gap: 0.9cqw; min-width: 0; }
+
+.shot img {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 0.5cqw;
+  box-shadow: 0 1.2cqw 3cqw rgba(31, 61, 51, 0.18);
+}
+
+/* Two stills side by side, for the in-and-out slide. */
+.shots { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5cqw; align-items: start; }
+
+/* Text on the left, a picture on the right. The picture is the smaller half:
+   it is evidence for the sentence, not the subject of the slide. */
+.split {
+  display: grid;
+  grid-template-columns: 1.55fr 1fr;
+  gap: 3cqw;
+  align-items: center;
+}
+
+/* A screenshot in the left half is the wider element and wants the room. */
+.split:has(.shot) { grid-template-columns: 1.35fr 1fr; align-items: start; }
+
+.split > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2cqw;
+  min-width: 0;
+}
+
+/* Four figures across a half-width column would set the type at a size the
+   back row cannot read; two-up keeps them large. */
+.split .stats { grid-template-columns: 1fr 1fr; gap: 2cqw 1.5cqw; }
+
 /* ----------------------------------------------------------- slide pieces */
 
 .quote {
@@ -418,6 +554,9 @@
   .leaves,
   .ladder,
   .labs { grid-template-columns: 1fr 1fr; }
+  .split,
+  .shots { grid-template-columns: 1fr; }
+  .backdrop { position: relative; min-height: 60vh; }
   .ladder div + div::before { content: none; }
   .controls { justify-content: center; }
   .toggle { margin-left: 0; }

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "@docusaurus/Link";
 import { NorthwindMark } from "@site/src/components/NorthwindLogo";
+import { Backdrop, Photo, Shot } from "@site/src/components/SlideDeck/media";
 import styles from "@site/src/components/SlideDeck/styles.module.css";
 
 /**
@@ -16,6 +17,13 @@ import styles from "@site/src/components/SlideDeck/styles.module.css";
  * `notes` is written to be *spoken from*, not read out. Short prompts, the
  * beat the slide exists for, and — where the run of show says a segment has
  * a step instructors skip — the reminder not to skip it.
+ *
+ * ON THE PICTURES: the first four slides carry photographs from the shop's
+ * own catalogue and stills of the live storefront, because the claim they
+ * make — this is a real company with a real queue and a real bottle in it —
+ * is one the room should be shown rather than told. From slide five on, the
+ * content is technical and a picture would be decoration, so there are none.
+ * See components/SlideDeck/media.tsx for where the files come from.
  */
 
 export type Slide = {
@@ -35,8 +43,8 @@ export const SLIDES: Slide[] = [
     title: "Title",
     minutes: 1,
     body: (
-      <div className={styles.title}>
-        <NorthwindMark size={92} />
+      <Backdrop name="hero-basecamp">
+        <NorthwindMark size={84} variant="inverted" />
         <p className={styles.eyebrow}>A hands-on course</p>
         <h1>Building with the Claude API</h1>
         <p className={styles.lead}>
@@ -44,7 +52,7 @@ export const SLIDES: Slide[] = [
           support queue where being wrong costs a person, not a metric.
         </p>
         <p className={styles.byline}>Northwind Outfitters · triage.mlynn.dev</p>
-      </div>
+      </Backdrop>
     ),
     notes: (
       <>
@@ -65,31 +73,42 @@ export const SLIDES: Slide[] = [
     title: "The stakes",
     minutes: 8,
     body: (
-      <>
-        <p className={styles.eyebrow}>Why this course exists</p>
-        <h2>A support queue is where a company finds out it hurt someone.</h2>
-        <div className={styles.quote}>
-          <p>“Hi, probably nothing, but…”</p>
+      <div className={styles.split}>
+        <div>
+          <p className={styles.eyebrow}>Why this course exists</p>
+          <h2>A support queue is where a company finds out it hurt someone.</h2>
+          <div className={styles.quote}>
+            <p>“Hi, probably nothing, but…”</p>
+          </div>
+          <p className={styles.lead}>
+            October 2025. A degraded bottle liner, an allergic reaction, an
+            urgent care visit. The message sat in the general queue for{" "}
+            <strong>three days</strong> — the keyword layer saw no defect words.
+            Legal found out from the customer’s attorney.
+          </p>
+          <ul className={styles.beats}>
+            <li>
+              Handbook §5.4 exists because of that phrase: safety reports reach
+              the safety queue within one hour,{" "}
+              <em>even if the customer says it is not a big deal.</em>
+            </li>
+            <li>
+              <span className={styles.ember}>The point:</span> a false negative
+              on safety is unacceptable; a false positive costs almost nothing.
+              That asymmetry is why the schema looks the way it does.
+            </li>
+          </ul>
         </div>
-        <p className={styles.lead}>
-          October 2025. A degraded bottle liner, an allergic reaction, an urgent
-          care visit. The message sat in the general queue for{" "}
-          <strong>three days</strong> — the keyword layer saw no defect words.
-          Legal found out from the customer’s attorney.
-        </p>
-        <ul className={styles.beats}>
-          <li>
-            Handbook §5.4 exists because of that phrase: safety reports reach the
-            safety queue within one hour,{" "}
-            <em>even if the customer says it is not a big deal.</em>
-          </li>
-          <li>
-            <span className={styles.ember}>The point:</span> a false negative on
-            safety is unacceptable; a false positive costs almost nothing. That
-            asymmetry is why the schema looks the way it does.
-          </li>
-        </ul>
-      </>
+        <Photo
+          name="basecamp-bottle-32"
+          caption={
+            <>
+              <b>Basecamp Insulated Bottle 32oz</b> · $42.50 · lifetime
+              workmanship guarantee
+            </>
+          }
+        />
+      </div>
     ),
     notes: (
       <>
@@ -119,36 +138,42 @@ export const SLIDES: Slide[] = [
     body: (
       <>
         <p className={styles.eyebrow}>Northwind Outfitters</p>
-        <h2>$180M of outdoor gear, sold on a lifetime guarantee.</h2>
-        <div className={styles.stats}>
+        <h2>$180M of outdoor gear — and you can go and look at it.</h2>
+        <div className={styles.split}>
+          <Shot
+            name="shop-home"
+            caption={
+              <>
+                <b>northwind.mlynn.dev</b> — a working shop, down to a support
+                form that runs the real triage service on whatever you type.
+              </>
+            }
+          />
           <div>
-            <b>4,100</b>
-            <span>tickets a week</span>
-          </div>
-          <div>
-            <b>11,300</b>
-            <span>peak week, Nov–Dec</span>
-          </div>
-          <div>
-            <b>34 → 46</b>
-            <span>agents on shift</span>
-          </div>
-          <div>
-            <b>14 → 41 hrs</b>
-            <span>median first response</span>
+            <div className={styles.stats}>
+              <div>
+                <b>4,100</b>
+                <span>tickets a week</span>
+              </div>
+              <div>
+                <b>11,300</b>
+                <span>peak week, Nov–Dec</span>
+              </div>
+              <div>
+                <b>34 → 46</b>
+                <span>agents on shift</span>
+              </div>
+              <div>
+                <b>14 → 41 hrs</b>
+                <span>median first response</span>
+              </div>
+            </div>
+            <p className={styles.lead}>
+              Triage is a human reading all 4,100 — in December, a seasonal hire
+              on their fifth day who has not read the handbook.
+            </p>
           </div>
         </div>
-        <ul className={styles.beats}>
-          <li>
-            The guarantee is the most important commercial fact about them. It
-            is why support costs more here than at competitors, and why “deny
-            the claim” is never the right answer.
-          </li>
-          <li>
-            Triage is a human reading all 4,100 — in December, a seasonal hire on
-            their fifth day who has not read the handbook.
-          </li>
-        </ul>
       </>
     ),
     notes: (
@@ -158,10 +183,60 @@ export const SLIDES: Slide[] = [
           loud is the seasonal swing: the team is sized for neither week.
         </p>
         <p>
-          The storefront is live at northwind.mlynn.dev and the support form
-          runs the real triage service. Everything is easier to hold once
-          they’ve seen the price tag on the jacket they’re about to complain
-          about.
+          The lifetime guarantee is the most important commercial fact about
+          them. It is why customers pay $189 for a shell, it makes support
+          structurally more expensive than competitors’, and it is why “just
+          deny the claim” is never the right answer.
+        </p>
+        <p>
+          If the room has laptops open, send them to the shop now rather than
+          later. Everything lands easier once someone has seen the price tag on
+          the jacket they are about to complain about.
+        </p>
+      </>
+    ),
+  },
+
+  {
+    id: "in-and-out",
+    title: "In and out",
+    minutes: 5,
+    body: (
+      <>
+        <p className={styles.eyebrow}>The system, end to end</p>
+        <h2>A message goes in. Only what needs a person comes out.</h2>
+        <div className={styles.shots}>
+          <Shot name="support-form" caption={<>Anyone can type into this.</>} />
+          <Shot
+            name="escalation-queue"
+            caption={<>Only what a person has to see reaches this.</>}
+          />
+        </div>
+        <p className={styles.lead}>
+          Between them: one Claude call with a schema attached.{" "}
+          <span className={styles.ember}>
+            Storage is a consequence of escalation, not of submission.
+          </span>
+        </p>
+      </>
+    ),
+    notes: (
+      <>
+        <p>
+          Both screens are live. If the room is warm, type the October 2025
+          incident into the support form now — “the bottle lining flaked and my
+          kid swallowed a bit, probably nothing” — and let them watch it reach{" "}
+          <code>persist</code> and come back with a ticket id.
+        </p>
+        <p>
+          Then point at the right-hand card: <code>DEMO-NW-T-1045</code>, tagged{" "}
+          <b>safety</b> and <b>urgent</b> at 0.88 confidence. That is the same
+          incident, already encoded as a fixture the labs test against.
+        </p>
+        <p>
+          A routine ticket produces no id at all. Say that out loud — it is the
+          cheapest possible illustration of a design decision they will make
+          themselves in Lab 2.
         </p>
       </>
     ),
