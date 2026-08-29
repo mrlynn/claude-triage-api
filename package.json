@@ -12,7 +12,7 @@
     "dev:all": "node scripts/dev-all.mjs",
     "start": "tsx src/server.ts",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test storefront/lib/*.test.ts",
+    "test": "tsx --test src/lib/*.test.ts storefront/lib/*.test.ts",
     "check:snippets": "tsx scripts/check-snippets.ts",
     "eval": "tsx evals/run-eval.ts",
     "eval:quick": "tsx evals/quick.ts",

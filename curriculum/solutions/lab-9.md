@@ -92,7 +92,36 @@ There is a third reason worth naming: the routes stay unaware of it. Not one
 handler mentions rate limits, so nobody has to remember the convention when
 adding a fifth route.
 
-**Q5. Why not add a second retry layer?**
+**Q5. Input order and no partial results — defend both.**
+
+**Input order**, because the caller indexes results against the cases it sent.
+An eval harness zips scores back onto `dataset.jsonl` rows to report *which*
+case moved, and [Lab 0](../labs/lab-0-scoreboard.md) established that naming
+the case is the whole value of the baseline — `+2` may be noise, `newly
+passing: eval-03` is something you can go look at. Completion order would
+silently mis-attribute every score to the wrong ticket the moment one call ran
+slow, and nothing about the output would look wrong.
+
+**No partial results**, because a half-finished eval that reports a score is
+worse than one that fails loudly. A score is a number people paste into a PR
+and compare against a baseline, and it carries no marking that says "8 of 12
+cases actually ran." The failure mode of partial results is not a missing
+number, it is a *confident wrong* number — which is the same argument
+`pricingFor()` makes when it throws on an unknown model id rather than
+defaulting, and the same one [Lab 8](../labs/lab-8-trust-boundary.md) makes
+about fabricated citations. Silence and a plausible value is the expensive
+combination.
+
+Worth noticing that both choices cost something real. Input order means one
+slow case holds a result slot while faster work finishes around it, and
+throwing means a single flaky call discards eleven good results and the money
+spent on them. Both are the right trade for a harness you re-run in a minute
+for $0.09. Neither would be right for a 400,000-ticket backfill, which is
+exactly the workload Q3 says to measure separately — there you want
+checkpointing and a dead-letter path, and `docs/architecture.md` lists both as
+things this repo deliberately does not have.
+
+**Q6. Why not add a second retry layer?**
 
 Because retries multiply rather than add. Three SDK retries inside three of
 ours is nine requests for one logical call, arriving in a burst against the
@@ -113,7 +142,7 @@ congestion control, for the same reason: shed load fast, reclaim it slowly. A
 system that recovers as aggressively as it backs off oscillates between
 hammering and hiding.
 
-**Q6. Your eval drops two points on a Tuesday. Nothing deployed.**
+**Q7. Your eval drops two points on a Tuesday. Nothing deployed.**
 
 First: **do not assume it is the model.** On a twelve-case set the run-to-run
 spread is already two cases with nothing changed, so a two-point move is inside
@@ -142,7 +171,7 @@ If you want to actually establish it, in order:
 None of that is buildable after the fact, which is the entire argument for
 building it before you need it.
 
-**Q7. Tool or resource?**
+**Q8. Tool or resource?**
 
 **If the client would be equally well served by reading the thing, it is a
 resource. Tools are for work.**
@@ -167,7 +196,7 @@ trip every time the model wonders.
 Note also the middle case this repo splits: the handbook is published whole
 *and* by section. A client that needs section 5 should not pay for all eight.
 
-**Q8. Should `/v1/resolve` get an orchestrator?**
+**Q9. Should `/v1/resolve` get an orchestrator?**
 
 *For:* an orchestrator could decompose an unusual ticket into sub-questions,
 run them in parallel, and synthesize. On a message raising three unrelated

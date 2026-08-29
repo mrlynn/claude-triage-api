@@ -27,8 +27,18 @@ They are three parameters on the same request. This is the single most
 useful thing to internalize early: once you can make one Messages call, every
 other capability is a field you add to it.
 
+There is a second axis, and it trips people who have internalised the first.
+Capabilities are parameters; **modalities are content blocks**. A user turn's
+`content` is either a string or an array of blocks, and an image or a document
+is a block in that array — not a parameter, not a different endpoint, and not a
+different model. `/v1/triage` accepts a photo on exactly this basis
+([Lab 2](labs/lab-2-structured-outputs.md), second extension).
+
 Supporting endpoints exist (`count_tokens`, `batches`, `files`, `models`) but
-they feed into or describe this one.
+they feed into or describe this one. `files` is the one worth knowing you are
+not using: it stores a document once and lets many requests reference it by id,
+which is the right answer when large documents vary per request and the wrong
+answer for a single handbook that belongs in a cached prefix.
 
 ---
 
@@ -40,6 +50,12 @@ they feed into or describe this one.
 | **Tool use** | `tools` | The answer depends on data the model can't have | You already know what to fetch — just fetch it and put it in the prompt |
 | **Streaming** | `.stream()` | A human is waiting and watching | A program is waiting; streaming adds complexity and no value |
 | **Prompt caching** | `cache_control` | A large, stable prefix repeats across requests | Each request is unique |
+
+Vision is deliberately not a fifth row. It is not a parameter and it does not
+get its own route — it is a block in `content`, on the same four capabilities.
+A photo classified by `/v1/triage` still uses structured outputs, still hits the
+same cached prefix, and still returns the same schema. Keeping the count at four
+is the honest description of the API surface.
 
 The "don't use it when" column matters more than the left one. The most common
 architectural mistake is reaching for tool use when a plain lookup plus a
@@ -118,7 +134,7 @@ That last row is the important one. Nothing in this domain needs a model to
 invent its own subtasks: the lookups `/v1/resolve` needs are known in advance
 and bounded by three tools. Adding an orchestrator would buy unpredictability
 and a bigger bill, and the fact that a pattern has a name is not an argument
-for using it. [Lab 9](labs/lab-9-shipping-it.md) Q8 makes you label the code you
+for using it. [Lab 9](labs/lab-9-shipping-it.md) Q9 makes you label the code you
 have already written and then defend the pattern you left out.
 
 ---
@@ -186,4 +202,5 @@ Three consequences that drive most real optimization work:
 | Cut your bill | [Lab 5](labs/lab-5-prompt-caching.md) |
 | Record a before-measurement before you start | [Lab 0: evaluation baseline](labs/lab-0-scoreboard.md) |
 | Know if any of it works | [Lab 6](labs/lab-6-evals.md) |
+| Put an agent in front of users without handing it the writes | [Lab 10](labs/lab-10-ask-northwind.md) |
 | Understand why the code is shaped this way | [../docs/architecture.md](../docs/architecture.md) |

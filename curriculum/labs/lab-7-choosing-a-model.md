@@ -63,11 +63,24 @@ Three models, twelve cases, four in flight. About ninety seconds and $0.19.
 Read the table top to bottom before you read any single column. The measured
 result on this repo, across four runs:
 
-| model | accuracy | $/mo @ 4,100/wk | calibration gap |
-|---|---|---|---|
-| `claude-opus-5` | 10–12 / 12 | ~$137 | 0.35–0.41 |
-| `claude-sonnet-5` | 7–9 / 12 | ~$70–98 | 0.20–0.30 |
-| `claude-haiku-4-5` | 6–8 / 12 | ~$67–74 | −0.06 to +0.13 |
+| model | accuracy | p50 | p95 | $/mo @ 4,100/wk | calibration gap |
+|---|---|---|---|---|---|
+| `claude-opus-5` | 10–12 / 12 | 17.8s | 22.4s | ~$137 | 0.35–0.41 |
+| `claude-sonnet-5` | 7–9 / 12 | 15.7s | 18.2s | ~$70–98 | 0.20–0.30 |
+| `claude-haiku-4-5` | 6–8 / 12 | 9.1s | 9.7s | ~$67–74 | −0.06 to +0.13 |
+
+The latency columns come from the same run and almost nobody reads them either.
+Two things about how they were measured, because a latency number without its
+conditions is decoration: models run **sequentially** so one tier's traffic
+never queues behind another's, and cases run **four in flight** within a model,
+so these include some self-contention and are not single-request figures. They
+are also whole-request times through the local route, not time-to-first-token —
+`/v1/triage` does not stream, and for a classifier that is the number that
+matters.
+
+Note that Haiku is roughly **half** the wall clock of Opus while costing about
+half as much and losing three to five cases in twelve. Cost and latency move
+together down the tiers; accuracy moves against them.
 
 **Q1.** Priya's budget is $4,000 a month. Every row above fits inside it with
 between thirty and sixty times the headroom. What does that do to the argument
@@ -187,11 +200,17 @@ actually worth something?
 
 ## Step 6 — write the decision down
 
-You have four numbers per tier and a matrix. Write three sentences: which model
+You have five numbers per tier and a matrix. Write three sentences: which model
 you would ship for Northwind, what evidence supports it, and what single
 observation would change your mind.
 
 **Q6.** Two models score 11/12. Is that the same number?
+
+**Q7.** Your three sentences almost certainly did not mention latency. Nothing
+in Northwind's queue is waiting on a human — triage runs over tickets nobody
+reads in real time — so say what the latency column is worth *here*. Then
+change one thing about the product so that the same column becomes the
+deciding number, and say which row you would ship then.
 
 ---
 

@@ -402,6 +402,51 @@ hardest correctness properties on the page are index definitions.
 
 ---
 
+## Decision 11 — two gates, because they answer different questions
+
+`npm test` and `npm run eval:redteam` both touch the trust boundary and neither
+substitutes for the other.
+
+The tests are pure functions: `enforceAuthority` on a fixture resolution and a
+fixture trace, `wrapUntrusted` on the `inj-02` payload, `redactPII` on a card
+number, `verifyCitations` on a forged clause, `summarizeUsage` on four token
+counts. No credential, no network, ~100ms, free, and **exact** — a failure is
+always a bug, never variance. They run on every fork PR, in the half of CI that
+works without secrets.
+
+The evals are statistical. `eval:redteam` asks whether a model can be talked
+past those controls, which is a question about a distribution and costs $0.40 a
+run. `eval:quick` gates accuracy at 80% and moves by two cases on its own.
+
+The mistake worth naming is treating either as the other. An eval cannot tell
+you that `$200.01 > $200` — it can only tell you that on fourteen cases nothing
+got through, and Lab 8 is emphatic that a rate is the wrong shape for a breach.
+And a unit test cannot tell you the prompt has drifted. Lab 8's central claim
+is that a deterministic control beats a well-written instruction *because it
+holds by construction*; a construction nobody tests is an instruction with
+better syntax.
+
+**The suite is mutation-checked**, which is the part usually skipped. Breaking
+the refund ceiling by one cent, dropping the Luhn check, treating a not-found
+customer as zero prior refunds, removing the escaping, and reverting
+`verifyCitations` to the version that was wrong each has to turn the suite red.
+That check earned its keep immediately: one test was passing for the wrong
+reason — an alphanumeric tracking number rejected by the length gate, never
+reaching the Luhn check it claimed to exercise — and dropping Luhn entirely
+left the suite green. A test that passes at the wrong gate is indistinguishable
+from one that passes at the right one until something mutates the code.
+
+Writing them also disproved a claim on this repo's own solutions page. Lab 8 Q5
+asserted that escaping before redacting makes a card number undetectable; it
+does not, because `&lt;` introduces no digits and `<` was never a legal
+separator inside the run. The ordering in `record()` is defensive rather than
+load-bearing — though a percent-encoding escape *would* make it load-bearing,
+since `%3C` ends in a word character and destroys the boundary the pattern
+needs. Both are pinned in `src/lib/untrusted.test.ts`, and the answer now says
+what is true.
+
+---
+
 ## What this reference deliberately omits
 
 Being explicit about scope is part of being teachable. Not here:
@@ -417,8 +462,33 @@ Being explicit about scope is part of being teachable. Not here:
   the page, which matters more than the mechanism: the failure mode for demo
   security is not that it is weak, it is that someone downstream mistakes it
   for the real thing.
-  Conversations remain single-turn by design, so the labs stay about the API
-  rather than about session storage.
+  The four routes in `src/` are single-turn by design, so the labs stay about
+  the API rather than about session storage. Lab 10's assistant is the
+  exception and is worth being precise about: it holds a multi-turn
+  conversation in an anonymous session for seven days, capped in turns and
+  spend. What it does *not* use is any of the API's memory machinery — no
+  memory tool, no context editing, no compaction. The history is short enough
+  to send whole, and a bounded transcript you can read beats a managed one you
+  cannot. **Reach for context management when the transcript outgrows the
+  window, not before**; at Northwind's conversation lengths that never
+  happens, and adopting it here would be the Agent SDK mistake from Lab 10 in
+  a second costume.
+- **Server-side tools — web search and code execution.** Both are one field on
+  the same request, and neither belongs in this domain. Web search answers
+  questions about the world; every fact this system needs is in Northwind's own
+  systems, reached through three typed tools whose results are auditable and
+  whose latency is a database call rather than a fetch. Code execution has no
+  candidate use here at all. The general test is the concept map's: reach for a
+  capability when the answer depends on data the model cannot have, not because
+  the capability exists.
+- **The Files API.** The natural pairing with batch — upload a document once,
+  reference it by id across many requests, stop re-uploading bytes. This repo
+  never needs it, because its one large stable document is the policy handbook
+  and the handbook goes in the **cached system prefix**, which is the cheaper
+  arrangement for a document that is on every single request. Files earns its
+  place when the documents vary per request and are large — a queue of PDF
+  receipts, say — and [Lab 9](../curriculum/labs/lab-9-shipping-it.md)'s batch
+  measurement is the shape of the experiment you would run to decide.
 - **Auth on the service itself.** There is no API key on our own endpoints.
   Anything internet-facing needs one.
 - **A durable queue and worker.** Batch jobs are fired from a script that has

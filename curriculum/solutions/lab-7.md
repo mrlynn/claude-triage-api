@@ -171,3 +171,48 @@ Note also what you will be measuring: the judge itself swings 1/4 to 3/4 on
 identical input. With a four-case sample you cannot distinguish tiers at all.
 Raising the sample is most of the work, and deciding how far to raise it is
 [Lab 6](../labs/lab-6-evals.md) Q7 all over again.
+
+**Q7. What is the latency column worth here?**
+
+For Northwind's triage queue: **almost nothing, and saying so is the point.**
+4,100 tickets a week arrive into a queue nobody reads in real time. Whether a
+classification takes 9 seconds or 22 makes no difference to any human — the
+tickets are processed faster than they arrive at every tier, and the constraint
+that binds is accuracy on the cases where two handbook rules interact. Shipping
+Haiku to save 13 seconds nobody experiences, at the price of three to five
+cases in twelve, is the same mistake as shipping it to save $65 against a
+$4,000 budget. Same error, different column.
+
+That is the transferable habit and it is worth stating flatly: **optimize the
+constraint that binds.** A number being real, measured, and printed in your
+table does not make it a decision input. Most of the columns in most model
+comparisons are like this, and the discipline is knowing which one is yours
+before you look.
+
+*Now change the product.* Put the classifier in front of a person and latency
+stops being decoration:
+
+- **The storefront support form.** A customer watches the pipeline run while
+  they wait. 22 seconds of spinner is a bad experience and 9 is a tolerable
+  one, and the classification is not what they came for — they came to file a
+  ticket. Ship the cheap tier and let the escalation path from Step 5 catch the
+  cases where confidence is low.
+- **An agent-assist panel** that classifies while a human reads the ticket. The
+  budget is however long the person spends reading, which is a few seconds. p95
+  is the number that matters, not p50, because the failure is "the panel was
+  still empty when I finished reading" and that happens in the tail.
+- **A phone IVR routing a live caller.** Nothing above is shippable; you need a
+  different architecture, not a different tier.
+
+Two things to carry out of that. Which *percentile* you read is part of the
+decision — p50 tells you what the experience usually is, p95 tells you how
+often it is bad, and an interactive surface is judged on the tail. And a
+system with both workloads should not pick one row: Northwind's real answer is
+the flagship on the batch queue and the cheap tier on the live form, which is
+`pickModel` from Step 4 doing exactly the job it exists for.
+
+The measurement caveats matter before you quote any of this. These are
+four-in-flight, whole-request times through the local route, not
+time-to-first-token and not single-request figures. `/v1/triage` does not
+stream; a streaming surface would be judged on time-to-first-token instead, and
+`/v1/draft` would need its own measurement that this matrix does not make.

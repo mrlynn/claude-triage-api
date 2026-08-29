@@ -111,7 +111,7 @@ The tool loop is the first genuinely fiddly thing. Two mitigations:
 
 ## Day 2 — production
 
-Four hours, and **optional**. Book it when the room has a project rather than a
+Four hours ten, and **optional**. Book it when the room has a project rather than a
 curiosity — these are the decisions that only arrive once something is real.
 Assumes Day 1's baseline exists; every measurement is a comparison against it.
 
@@ -120,12 +120,41 @@ Assumes Day 1's baseline exists; every measurement is a comparison against it.
 | 0:00–0:10 | Recap | Put yesterday's `evals/baseline.json` on screen. |
 | 0:10–0:55 | **Lab 7** | Model choice. |
 | 0:55–1:05 | Break | |
-| 1:05–1:55 | **Lab 8** | The trust boundary. |
-| 1:55–2:10 | **Live demo** | The queue. See below. |
-| 2:10–3:10 | **Lab 9** | Shipping it. Longest lab. |
-| 3:10–3:20 | Break | |
-| 3:20–3:50 | Patterns + what we left out | Lab 9 Q8, then the omissions list. |
-| 3:50–4:00 | Where to go next | |
+| 1:05–2:05 | **Lab 8** | The trust boundary. Step 6 is the one to cut. |
+| 2:05–2:20 | **Live demo** | The queue. See below. |
+| 2:20–3:20 | **Lab 9** | Shipping it. Longest lab. |
+| 3:20–3:30 | Break | |
+| 3:30–4:00 | Patterns + what we left out | Lab 9 Q9, then the omissions list. |
+| 4:00–4:10 | Where to go next | Hand out **Lab 10**. See below. |
+
+### The capstone (Lab 10) — assign it, or run it if you have the room
+
+[Lab 10](labs/lab-10-ask-northwind.md) is 45 minutes and it is not in either
+day's table on purpose. Its subject is already deployed on both public sites,
+so it needs no key, no local service, and no terminal — which makes it the one
+thing on this course you can hand to a room whose keys you already revoked.
+
+**If you are sending it home,** spend two minutes at 4:00 doing step 3 on the
+projector so they know what they are going to. Ask for a $900 refund in the
+storefront assistant. It comes back an escalation. Ask the room why, and let
+them say "the model followed policy" before you tell them `underAuthority`
+rewrote the outcome — Lab 8's `enforceAuthority` move, arriving where the model
+was being *persuasive* rather than merely attacked.
+
+**If you have a spare 45 minutes,** run the five Check-your-work steps in order
+and stop hard on two beats:
+
+1. *"Which of its four tools files the ticket?"* None of them. The confirmation
+   is the write, and it re-derives authority on the confirming request, because
+   a stored proposal is not evidence it was ever within policy.
+2. The Agent SDK argument. An earlier version of this assistant ran the SDK with
+   `tools: []`, `settingSources: []` and memory off — every reason to use it,
+   switched off — and what remained was `messages.toolRunner`. Ask what would
+   have to change about this assistant to flip that call. "A filesystem," "a
+   shell," or "memory across sessions" are the right answers.
+
+Cost is **$0 per learner**: the storefront pays, and it is rate-limited and
+spend-capped.
 
 ### Lab 7 — the two beats that matter
 
@@ -143,7 +172,7 @@ failures during development were mis-specified assertions, not model failures** 
 one literally inverted. That is Lab 0's "check the label before the model"
 arriving where it is much easier to mistake a broken test for a broken defence.
 
-### Live demo (1:55–2:10) — the queue
+### Live demo (2:05–2:20) — the queue
 
 Five minutes, and it lands better than any slide about human-in-the-loop.
 
@@ -204,9 +233,11 @@ In the order you should cut:
 
 1. Lab 3 extensions
 2. Lab 4 Steps 5–6
-3. Lab 9 Step 7 (the patterns exercise) — valuable, but it is discussion and
+3. Lab 8 Step 6 (citation verification) — the only step in that lab with no
+   deterministic control to demonstrate live, and it reads well cold
+4. Lab 9 Step 7 (the patterns exercise) — valuable, but it is discussion and
    discussion compresses
-4. The architecture walkthrough, down to just the omissions list
+5. The architecture walkthrough, down to just the omissions list
 
 **Never cut:** Lab 0 (the baseline everything else compares against), Lab 2
 (the conceptual spine), or Lab 8 Step 5 (measuring what the hardening cost —
