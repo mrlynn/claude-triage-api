@@ -19,6 +19,8 @@
     "eval:quick": "tsx evals/quick.ts",
     "eval:models": "tsx evals/compare-models.ts",
     "eval:redteam": "tsx evals/red-team.ts",
+    "eval:compare": "tsx evals/compare-runtimes.ts",
+    "eval:compare:report": "tsx evals/compare-report.ts",
     "smoke": "tsx scripts/smoke.ts",
     "triage:queue": "tsx scripts/triage-queue.ts",
     "triage:queue:batch": "tsx scripts/triage-queue-batch.ts",
