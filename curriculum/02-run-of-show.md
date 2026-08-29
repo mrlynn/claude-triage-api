@@ -57,6 +57,11 @@ Nothing here is scaffolding for Day 2 that goes to waste without it.
 |---|---|---|
 | 0:00–0:20 | **The scenario** | Read [`scenario.md`](scenario.md) beats aloud. The October 2025 incident is the spine of the whole course — spend the time. |
 | 0:20–0:35 | **Concept map** | Everything is one endpoint. Four capabilities are four parameters. |
+
+Both opening segments have a deck: **[slideshow mode](https://triage.mlynn.dev/talk)**,
+eight slides with speaker notes on each. Arrow keys or a clicker move it, `S`
+opens the notes, `F` goes full screen. It is unlisted — no navbar entry — so
+open it by URL before the room arrives.
 | 0:35–0:55 | **Lab 0** | Not optional. See below. |
 | 0:55–1:15 | Lab 1 | |
 | 1:15–1:50 | Lab 2 | The conceptual spine. Never cut. |

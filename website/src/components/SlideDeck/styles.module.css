@@ -1,0 +1,424 @@
+/**
+ * Deck styling. Brand tokens only — every colour here comes from custom.css,
+ * so the deck follows the site's colour mode the way the playground
+ * components do and there is no second palette to keep in sync.
+ *
+ * The frame is a container (`container-type: inline-size`) and all slide type
+ * is sized in `cqw`, clamped. That is the whole trick behind "what you
+ * rehearse is what projects": type scales with the FRAME, not the viewport,
+ * so the same slide fills a 13" laptop and a 4K projector identically.
+ */
+
+.deck {
+  /* Vertical space the controls row and padding need in fullscreen; the frame
+     sizes itself off what is left. */
+  --deck-chrome: 6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem 1rem 3rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.frame {
+  position: relative;
+  container-type: inline-size;
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 0.75rem;
+  background: var(--ifm-background-surface-color);
+  box-shadow: 0 12px 40px rgba(31, 61, 51, 0.14);
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2.2cqw;
+  padding: 5cqw 6cqw;
+  overflow: auto;
+  animation: slidein 260ms ease-out;
+}
+
+@keyframes slidein {
+  from { opacity: 0; transform: translateY(0.6cqw); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide { animation: none; }
+}
+
+/* ------------------------------------------------------------- slide type */
+
+.slide h1 {
+  font-size: clamp(1.6rem, 6.4cqw, 4rem);
+  line-height: 1.05;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.slide h2 {
+  font-size: clamp(1.15rem, 4.2cqw, 2.6rem);
+  line-height: 1.15;
+  margin: 0;
+  letter-spacing: -0.015em;
+}
+
+.slide p,
+.slide li {
+  font-size: clamp(0.72rem, 1.9cqw, 1.2rem);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.slide code {
+  font-size: 0.92em;
+  border: 0;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  font-size: clamp(0.6rem, 1.3cqw, 0.85rem) !important;
+  color: var(--ifm-color-primary);
+  margin: 0;
+}
+
+.lead { color: var(--ifm-color-emphasis-800); max-width: 46ch; }
+
+/* Ember is the system's only warm colour. One per slide, marking the sentence
+   the room should leave with — never decoration. */
+.ember { color: var(--nw-ember); font-weight: 700; }
+
+/* ------------------------------------------------------------ slide title */
+
+.title {
+  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 2cqw;
+  height: 100%;
+  justify-content: center;
+}
+
+.title .lead { max-width: 52ch; }
+
+.byline {
+  color: var(--ifm-color-emphasis-600);
+  font-size: clamp(0.65rem, 1.5cqw, 1rem) !important;
+}
+
+/* ----------------------------------------------------------- slide pieces */
+
+.quote {
+  border-left: 0.5cqw solid var(--nw-ember);
+  padding-left: 2cqw;
+}
+
+.quote p {
+  font-size: clamp(1rem, 3.4cqw, 2.1rem) !important;
+  font-style: italic;
+  color: var(--ifm-heading-color);
+}
+
+.beats {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2cqw;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.beats li {
+  border-left: 0.35cqw solid var(--ifm-color-emphasis-300);
+  padding-left: 1.6cqw;
+  color: var(--ifm-color-emphasis-800);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5cqw;
+}
+
+.stats div {
+  border-top: 0.25cqw solid var(--nw-spruce);
+  padding-top: 1cqw;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4cqw;
+}
+
+.stats b {
+  font-size: clamp(1rem, 3.4cqw, 2.2rem);
+  line-height: 1;
+  color: var(--ifm-heading-color);
+}
+
+.stats span {
+  font-size: clamp(0.6rem, 1.4cqw, 0.9rem);
+  color: var(--ifm-color-emphasis-600);
+}
+
+/* The one-endpoint diagram: a trunk with four leaves. Deliberately plain —
+   a mermaid render at projector size is unreadable and slow to paint. */
+.branches { display: flex; flex-direction: column; gap: 1.6cqw; }
+
+.trunk {
+  align-self: flex-start;
+  background: var(--nw-pine);
+  color: var(--nw-bone);
+  border-radius: 0.5cqw;
+  padding: 1.2cqw 2cqw;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: clamp(0.75rem, 2.4cqw, 1.5rem);
+  font-weight: 700;
+}
+
+.leaves { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2cqw; }
+
+.leaves div {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-top: 0.3cqw solid var(--nw-spruce);
+  border-radius: 0.4cqw;
+  padding: 1.2cqw;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5cqw;
+}
+
+.leaves b {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: clamp(0.65rem, 1.7cqw, 1.05rem);
+}
+
+.leaves span {
+  font-size: clamp(0.55rem, 1.3cqw, 0.85rem);
+  color: var(--ifm-color-emphasis-600);
+}
+
+.table { width: 100%; display: table; border-collapse: collapse; margin: 0; }
+
+.table th,
+.table td {
+  border: 1px solid var(--ifm-table-border-color);
+  padding: 1cqw 1.2cqw;
+  text-align: left;
+  font-size: clamp(0.55rem, 1.5cqw, 0.95rem);
+  line-height: 1.35;
+  vertical-align: top;
+}
+
+.table th { background: var(--ifm-color-emphasis-100); }
+
+/* The "don't use it when" column is the reason this slide exists. */
+.emphCol { background: rgba(217, 100, 42, 0.08); font-weight: 600; }
+
+.ladder { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2cqw; }
+
+.ladder div {
+  position: relative;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 0.4cqw;
+  padding: 1.4cqw;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5cqw;
+}
+
+.ladder div + div::before {
+  content: "→";
+  position: absolute;
+  left: -1.05cqw;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ifm-color-emphasis-500);
+  font-size: 1.4cqw;
+}
+
+.ladder b { font-size: clamp(0.75rem, 2.1cqw, 1.35rem); }
+
+.ladder span {
+  font-size: clamp(0.55rem, 1.3cqw, 0.85rem);
+  color: var(--ifm-color-emphasis-600);
+}
+
+.numbered {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2cqw;
+  margin: 0;
+  padding-left: 2.4cqw;
+}
+
+.numbered li { color: var(--ifm-color-emphasis-800); }
+.numbered b { color: var(--ifm-heading-color); }
+
+.labs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.8cqw 2.4cqw;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: none;
+}
+
+.labs li {
+  display: flex;
+  gap: 1.2cqw;
+  align-items: baseline;
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+  padding-bottom: 0.7cqw;
+}
+
+.labs b { flex: none; width: 7.5cqw; color: var(--ifm-color-primary); }
+.labs span { color: var(--ifm-color-emphasis-700); }
+
+.counter {
+  position: absolute;
+  right: 2cqw;
+  bottom: 1.6cqw;
+  font-size: clamp(0.55rem, 1.2cqw, 0.8rem);
+  font-variant-numeric: tabular-nums;
+  color: var(--ifm-color-emphasis-500);
+}
+
+/* ---------------------------------------------------------------- chrome  */
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.arrow,
+.toggle {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  background: transparent;
+  color: inherit;
+  border-radius: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.arrow:disabled { opacity: 0.35; cursor: default; }
+.arrow:not(:disabled):hover,
+.toggle:hover { background: var(--ifm-color-emphasis-100); }
+
+.toggle:last-of-type { margin-left: 0; }
+.toggle { margin-left: auto; }
+.toggle + .toggle { margin-left: 0; }
+
+.dots { display: flex; gap: 0.4rem; list-style: none; margin: 0; padding: 0; }
+
+.dot {
+  width: 0.65rem;
+  height: 0.65rem;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--ifm-color-emphasis-500);
+  background: transparent;
+  cursor: pointer;
+}
+
+.dot[data-current] { background: var(--nw-ember); border-color: var(--nw-ember); }
+
+.notes {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-left: 3px solid var(--nw-spruce);
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+  background: var(--ifm-color-emphasis-100);
+}
+
+.notes header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.notes header span,
+.notes footer {
+  font-size: 0.8rem;
+  color: var(--ifm-color-emphasis-600);
+}
+
+.notes footer {
+  margin-top: 0.75rem;
+  border-top: 1px solid var(--ifm-color-emphasis-200);
+  padding-top: 0.6rem;
+}
+
+.notesBody p { margin-bottom: 0.6rem; font-size: 0.95rem; line-height: 1.55; }
+.notesBody p:last-child { margin-bottom: 0; }
+
+/* Fullscreen: the deck element itself becomes the screen, so it has to paint
+   its own ground — the page background does not come with it. */
+.deck[data-fullscreen] {
+  max-width: none;
+  height: 100%;
+  padding: 1rem;
+  background: var(--ifm-background-color);
+  justify-content: center;
+}
+
+/*
+ * Letterbox 16:9 into whatever the screen actually is.
+ *
+ * The obvious `height: 100%; width: auto` does NOT work: width:auto on a block
+ * stretches to fill, which makes both dimensions definite and causes
+ * aspect-ratio to be ignored — the frame comes out at the screen's ratio, not
+ * the deck's. Driving the WIDTH off the available height keeps one dimension
+ * auto, so the base aspect-ratio still decides the other.
+ */
+.deck[data-fullscreen] .frame {
+  width: min(100%, calc((100dvh - var(--deck-chrome)) * 16 / 9));
+  height: auto;
+  margin: 0 auto;
+  border: 0;
+  box-shadow: none;
+}
+
+/* Notes stay available in fullscreen — `S` doing nothing there would be a
+   trap. Capped, so an open panel never squeezes the slide off the screen. */
+.deck[data-fullscreen] .notes {
+  width: min(100%, 70rem);
+  margin: 0 auto;
+  max-height: 28vh;
+  overflow-y: auto;
+}
+
+.deck[data-fullscreen][data-notes] {
+  --deck-chrome: 34vh;
+}
+
+/* Phones: the frame is unreadable at 16:9, so let it grow instead of
+   shrinking the type into nothing. The deck is a presenter tool; this is the
+   "reading it on the train" case. */
+@media (max-width: 600px) {
+  /* Hug the content instead of holding a 16:9 box: at this width the frame is
+     a reading surface, and a fixed ratio only adds dead space under the
+     shorter slides. */
+  .frame { aspect-ratio: auto; }
+  .slide { position: static; }
+  .stats,
+  .leaves,
+  .ladder,
+  .labs { grid-template-columns: 1fr 1fr; }
+  .ladder div + div::before { content: none; }
+  .controls { justify-content: center; }
+  .toggle { margin-left: 0; }
+}
