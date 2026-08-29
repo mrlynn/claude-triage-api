@@ -3,3 +3,10 @@ build/
 .docusaurus/
 node_modules/
 docs-manifest.json
+
+# Copied here by scripts/sync-docs.mjs from assets/readme/, which is the
+# canonical location — README.md points at those paths so the images render on
+# GitHub too. The copies are rewritten on every start and build, and they are
+# screenshots: tracking them would put a second copy of every regeneration in
+# history for no benefit.
+static/img/readme/

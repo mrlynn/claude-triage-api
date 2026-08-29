@@ -282,9 +282,10 @@ Three properties follow, and each is enforced rather than documented:
 - **The stored text is redacted**, by the same `redactPII` used at the model
   boundary. Once you persist, "the model was polite about the card number"
   stops being relevant and the only question is what is in the database.
-- **Documents expire after 30 days**, via a TTL index in `ensureIndexes()`. The
-  only version of a retention policy that survives contact with a busy team is
-  one the database applies without being asked.
+- **Documents expire after 30 days**, via a MongoDB TTL index in
+  `ensureIndexes()`. The only version of a retention policy that survives
+  contact with a busy team is one the database applies without being asked.
+  Decision 10 has the mechanism.
 - **A storage failure degrades the queue, not the answer.** The `persist` stage
   reports `failed` and the pipeline continues to its result. The customer's
   classification does not depend on our operations tooling working.
@@ -329,7 +330,79 @@ table was the one backed by no evidence. Every display site now renders `n/a`.
 
 ---
 
-## Decision 10 — two gates, because they answer different questions
+## Decision 10 — the retention policy is an index, not a paragraph
+
+Decision 8 argues that only escalated tickets should be stored and that they
+should expire. This is how that argument stops being a paragraph.
+
+```ts
+// storefront/lib/mongo.ts — ensureIndexes()
+db.collection("escalations").createIndex(
+  { created_at: 1 },
+  {
+    expireAfterSeconds: ESCALATION_RETENTION_DAYS * 24 * 60 * 60,
+    name: "retention",
+  },
+);
+```
+
+MongoDB runs a background task that deletes documents past that age. No cron
+entry, no cleanup script, no runbook step, nobody to remember. The policy and
+its enforcement are one line, which means they cannot drift apart — the failure
+mode of a written retention policy is not that it is wrong, it is that the job
+implementing it was disabled in an incident eighteen months ago and nobody
+noticed.
+
+Five collections carry one: `rate_limits`, `escalations`, `usage_daily`,
+`assistant_sessions`, `assistant_proposals`. Everything the storefront stores
+that derives from a person deletes itself.
+
+**The same reasoning shows up in the rate limiter, for a different property.**
+
+```ts
+// storefront/lib/ratelimit.ts
+const result = await db.collection<Bucket>("rate_limits").findOneAndUpdate(
+  { _id: id },
+  {
+    $inc: { count: 1 },
+    $setOnInsert: { expiresAt: new Date(Date.now() + ttlMs) },
+  },
+  { upsert: true, returnDocument: "after", projection: { count: 1 } },
+);
+```
+
+Read the count, decide, then write it back, and two requests arriving together
+both read `count = 4`, both conclude they are under a limit of 5, and both
+proceed. That is not a rare race — it is the normal case for a room of forty
+people submitting at once, which is exactly the traffic this app was built for.
+Here it is one round trip and one document, and the increment and the read of
+the result are the same operation. No transaction, no lock, no second service.
+
+Both of these are worth noticing because they are **guarantees the application
+does not implement**. The service is spending its complexity budget on the
+guardrails in Decisions 1 through 9; retention and atomicity are delegated to
+the datastore, and the code is shorter for it.
+
+Two more things the storefront relies on, both in `storefront/lib/mongo.ts`:
+
+- **The client is module-level and cached on `globalThis`.** Vercel Functions
+  reuse instances, so a client created inside a handler would pay TCP + TLS +
+  auth on every invocation. The `globalThis` cache also stops `next dev` from
+  opening a fresh pool on every file save.
+- **`maxPoolSize` is small on purpose.** Free-tier Atlas clusters cap total
+  connections and each warm instance holds its own pool. The comment in that
+  file states the traffic assumptions the number is derived from, so the next
+  person can re-derive it instead of raising it on a hunch.
+
+What is *not* used, since a reference should be honest about its own scope: no
+Atlas Search, no vector search, no aggregation pipelines, no transactions. Five
+TTL indexes, one compound index for the queue board, and an atomic upsert. The
+interesting part is not that the feature list is long — it is that the two
+hardest correctness properties on the page are index definitions.
+
+---
+
+## Decision 11 — two gates, because they answer different questions
 
 `npm test` and `npm run eval:redteam` both touch the trust boundary and neither
 substitutes for the other.
@@ -371,6 +444,8 @@ load-bearing — though a percent-encoding escape *would* make it load-bearing,
 since `%3C` ends in a word character and destroys the boundary the pattern
 needs. Both are pinned in `src/lib/untrusted.test.ts`, and the answer now says
 what is true.
+
+---
 
 ## What this reference deliberately omits
 

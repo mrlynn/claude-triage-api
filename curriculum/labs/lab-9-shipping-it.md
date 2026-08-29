@@ -261,4 +261,17 @@ gate recovers by one after a clean batch, and halves on failure. What happens to
 throughput if the true limit sits just below your starting width — and what
 would you change?
 
+---
+
+## Where this goes next
+
+This lab is called "shipping it" and it stops one step short of that. You have
+batching, rate-limit handling and MCP; you do not have a way for a real ticket
+to arrive or a real decision to land anywhere.
+
+[`../next-steps.md`](../next-steps.md) covers the repository that closes that
+gap — policy packs in place of Northwind's hardcoded taxonomy, signed webhook
+ingest, helpdesk connectors, and the one guardrail argument this course does not
+make: what a control should do when it *cannot run*.
+
 **Answers:** [../solutions/lab-9.md](../solutions/lab-9.md)

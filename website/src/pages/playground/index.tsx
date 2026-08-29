@@ -28,6 +28,13 @@ const TOOLS = [
     lab: "Scenario",
   },
   {
+    to: storefront("/playground/live"),
+    title: "Watch it read as you type",
+    blurb:
+      "A live triage preview that fills in category, sentiment and urgency while you write. Then commit the message and see where the cheap model was wrong.",
+    lab: "Lab 5",
+  },
+  {
     to: storefront("/queue"),
     title: "The escalation queue",
     blurb:

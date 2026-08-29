@@ -1,4 +1,10 @@
+![Claude Triage API — a support-triage service built on the Claude API, and the course that teaches it](assets/readme/banner.png)
+
 # Claude Triage API
+
+[![CI](https://github.com/mrlynn/claude-triage-api/actions/workflows/ci.yml/badge.svg)](https://github.com/mrlynn/claude-triage-api/actions/workflows/ci.yml)
+
+**[Take the course](https://triage.mlynn.dev)** · **[Visit the shop](https://northwind.mlynn.dev)** · **[Read the scenario](curriculum/scenario.md)** · Node ≥ 20
 
 A reference implementation of a customer-support triage service built on the
 Claude API, plus the course that teaches it — written to be **read and taught
@@ -31,6 +37,38 @@ bottleneck, two failed automation attempts, and an incident where a child's
 injury report sat unrouted for three days because it opened with "probably
 nothing." Every design decision in this repo traces back to something on that
 page, and the labs are much harder to motivate without it.
+
+### What that looks like
+
+**The shop.** A working Next.js storefront for the fictional company, so the
+tickets the service triages are about products a learner has actually looked
+at. [northwind.mlynn.dev](https://northwind.mlynn.dev)
+
+![The Northwind Outfitters storefront: a tent pitched at sunrise under the headline Gear that outlasts the trip](assets/readme/shop.jpg)
+
+**The queue.** Every ticket here was classified `requires_human: true` and
+written to the database by the `persist` stage. Tickets that did not need a
+human were classified and discarded — storage is a consequence of escalation,
+not of submission. [northwind.mlynn.dev/queue](https://northwind.mlynn.dev/queue)
+
+![An escalation queue card: a child's illness linked to a flaking bottle lining, tagged safety and urgent at 0.88 confidence](assets/readme/queue.jpg)
+
+**The playgrounds.** Seven of them on the course site, rendering results from
+real runs rather than illustrations of results. This is the model matrix from
+Lab 7, where the calibration gap — not the accuracy column — is the number
+that decides whether you can route on confidence.
+[triage.mlynn.dev/playground](https://triage.mlynn.dev/playground)
+
+![The model matrix comparing Opus 5, Sonnet 5 and Haiku 4.5 on accuracy, cost, latency and calibration gap](assets/readme/playground.jpg)
+
+**The deck.** Slideshow mode for the course introduction, with speaker notes
+and a synchronised presenter window. Arrow keys move it, `S` opens the notes
+in the page, `P` puts them in a second window that stays in step, `F` goes
+full screen. [triage.mlynn.dev/talk](https://triage.mlynn.dev/talk)
+
+![The opening slide of the course deck, titled Building with the Claude API, over a photograph of a tent at sunrise](assets/readme/deck.jpg)
+
+---
 
 | Route | Capability | The idea it teaches |
 |---|---|---|
@@ -100,6 +138,29 @@ sideways. Solutions are in [`curriculum/solutions/`](curriculum/solutions/).
 Facilitators: [`curriculum/02-run-of-show.md`](curriculum/02-run-of-show.md) is
 minute-by-minute, and [`docs/facilitator/keys.md`](docs/facilitator/keys.md)
 covers workspaces, keys, and measured per-learner cost.
+
+The opening two segments — the scenario and the concept map — have a deck:
+[slideshow mode](https://triage.mlynn.dev/talk), nine slides with speaker
+notes. `P` opens the notes in a second window that stays in step with the
+deck, so a mirrored projector does not show the room your notes.
+
+---
+
+## After the course: `triage-api`
+
+The service in `src/` is deliberately Northwind's — hardcoded taxonomy, one
+company's handbook, fixture data, and nothing writing back to a ticketing
+system. That is right for a course and wrong for production.
+
+**[github.com/mrlynn/triage-api](https://github.com/mrlynn/triage-api)** is the
+same technique with those four things moved behind a config seam: policy packs,
+a `DataProvider`, signed webhook ingest with connectors for **Chatwoot** and
+**Zammad**, a reviewer queue, and a conformance suite for writing your own
+adapter. The guardrails are the same code; what is new is everything that only
+shows up once something has to run — including `/readyz` reporting which
+controls can actually execute in a given deployment.
+
+Full comparison and a reading order: [`curriculum/next-steps.md`](curriculum/next-steps.md).
 
 ---
 
@@ -604,8 +665,39 @@ exact dashboard settings — Ignored Build Step is configured in-repo via
 `ignoreCommand`, so leave that dropdown on **Automatic**.
 
 The storefront calls Claude for real, so it is rate-limited and spend-capped
-(MongoDB Atlas, five per IP per ten minutes, a global daily ceiling, and it
-fails closed rather than running uncapped).
+(five per IP per ten minutes, a global daily ceiling, and it fails closed rather
+than running uncapped).
+
+---
+
+## Built on MongoDB
+
+The storefront's state lives in **MongoDB Atlas**
+([`storefront/lib/mongo.ts`](storefront/lib/mongo.ts)), and two of the
+properties this project argues for hardest are index definitions rather than
+application code:
+
+- **Retention is a mechanism, not a promise.** Every collection holding
+  anything derived from a person — `escalations`, `assistant_sessions`,
+  `assistant_proposals`, `rate_limits`, `usage_daily` — carries an
+  `expireAfterSeconds` index. Documents delete themselves. There is no cron
+  entry to disable during an incident and forget to re-enable, which is how
+  written retention policies actually fail.
+- **The rate limiter cannot be raced.** One `findOneAndUpdate` with `$inc` and
+  `$setOnInsert` under an upsert: one round trip, one document. Read-then-write
+  would let two requests from a room of forty people both read `count = 4` and
+  both conclude they are under a limit of 5.
+
+Also there: the reviewer queue behind a compound index, and a module-level
+pooled client, because Vercel Functions reuse instances and a client built
+inside the handler would pay TCP + TLS + auth every invocation.
+
+Not used, since a reference should be honest about its scope: no Atlas Search,
+no vector search, no aggregation pipelines, no transactions. The argument is
+made in [`docs/architecture.md`](docs/architecture.md) as Decision 10.
+
+The reference implementation, [triage-api](https://github.com/mrlynn/triage-api),
+uses MongoDB the same way for the same reasons.
 
 ---
 

@@ -119,12 +119,26 @@ export default function RootLayout({
               >
                 the labs
               </a>
-              , or read the{" "}
+              , read the{" "}
               <a
                 href="https://github.com/mrlynn/claude-triage-api"
                 className="underline underline-offset-2"
               >
                 source
+              </a>
+              , or take the same technique to your own helpdesk with{" "}
+              <a
+                href="https://github.com/mrlynn/triage-api"
+                className="underline underline-offset-2"
+              >
+                triage-api
+              </a>
+              . Tickets, rate limits and retention run on{" "}
+              <a
+                href="https://www.mongodb.com/atlas"
+                className="underline underline-offset-2"
+              >
+                MongoDB Atlas
               </a>
               .
             </p>

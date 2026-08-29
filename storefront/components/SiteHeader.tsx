@@ -23,6 +23,11 @@ const LINKS = [
   { href: "/ops", label: "Ops", title: "Internal operations dashboard" },
   { href: "/queue", label: "Queue", title: "Escalation queue (internal)" },
   {
+    href: "/playground/live",
+    label: "Live read",
+    title: "Watch a message get classified as you type",
+  },
+  {
     href: "/playground/injection",
     label: "Break it",
     title: "Prompt-injection playground",
