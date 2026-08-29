@@ -154,8 +154,9 @@ system. That is right for a course and wrong for production.
 
 **[github.com/mrlynn/triage-api](https://github.com/mrlynn/triage-api)** is the
 same technique with those four things moved behind a config seam: policy packs,
-a `DataProvider`, signed webhook ingest with connectors for **Chatwoot** and
-**Zammad**, a reviewer queue, and a conformance suite for writing your own
+a `DataProvider`, signed webhook ingest with connectors for **Chatwoot**,
+**Zammad**, **Zendesk**, **GitHub Issues** and a signed **generic webhook**, a
+reviewer queue, and a conformance suite for writing your own
 adapter. The guardrails are the same code; what is new is everything that only
 shows up once something has to run — including `/readyz` reporting which
 controls can actually execute in a given deployment.
@@ -724,3 +725,11 @@ uses MongoDB the same way for the same reasons.
   `npm run sync:storefront` emits `storefront/lib/pricing.generated.ts` from the
   same catalog, because that app deploys from its own root directory and cannot
   import from `src/`.
+
+---
+
+## License
+
+[Apache-2.0](LICENSE). The curriculum, the labs and the instructor materials are
+covered by the same terms as the code: teach from them, fork them, adapt them
+for your own domain. Attribution is appreciated, not required.
