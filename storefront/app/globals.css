@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+/*
+ * `dock` is "there is room to float a panel" — wide enough AND tall enough.
+ *
+ * Tailwind's own `sm:` is width-only, and a phone in landscape is 667x375:
+ * wide enough to clear a 640px width breakpoint and far too short to hold a
+ * 620px panel. Using `sm:` alone put a cramped floating card on a screen that
+ * wanted a full-screen sheet, and it disagreed with the course site, whose
+ * rule tests both axes. One named variant, used by AssistantChat, keeps the
+ * two implementations saying the same thing.
+ */
+@custom-variant dock (@media (min-width: 40rem) and (min-height: 34rem));
+
 @theme {
   --color-pine: #1f3d33;
   --color-spruce: #5c9a86;
