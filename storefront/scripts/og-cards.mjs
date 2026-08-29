@@ -21,32 +21,9 @@ import { writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
+import { PINE, SPRUCE, BONE, EMBER, SANS, MONO, mark } from "./lib/brand.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-
-const PINE = "#1f3d33";
-const SPRUCE = "#5c9a86";
-const BONE = "#f2ede4";
-const EMBER = "#d9642a";
-
-/** The header mark, scaled into a 64-unit box at an arbitrary origin. */
-function mark(x, y, size) {
-  const s = size / 64;
-  return `<g transform="translate(${x} ${y}) scale(${s})">
-    <rect width="64" height="64" rx="15" fill="${SPRUCE}" opacity="0.18"/>
-    <path d="M42 26 L58 47 H30 Z" fill="${SPRUCE}"/>
-    <path d="M26 16 L44 47 H8 Z" fill="${BONE}"/>
-    <path d="M26 16 L32 26 L28.5 25 L26 28 L23 24.5 L20 26 Z" fill="${PINE}"/>
-  </g>`;
-}
-
-/**
- * Text is drawn with an explicit font stack rather than a webfont: the card is
- * rasterised here, once, on a machine that has these faces, so there is no
- * loading path at view time to get wrong.
- */
-const SANS = "Helvetica Neue, Helvetica, Arial, sans-serif";
-const MONO = "SF Mono, Menlo, monospace";
 
 function card({ eyebrow, title, lines, chips, accent }) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
