@@ -30,7 +30,7 @@ the ones that only show up once something has to run.
 | Northwind's taxonomy, hardcoded in `src/schemas.ts` | **policy packs** — taxonomy, handbook, authority limits and eval set as a matched set you copy and edit |
 | `AGENT_REFUND_LIMIT_USD = 200` in `src/lib/authority.ts` | `pack.authority.refundLimitUsd`, validated at boot |
 | Order data from a fixture | a `DataProvider` seam: fixtures, HTTP, or your own |
-| Nothing arrives, nothing is written back | signed, idempotent webhook ingest and **connectors for Chatwoot and Zammad** |
+| Nothing arrives, nothing is written back | signed, idempotent webhook ingest and **connectors for Chatwoot, Zammad, Zendesk, GitHub Issues, and a signed generic webhook** |
 | Escalations printed to the console | a store, a reviewer queue, and a retention policy that is a TTL index rather than a promise |
 
 The guardrails you built in Labs 3, 6 and 8 are the same code. `authority.ts`
