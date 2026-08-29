@@ -120,6 +120,32 @@ interface RunInput {
   context: AssistantContext;
 }
 
+/**
+ * What this thing is built on, as a fact the assistant can look up.
+ *
+ * DELIBERATELY A TOOL AND NOT A LINE IN THE SYSTEM PROMPT. Prompt text is read
+ * on every turn: it costs tokens forever, it invites the model to volunteer the
+ * stack unprompted, and it bloats a prompt whose other job is holding an
+ * injection boundary. A tool is read only when someone actually asks.
+ *
+ * Everything here is checkable in the repo. Nothing aspirational — an assistant
+ * that overstates its own stack is a worse demo than one that says "I don't
+ * know", and a visitor who checks will find whatever we wrote.
+ */
+const STACK = {
+  model: "Claude, via the Anthropic Messages API",
+  database: "MongoDB Atlas",
+  database_does: [
+    "Retention: TTL indexes (expireAfterSeconds) on every collection holding anything derived from a person, so escalations, sessions, proposals and usage counters delete themselves. The retention policy is the index, not a cron job.",
+    "Rate limiting and the spend cap: one atomic findOneAndUpdate with $inc and $setOnInsert under an upsert, so two concurrent requests cannot both read the same count and both decide they are under the limit.",
+    "The reviewer queue: escalated tickets only, stored redacted, behind a compound index.",
+  ],
+  database_does_not: "No Atlas Search, no vector search, no aggregation pipelines, no transactions. Five TTL indexes, one compound index, and an atomic upsert.",
+  hosting: "Next.js on Vercel Functions; the Mongo client is module-level and pooled because instances are reused across invocations.",
+  source: "https://github.com/mrlynn/claude-triage-api",
+  production_reference: "https://github.com/mrlynn/triage-api",
+} as const;
+
 function systemPrompt(surface: AssistantSurface): string {
   return [
     "You are Ask Northwind, the assistant for a Claude API workshop and its fictional retailer, Northwind Outfitters.",
@@ -232,9 +258,22 @@ function buildTools(input: RunInput, pending: AssistantEvent[], onEscalate: () =
     },
   });
 
+  const stack = betaZodTool({
+    name: "describe_stack",
+    description:
+      "Return what this application is built on — model, database, hosting — and what each is actually doing. " +
+      "Call this only when someone asks about the stack, the architecture, or how something is stored. " +
+      "Answer from what it returns; never guess at infrastructure.",
+    inputSchema: z.object({}),
+    run: async () => asText(STACK),
+  });
+
   // The course surface gets no support powers at all. Withholding the tool is
-  // a stronger guarantee than instructing the model not to use it.
-  return input.surface === "course" ? [journey, current] : [journey, current, policy, propose];
+  // a stronger guarantee than instructing the model not to use it. The stack
+  // description is safe on both: it is public information about a public repo.
+  return input.surface === "course"
+    ? [journey, current, stack]
+    : [journey, current, policy, propose, stack];
 }
 
 /** Sessions record WHERE someone is, never WHAT they typed. */

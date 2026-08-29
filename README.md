@@ -587,8 +587,39 @@ exact dashboard settings — Ignored Build Step is configured in-repo via
 `ignoreCommand`, so leave that dropdown on **Automatic**.
 
 The storefront calls Claude for real, so it is rate-limited and spend-capped
-(MongoDB Atlas, five per IP per ten minutes, a global daily ceiling, and it
-fails closed rather than running uncapped).
+(five per IP per ten minutes, a global daily ceiling, and it fails closed rather
+than running uncapped).
+
+---
+
+## Built on MongoDB
+
+The storefront's state lives in **MongoDB Atlas**
+([`storefront/lib/mongo.ts`](storefront/lib/mongo.ts)), and two of the
+properties this project argues for hardest are index definitions rather than
+application code:
+
+- **Retention is a mechanism, not a promise.** Every collection holding
+  anything derived from a person — `escalations`, `assistant_sessions`,
+  `assistant_proposals`, `rate_limits`, `usage_daily` — carries an
+  `expireAfterSeconds` index. Documents delete themselves. There is no cron
+  entry to disable during an incident and forget to re-enable, which is how
+  written retention policies actually fail.
+- **The rate limiter cannot be raced.** One `findOneAndUpdate` with `$inc` and
+  `$setOnInsert` under an upsert: one round trip, one document. Read-then-write
+  would let two requests from a room of forty people both read `count = 4` and
+  both conclude they are under a limit of 5.
+
+Also there: the reviewer queue behind a compound index, and a module-level
+pooled client, because Vercel Functions reuse instances and a client built
+inside the handler would pay TCP + TLS + auth every invocation.
+
+Not used, since a reference should be honest about its scope: no Atlas Search,
+no vector search, no aggregation pipelines, no transactions. The argument is
+made in [`docs/architecture.md`](docs/architecture.md) as Decision 10.
+
+The reference implementation, [triage-api](https://github.com/mrlynn/triage-api),
+uses MongoDB the same way for the same reasons.
 
 ---
 
