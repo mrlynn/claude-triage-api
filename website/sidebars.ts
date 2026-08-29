@@ -32,6 +32,7 @@ const sidebars: SidebarsConfig = {
         "labs/lab-10-ask-northwind",
       ],
     },
+    "comparison",
     "next-steps",
     "architecture",
     "python-deltas",

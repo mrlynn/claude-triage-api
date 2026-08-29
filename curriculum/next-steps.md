@@ -4,6 +4,12 @@ You have finished the labs. You have a service that classifies a ticket, looks
 up an order, recommends an action, re-checks that recommendation in code, and
 tells you what it cost. That is the Claude API, learned.
 
+Learned on *one* API. If the question you are left with is whether it was the
+right one, [Claude vs Cursor](../docs/comparison.md) builds these same four
+routes on Cursor's Agent SDK and compares the two with a command you can
+re-run. This page answers the other question: what it takes to run what you
+just built.
+
 What you do **not** have is something you can put in front of your own helpdesk
 on Monday. The service in `src/` is deliberately Northwind's: the taxonomy is
 hardcoded, the handbook is one company's, the order data is a JSON fixture, and
