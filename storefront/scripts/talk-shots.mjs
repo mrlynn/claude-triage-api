@@ -19,14 +19,15 @@
  * Run:  node scripts/talk-shots.mjs            (from storefront/)
  *       TALK_SHOT_ORIGIN=http://localhost:3000 node scripts/talk-shots.mjs
  *
- * Needs a Chrome. Set CHROME_BIN if yours is not in the usual place.
+ * Needs a Chrome. Set CHROME_BIN if yours is not in the usual place. The
+ * capture and crop mechanics are in lib/capture.mjs, shared with the README's
+ * gallery; what lives here is only the list of what to shoot and where to cut.
  */
-import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, copyFileSync, existsSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, copyFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import sharp from "sharp";
+import { capture, crop } from "./lib/capture.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const STOREFRONT = resolve(HERE, "..");
@@ -34,28 +35,8 @@ const OUT = resolve(STOREFRONT, "../website/static/img/talk");
 
 const ORIGIN = process.env.TALK_SHOT_ORIGIN ?? "https://northwind.mlynn.dev";
 
-/** Retina, so a still holds up when a projector scales it back up. */
-const SCALE = 2;
 /** Long edge of what ships. The frame is 1200px at most; 1600 covers 2x. */
 const WIDTH = 1600;
-
-const CHROME_CANDIDATES = [
-  process.env.CHROME_BIN,
-  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-  "/Applications/Chromium.app/Contents/MacOS/Chromium",
-  "/usr/bin/google-chrome",
-  "/usr/bin/chromium",
-].filter(Boolean);
-
-function chrome() {
-  const found = CHROME_CANDIDATES.find((p) => existsSync(p));
-  if (!found) {
-    throw new Error(
-      `No Chrome found. Set CHROME_BIN. Looked in:\n  ${CHROME_CANDIDATES.join("\n  ")}`,
-    );
-  }
-  return found;
-}
 
 /**
  * Each shot names the viewport it is composed for and the slice of that
@@ -107,42 +88,25 @@ const SHOTS = [
  */
 const PHOTOS = ["hero-basecamp", "basecamp-bottle-32"];
 
-function capture(shot, dir) {
-  const [w, h] = shot.viewport;
-  const png = join(dir, `${shot.name}.png`);
-  execFileSync(
-    chrome(),
-    [
-      "--headless",
-      "--disable-gpu",
-      "--hide-scrollbars",
-      `--force-device-scale-factor=${SCALE}`,
-      `--window-size=${w},${h}`,
-      // Fonts, images and the client render all need to settle before the
-      // shutter. Virtual time makes that deterministic instead of a sleep.
-      "--virtual-time-budget=8000",
-      `--screenshot=${png}`,
-      `${ORIGIN}${shot.path}`,
-    ],
-    { stdio: "ignore" },
-  );
-  return png;
-}
-
 async function main() {
   mkdirSync(OUT, { recursive: true });
   const dir = mkdtempSync(join(tmpdir(), "talk-shots-"));
 
   try {
     for (const shot of SHOTS) {
-      const png = capture(shot, dir);
-      const [x, y, w, h] = shot.crop.map((n) => n * SCALE);
-      const out = join(OUT, `${shot.name}.jpg`);
-      await sharp(png)
-        .extract({ left: x, top: y, width: w, height: h })
-        .resize({ width: WIDTH, withoutEnlargement: true })
-        .jpeg({ quality: 80, progressive: true, mozjpeg: true })
-        .toFile(out);
+      const png = capture({
+        name: shot.name,
+        url: `${ORIGIN}${shot.path}`,
+        viewport: shot.viewport,
+        dir,
+      });
+      const { w, h } = await crop({
+        from: png,
+        to: join(OUT, `${shot.name}.jpg`),
+        rect: shot.crop,
+        width: WIDTH,
+        quality: 80,
+      });
       console.log(`${shot.name}.jpg  ${w}×${h} from ${ORIGIN}${shot.path}`);
     }
 

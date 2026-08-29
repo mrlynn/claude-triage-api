@@ -1,4 +1,10 @@
+![Claude Triage API — a support-triage service built on the Claude API, and the course that teaches it](assets/readme/banner.png)
+
 # Claude Triage API
+
+[![CI](https://github.com/mrlynn/claude-triage-api/actions/workflows/ci.yml/badge.svg)](https://github.com/mrlynn/claude-triage-api/actions/workflows/ci.yml)
+
+**[Take the course](https://triage.mlynn.dev)** · **[Visit the shop](https://northwind.mlynn.dev)** · **[Read the scenario](curriculum/scenario.md)** · Node ≥ 20
 
 A reference implementation of a customer-support triage service built on the
 Claude API, plus the course that teaches it — written to be **read and taught
@@ -31,6 +37,38 @@ bottleneck, two failed automation attempts, and an incident where a child's
 injury report sat unrouted for three days because it opened with "probably
 nothing." Every design decision in this repo traces back to something on that
 page, and the labs are much harder to motivate without it.
+
+### What that looks like
+
+**The shop.** A working Next.js storefront for the fictional company, so the
+tickets the service triages are about products a learner has actually looked
+at. [northwind.mlynn.dev](https://northwind.mlynn.dev)
+
+![The Northwind Outfitters storefront: a tent pitched at sunrise under the headline Gear that outlasts the trip](assets/readme/shop.jpg)
+
+**The queue.** Every ticket here was classified `requires_human: true` and
+written to the database by the `persist` stage. Tickets that did not need a
+human were classified and discarded — storage is a consequence of escalation,
+not of submission. [northwind.mlynn.dev/queue](https://northwind.mlynn.dev/queue)
+
+![An escalation queue card: a child's illness linked to a flaking bottle lining, tagged safety and urgent at 0.88 confidence](assets/readme/queue.jpg)
+
+**The playgrounds.** Seven of them on the course site, rendering results from
+real runs rather than illustrations of results. This is the model matrix from
+Lab 7, where the calibration gap — not the accuracy column — is the number
+that decides whether you can route on confidence.
+[triage.mlynn.dev/playground](https://triage.mlynn.dev/playground)
+
+![The model matrix comparing Opus 5, Sonnet 5 and Haiku 4.5 on accuracy, cost, latency and calibration gap](assets/readme/playground.jpg)
+
+**The deck.** Slideshow mode for the course introduction, with speaker notes
+and a synchronised presenter window. Arrow keys move it, `S` opens the notes
+in the page, `P` puts them in a second window that stays in step, `F` goes
+full screen. [triage.mlynn.dev/talk](https://triage.mlynn.dev/talk)
+
+![The opening slide of the course deck, titled Building with the Claude API, over a photograph of a tent at sunrise](assets/readme/deck.jpg)
+
+---
 
 | Route | Capability | The idea it teaches |
 |---|---|---|
@@ -90,6 +128,11 @@ sideways. Solutions are in [`curriculum/solutions/`](curriculum/solutions/).
 Facilitators: [`curriculum/02-run-of-show.md`](curriculum/02-run-of-show.md) is
 minute-by-minute, and [`docs/facilitator/keys.md`](docs/facilitator/keys.md)
 covers workspaces, keys, and measured per-learner cost.
+
+The opening two segments — the scenario and the concept map — have a deck:
+[slideshow mode](https://triage.mlynn.dev/talk), nine slides with speaker
+notes. `P` opens the notes in a second window that stays in step with the
+deck, so a mirrored projector does not show the room your notes.
 
 ---
 
