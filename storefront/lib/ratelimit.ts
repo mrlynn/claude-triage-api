@@ -44,6 +44,13 @@ const SCOPES = {
   // rather than one, and it can now put a row on a public board, so it needs a
   // budget of its own — and must not be able to exhaust the support form's.
   assistant: Number(process.env.ASSISTANT_IP_LIMIT ?? 12),
+  // The as-you-type preview. A higher ceiling than any other paid surface
+  // because ONE message legitimately costs several calls — the debounce fires
+  // whenever you pause, and a person writing a paragraph pauses. The budget
+  // that makes that safe is not the request count, it is the model: a Haiku
+  // preview against a cached prefix is roughly a fiftieth of a triage call, so
+  // forty of them cost less than two submitted tickets.
+  live: Number(process.env.LIVE_IP_LIMIT ?? 40),
   // Token probing, not spending. A higher ceiling than the paid surfaces
   // because a facilitator refreshing the board during a session is normal
   // traffic — the point is a floor under brute force, not a tight budget.
