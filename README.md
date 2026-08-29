@@ -136,6 +136,24 @@ deck, so a mirrored projector does not show the room your notes.
 
 ---
 
+## After the course: `triage-api`
+
+The service in `src/` is deliberately Northwind's — hardcoded taxonomy, one
+company's handbook, fixture data, and nothing writing back to a ticketing
+system. That is right for a course and wrong for production.
+
+**[github.com/mrlynn/triage-api](https://github.com/mrlynn/triage-api)** is the
+same technique with those four things moved behind a config seam: policy packs,
+a `DataProvider`, signed webhook ingest with connectors for **Chatwoot** and
+**Zammad**, a reviewer queue, and a conformance suite for writing your own
+adapter. The guardrails are the same code; what is new is everything that only
+shows up once something has to run — including `/readyz` reporting which
+controls can actually execute in a given deployment.
+
+Full comparison and a reading order: [`curriculum/next-steps.md`](curriculum/next-steps.md).
+
+---
+
 ## Quickstart
 
 Full setup, prerequisites, and troubleshooting:
