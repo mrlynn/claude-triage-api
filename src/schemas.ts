@@ -105,10 +105,49 @@ export const ResolutionSchema = z.object({
 });
 export type Resolution = z.infer<typeof ResolutionSchema>;
 
+/**
+ * An image the customer attached.
+ *
+ * TEACHING NOTE: a support inbox is the single most obvious place a photo
+ * arrives — "here is the zipper" is a better description of a defect than any
+ * sentence the customer will write about it. Vision is not a different API or
+ * a different model; it is a content BLOCK on the same `messages` array, which
+ * is the concept-map thesis arriving one more time.
+ *
+ * Constrained to what the API actually accepts, so a bad attachment is a 400
+ * from us with a readable message rather than a 400 from upstream with a
+ * cryptic one. The 5MB ceiling is the API's; base64 inflates by ~4/3, so the
+ * encoded string is checked rather than the decoded size.
+ */
+export const AttachmentInput = z.object({
+  media_type: z
+    .enum(["image/jpeg", "image/png", "image/gif", "image/webp"])
+    .describe("The four image types the Messages API accepts."),
+  data: z
+    .string()
+    .min(1)
+    .max(7_000_000, "attachment exceeds the 5MB API limit once decoded")
+    // Rejected rather than stripped. A browser's FileReader hands you
+    // "data:image/png;base64,iVBOR..." and pasting it whole is the most common
+    // way to get this wrong; silently trimming the prefix would also silently
+    // accept a media_type that disagrees with the one in the field above.
+    .refine((d) => !d.startsWith("data:"), {
+      message: "send raw base64, not a data: URI — strip the 'data:...;base64,' prefix",
+    })
+    .describe("Base64-encoded image bytes, with no data: URI prefix."),
+});
+export type Attachment = z.infer<typeof AttachmentInput>;
+
 /** Request body shared by every route that takes a ticket. */
 export const TicketInput = z.object({
   message: z.string().min(1, "message is required").max(20_000),
   customer_email: z.string().email().optional(),
   channel: z.enum(["email", "chat", "phone_transcript"]).default("email"),
+  /**
+   * Optional photo. Absent on every existing caller, and the request built
+   * for a ticket without one is byte-identical to what it was before this
+   * field existed — see `buildTriageRequest`.
+   */
+  attachment: AttachmentInput.optional(),
 });
 export type Ticket = z.infer<typeof TicketInput>;

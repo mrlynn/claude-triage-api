@@ -29,6 +29,26 @@
  * fabricated. All four are real. The verifier was wrong about the
  * architecture, and it took a red-team run to notice.
  *
+ * WHY THIS IS HAND-ROLLED, since the API has a feature for it. Anthropic's
+ * Citations (`citations: {enabled: true}` on a document content block) makes
+ * the model emit spans that point back into a supplied document, and the
+ * pointer is produced by the API rather than by the model's memory — which is
+ * a genuinely stronger guarantee than anything in this file. It is the right
+ * tool when the source document travels WITH the request.
+ *
+ * It does not fit here, and the reason is Decision 2. This handbook lives in
+ * the cached system prefix, which is why a triage call costs $0.006 warm
+ * instead of $0.033. Citations needs it as a document block in `messages`
+ * instead, and the moment it moves there the cache arrangement this whole
+ * repo is built around changes shape. We chose the cheaper prefix and a
+ * cheaper check.
+ *
+ * That trade is worth re-running for your own domain rather than inheriting.
+ * If your source documents are per-request (a contract, a receipt, a
+ * customer-specific policy), they were never going in a shared cached prefix,
+ * you give up nothing, and Citations is strictly better than string-matching
+ * clause numbers. Reach for it there.
+ *
  * So the real check is EXISTENCE: does the cited clause exist in the handbook
  * at all? That catches the forged "clause 9.9" and permits every genuine
  * citation regardless of how the model came to know it. Whether the agent

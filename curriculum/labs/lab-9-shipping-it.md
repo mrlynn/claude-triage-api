@@ -28,6 +28,7 @@ underneath you, and publishing your tools to clients you did not write.
 By the end you can:
 
 - Run the same workload three ways and explain which is cheapest, and why
+- Bound concurrency on purpose, and say why a ceiling beats both alternatives
 - Read the rate-limit headers that come back on every response
 - Say when to pin a model id and when to let it float
 - Publish a tool surface over MCP, and tell a tool from a resource
@@ -147,7 +148,31 @@ have caused here.
 
 ## Step 4 — back off, don't retry
 
-Read `AdaptiveGate` in [`src/lib/limits.ts`](../../src/lib/limits.ts). On a
+First, the thing you are backing off *from*. Step 1's concurrent run went
+through [`src/lib/pool.ts`](../../src/lib/pool.ts) — forty lines, no
+dependencies, and worth reading before the adaptive version because most
+workloads never need the adaptive version.
+
+Every loop in this repo used to be `for (const x of xs) await f(x)`. That is a
+defensible default: it never hits a rate limit and it makes cost accounting
+obvious. It is also why `npm run eval` took minutes to do a minute of work.
+The tempting fix is `Promise.all(xs.map(f))`, which works on twelve cases and
+takes down your rate limit on twelve hundred — you have replaced "too slow"
+with "unbounded", **which is the same shape of bug as the uncapped agent loop
+from [Lab 3](lab-3-tool-use.md)**. A fixed number of workers pulling from a
+shared cursor is the middle option, and it is the one you want by default.
+
+```ts
+// src/lib/pool.ts
+const width = Math.max(1, Math.min(Math.floor(limit) || 1, items.length));
+```
+
+**Q5.** `mapWithConcurrency` returns results in *input* order and throws the
+first rejection after in-flight work settles, with no partial-results mode.
+Both are deliberate. Defend each in one sentence, given that the caller is an
+eval harness.
+
+Now read `AdaptiveGate` in [`src/lib/limits.ts`](../../src/lib/limits.ts). On a
 429 it halves in-flight concurrency, waits out `retry-after`, and re-runs.
 
 Note what it does **not** do:
@@ -158,7 +183,7 @@ this.throttleEvents++;
 this.width = Math.max(1, Math.floor(this.width / 2));
 ```
 
-**Q5.** The SDK already retries 429s three times, honouring `retry-after`.
+**Q6.** The SDK already retries 429s three times, honouring `retry-after`.
 Explain why adding a second retry layer here would be a mistake, and what this
 class does instead.
 
@@ -172,7 +197,7 @@ Read `MODEL_PINS` in [`src/config.ts`](../../src/config.ts), then look at the
 [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml). It runs the tier
 matrix weekly and posts the table to the job summary.
 
-**Q6.** Your eval drops two points on a Tuesday. Nothing was deployed. Walk
+**Q7.** Your eval drops two points on a Tuesday. Nothing was deployed. Walk
 through how you would establish whether the model changed, and what you would
 have needed to have in place beforehand.
 
@@ -192,7 +217,7 @@ array `/v1/resolve` wraps.
 
 The handbook is published as a **resource**, not a tool.
 
-**Q7.** `search_policy` is a tool and the handbook is a resource. State the rule
+**Q8.** `search_policy` is a tool and the handbook is a resource. State the rule
 you would use to decide, and give one example from your own work of something
 currently modelled as a tool that should be a resource.
 
@@ -209,7 +234,7 @@ Three of them are **routing**, **prompt chaining**, and **evaluator-optimizer**.
 The fourth named pattern — **orchestrator-workers**, where a model decomposes a
 task and farms out subtasks — appears nowhere in this repo.
 
-**Q8.** Make the case for adding an orchestrator to `/v1/resolve`. Then make
+**Q9.** Make the case for adding an orchestrator to `/v1/resolve`. Then make
 the case against. Which would you ship, and what would have to be true about
 Northwind's tickets to change your answer?
 
@@ -221,6 +246,7 @@ You should be able to answer, without looking anything up:
 
 - [ ] Why did batch cost more than synchronous here?
 - [ ] What does concurrency buy, and what does it never buy?
+- [ ] Why is `Promise.all` the wrong fix for a slow loop over a metered API?
 - [ ] When do you pin a model id?
 - [ ] What distinguishes an MCP tool from an MCP resource?
 

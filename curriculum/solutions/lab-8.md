@@ -85,20 +85,59 @@ the redacted string. The checks need real numbers.
 
 **Q5. What breaks if you escape before redacting?**
 
-The card number stops being detectable. `redactPII` looks for 13–19 digits with
-optional spaces or hyphens between them and then Luhn-checks the result. Escape
-first and any `<` in the surrounding JSON becomes `&lt;`, which introduces
-characters into the digit run's neighbourhood; more importantly, the general
-form of the bug is that escaping rewrites the string the detector was written
-to match.
+**On this implementation: nothing.** That is the answer, and if you predicted a
+silent redaction failure you were reasoning correctly from a real rule and
+should still check.
 
-The failure is silent and it is the worst kind: the card number flows to the
-model, into the request logs, and into anything downstream that persists a
-transcript, while `redactions: []` reports confidently that there was nothing
-to redact. You get a compliance artifact asserting the opposite of the truth.
+The expected bug is worth stating first, because it is the right instinct.
+Escaping rewrites the string the detector was written to match, so a detector
+run afterwards is matching against something its author never saw. When that
+bites, it is the worst kind of failure: the card number flows to the model,
+into the request logs, and into anything downstream that persists a transcript,
+while `redactions: []` reports confidently that there was nothing to redact.
+A compliance artifact asserting the opposite of the truth.
 
-Rule of thumb: **detect on the rawest form you have, transform afterwards.**
-Any sanitization pipeline has an order and the order is load-bearing.
+Now the check. `redactPII` looks for 13–19 digits separated only by spaces or
+hyphens, then Luhn-checks the run. `sanitizeToolOutput` replaces `<` with
+`&lt;`, which introduces **no digits** — and `<` was never a legal separator
+inside the run, so it already terminated any match it sat in the middle of.
+Escaping therefore cannot break an existing match and cannot create a new one.
+Same for the SSN pattern. This was verified against 300,000 fuzzed strings over
+the alphabet that matters, plus every insertion point of `<`, `<b>`, `&` and
+`><` into a valid card number: zero differences. The property is pinned in
+`src/lib/untrusted.test.ts`.
+
+So the ordering in `record()` is **defensive, not load-bearing**. It is still
+the right order — detect on the rawest form you have is a habit worth keeping
+even where it is free, and it is what keeps `redactions[].at` pointing into the
+string a human would recognise rather than into an escaped one. But it does not
+currently protect against anything.
+
+**This solution page previously claimed it did.** The tests were written to
+encode the claim and instead disproved it. That is the third appearance of the
+same lesson in this course — the gold set's mislabelled cases in
+[Lab 6](../labs/lab-6-evals.md), the eight mis-specified red-team assertions in
+Step 1, and now a documented rationale that was simply wrong — and it is the
+most transferable thing here: **a control with a wrong justification is one
+nobody can maintain correctly.** The next person to touch `record()` would have
+reordered it back on a false premise, or left a real vulnerability in place
+believing the ordering covered it.
+
+What *would* make the ordering load-bearing is the version of this question
+with teeth, and it has a concrete answer. Swap `&lt;` for **URL-encoding** and
+the property collapses immediately: `%3C` ends in `C`, a word character, so
+`%3C4111111111111111` no longer satisfies the `\b` the card pattern needs. The
+number sails through and `redactions: []` reports all clear — precisely the
+compliance artifact described above. `untrusted.test.ts` pins that
+counterexample next to the commuting one, because a property test without a
+case that violates it is not evidence of anything.
+
+Worth noting what does *not* break it, since the obvious guess is wrong: HTML
+numeric entities (`&#60;`) introduce digits, which sounds fatal and is not —
+the `;` terminates the run before the payload, so detection is unchanged across
+200,000 fuzzed inputs. "Introduces digits" was the wrong mental model; "damages
+the word boundary" is the right one. That distinction is only available to
+someone who ran it.
 
 **Q6. What does the favourable result establish?**
 
@@ -154,6 +193,94 @@ other two — decide whether that is deliberate. And re-run
 demanding system prompt does not necessarily land the same way on a smaller
 model, and Lab 7 established that the cheap tier's confidence will not tell you
 when it has stopped coping.
+
+**Q8. Make the case for promoting `cited_without_search` to a violation.**
+
+The case for it is real, and it is a diligence argument. An agent that cites
+clause 2.7 without ever calling `search_policy` decided from memory of a
+document sitting in its prefix, and if you believe a citation should mean "I
+went and looked," then a citation without a lookup is a claim about process
+that did not happen.
+
+The case against it is what happened when it *was* one. That is precisely the
+first version of this checker, and it flagged four legitimate clauses on the
+first run and would flag legitimate clauses on most runs — because the
+handbook is in the cached system prompt and reading it there is the *designed*
+behaviour, not a shortcut. A control that fires on the system working as
+intended is not strict, it is broken.
+
+Run it as a violation and the red-team gate goes red on cases where nothing
+went wrong. That is the expensive failure, and not because of the wasted
+triage: a gate that fails for reasons the team learns to dismiss stops being
+read, and the day it fires for a real reason it gets dismissed too. False
+positives do not just cost attention — they spend the credibility the control
+needs on the one occasion it matters.
+
+So: report it, do not gate on it. It is a signal worth looking at when an
+agent is confidently citing things it never looked up, and it is evidence of
+nothing on its own.
+
+**Q9. Name the failure this check cannot catch.**
+
+A clause that exists and does not support the conclusion drawn from it. The
+model cites 2.4 for a decision 2.4 does not license; every string in the report
+checks out, and the reasoning is wrong.
+
+No string comparison finds it, because the failure is not in the citation, it
+is in the *relation* between the citation and the conclusion — and that
+relation only exists once you have read both. Finding it needs a reader:
+an LLM judge with the clause text and the resolution in front of it, or a
+human.
+
+Whether that belongs on the request path is the actual question, and the answer
+here is no. It is a second inference on every resolve — latency and cost on the
+hot path — to catch a failure that a human reviewer is already positioned to
+catch, because the citation is *why the trace is returned in the first place*.
+Put it in the eval suite, where you can afford it and where a rate is the thing
+you want anyway. That is the same split as [Lab 6](../labs/lab-6-evals.md) Q1:
+deterministic checks gate, judges measure.
+
+The general form is worth holding onto. `verifyCitations` catches the failure
+that cannot be defended under any reading, cheaply and totally. It does not
+attempt the failure that needs judgement. Controls that know which of the two
+they are doing are much more useful than controls that claim both — and "we
+verify citations" is exactly the phrase that invites a reader to assume the
+stronger property.
+
+**Q10. When does the Citations trade flip?**
+
+It flips whenever the source document is **per-request rather than shared**,
+because that is precisely when it was never a candidate for a cached prefix and
+so costs nothing to move into `messages`.
+
+Concrete cases: an insurance claim adjudicated against that customer's own
+policy document; a B2B support desk where each account has negotiated terms; a
+warranty question answered against the receipt the customer just uploaded; any
+regulated domain where "which sentence in which document" is an audit
+requirement rather than a nicety. In all of these the document travels with the
+request either way. Citations is then strictly better than clause-number
+matching — the span comes from the API rather than from the model's memory, it
+survives a renumbered document, and it points at the *text*, which is the
+thing a reviewer actually wants to read.
+
+The caching arithmetic is the whole argument. Northwind's handbook is
+identical on all 4,100 tickets a week, so it belongs in the prefix, where a
+warm call costs $0.006 instead of $0.033 — an 81% saving on every request in
+perpetuity. Move it into `messages` as a document block and that saving is
+gone. A per-customer document has no such saving to lose: it is fresh input on
+every request whichever block it sits in.
+
+So the rule is not "prefer Citations" or "prefer caching". It is: **a document
+that is the same for everyone belongs in the prefix; a document that differs
+per request should carry its own citations.** A system with both — a shared
+handbook and a per-customer contract — should do both, and this repo happens
+to have only the first kind.
+
+Worth noticing what this repo gives up by choosing the cache: `verifyCitations`
+can tell you clause 9.9 does not exist, and it cannot tell you that clause 2.4
+does not say what the model claimed. That is Q9's gap, and Citations would
+close a real part of it. The trade was made with the price list in view, which
+is the only way it is defensible.
 
 ## Extension notes
 

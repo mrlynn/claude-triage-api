@@ -21,7 +21,7 @@ flowchart LR
 | | What it is | Where |
 |---|---|---|
 | **The service** | `src/` — the Claude API reference implementation the whole course is about. Runs locally; not deployed. | this repo |
-| **The course** | `website/` — Docusaurus site: scenario, setup, ten labs with inline knowledge checks, solutions, instructor guide, auto-scored assessment, and seven interactive playgrounds. | [triage.mlynn.dev](https://triage.mlynn.dev) |
+| **The course** | `website/` — Docusaurus site: scenario, setup, eleven labs with inline knowledge checks, solutions, instructor guide, auto-scored assessment, and seven interactive playgrounds. | [triage.mlynn.dev](https://triage.mlynn.dev) |
 | **The Python track** | `python/` — the same service on FastAPI, plus [what is actually different](python/labs/deltas.md). Four differences, all of them found by porting rather than recalled. | this repo |
 | **The scenario, made real** | `storefront/` — Next.js shop for the fictional company. Browse the gear, file a support ticket, watch your own words get classified live, then try to break the classifier. Escalated tickets land in a reviewer queue you can read without a credential; Priya's ops dashboard sits on top. | [northwind.mlynn.dev](https://northwind.mlynn.dev) |
 
@@ -77,8 +77,18 @@ service. Skip it without loss if you are here to learn the API.
 | Lab | Topic | Time |
 |---|---|---|
 | [7](curriculum/labs/lab-7-choosing-a-model.md) | Choosing a model | 45 min |
-| [8](curriculum/labs/lab-8-trust-boundary.md) | The trust boundary | 50 min |
+| [8](curriculum/labs/lab-8-trust-boundary.md) | The trust boundary | 60 min |
 | [9](curriculum/labs/lab-9-shipping-it.md) | Shipping it: batch, limits, MCP | 60 min |
+
+**The capstone is separate from both, and it is a reading lab.** Lab 10 works
+through [Ask Northwind](https://northwind.mlynn.dev) — the assistant already
+running on both public sites — rather than building a route in `src/`. It is
+the only lab where the artifact is deployed rather than local, so it needs no
+key and can be run by someone who never opened a terminal.
+
+| Lab | Topic | Time |
+|---|---|---|
+| [10](curriculum/labs/lab-10-ask-northwind.md) | Ask Northwind: scoped tools, and why the confirmation is the write | 45 min |
 
 Optional throughout: a [Python track](python/labs/deltas.md) covering the four
 things that genuinely differ between the SDKs. The labs are TypeScript and
@@ -217,7 +227,63 @@ a given volume, cached and uncached. No inference, so it's free.
 It also reports `prefix_meets_cache_minimum` — below ~1024 tokens the API
 silently declines to cache, with no error.
 
+### Attachments — the photo of the zipper
+
+`/v1/triage` accepts an optional base64 image alongside the message, because a
+support inbox is the most obvious place in software for a photo to arrive.
+
+Vision is not a separate API, model, or route: the user turn's `content` is
+either a string or an array of blocks, and an image is a block. Two properties
+worth knowing, both pinned by tests in
+[`src/lib/requests.test.ts`](src/lib/requests.test.ts):
+
+- **A ticket with no attachment still sends a bare string**, not a
+  one-element array. Those are identical to the API and different to the
+  cache — prompt caching is a prefix match, so returning an array
+  unconditionally would have cost every warm caller a fresh cache write on the
+  day it shipped.
+- **The image is not, and cannot be, wrapped by `wrapUntrusted`** — escaping is
+  a string operation. Text rendered into an image bypasses that defence
+  entirely, while `enforceAuthority` and `verifyCitations` are completely
+  unmoved, because they read the tool trace rather than the message. An entire
+  defensive layer goes to zero and the money stays safe, which is the clearest
+  demonstration in the repo of why defences get ranked by kind.
+  [Lab 2](curriculum/labs/lab-2-structured-outputs.md)'s second extension.
+
+None of the twelve gold cases has an attachment, so `npm run eval` says nothing
+about this path. A capability with no cases in the gold set is untested however
+green the suite is.
+
 ---
+
+## Tests
+
+```bash
+npm test
+```
+
+60 tests, no credential, no network, about 100ms and $0. These cover the
+guardrails as pure functions — the refund ceilings in
+[`src/lib/authority.ts`](src/lib/authority.ts), the escaping and redaction in
+[`src/lib/untrusted.ts`](src/lib/untrusted.ts), citation verification, cost
+accounting, and the assistant's authority rules.
+
+**The split is the point.** Lab 8 argues that a deterministic control beats a
+well-written instruction *because it holds by construction* — and a
+construction nobody tests is an instruction with better syntax. So the two
+gates answer different questions and neither substitutes for the other:
+
+| | Question | Determinism | Cost |
+|---|---|---|---|
+| `npm test` | Does the arithmetic hold? | Exact. A failure is always a bug. | free |
+| `npm run eval:redteam` | Can the model be talked past it? | Statistical. 100% on 14 cases. | ~$0.40 |
+
+The suite is mutation-checked rather than merely green: breaking the refund
+ceiling by one cent, dropping the Luhn check, treating a not-found customer as
+zero prior refunds, or reverting `verifyCitations` to the version that was
+wrong each turn it red. That check found one test in this file passing for the
+wrong reason — an alphanumeric tracking number was being rejected by the length
+gate, never reaching the Luhn check it claimed to exercise.
 
 ## Evals
 
@@ -345,17 +411,29 @@ be the only thing between an attacker and money.
 
 **Model tiering** — measured across four runs of `npm run eval:models`:
 
-| model | accuracy | $/mo @ 4,100/wk | calibration gap |
-|---|---|---|---|
-| `claude-opus-5` | 10–12 / 12 | ~$137 | 0.35–0.41 |
-| `claude-sonnet-5` | 7–9 / 12 | ~$70–98 | 0.20–0.30 |
-| `claude-haiku-4-5` | 6–8 / 12 | ~$67–74 | −0.06 to +0.13 |
+| model | accuracy | p50 | p95 | $/mo @ 4,100/wk | calibration gap |
+|---|---|---|---|---|---|
+| `claude-opus-5` | 10–12 / 12 | 17.8s | 22.4s | ~$137 | 0.35–0.41 |
+| `claude-sonnet-5` | 7–9 / 12 | 15.7s | 18.2s | ~$70–98 | 0.20–0.30 |
+| `claude-haiku-4-5` | 6–8 / 12 | 9.1s | 9.7s | ~$67–74 | −0.06 to +0.13 |
 
-Three findings, none of which the accuracy column alone would give you.
+Latency is whole-request through the local route, four cases in flight, models
+run sequentially so one tier never queues behind another. Not
+time-to-first-token — `/v1/triage` does not stream.
+
+Four findings, none of which the accuracy column alone would give you.
 
 Every tier lands **30–60× under Priya's $4,000 budget**, so cost is not a
 binding constraint at this volume and the usual "move down a tier to save
 money" reflex buys ~$65/month at the price of three to five cases in twelve.
+
+Latency is not a constraint here either, and it is worth saying so out loud
+rather than quietly not mentioning it. Haiku is half the wall clock of Opus,
+and nothing in Northwind's queue is waiting on a human — the tickets are
+classified faster than they arrive at every tier. A real, measured, printed
+column can still be irrelevant to the decision, and knowing which of your
+columns binds is most of the skill. It flips the moment a person is watching:
+[Lab 7](curriculum/labs/lab-7-choosing-a-model.md) Q7.
 
 The cheap tiers do not fail randomly. They fail where two handbook rules
 interact — `eval-10` (delivered-not-received) nearly every run, and `eval-04`,

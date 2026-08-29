@@ -36,7 +36,8 @@ below. Otherwise it surfaces on its own as a confusing bug in Lab 3.
 | Lightning talk | 45 min | Concept map + live demo of all four routes |
 | Half day | 3.5 hrs | Lab 0, Labs 1–4, concept map, architecture walkthrough |
 | Full day | 6.5 hrs | Lab 0, Labs 1–6 + assessment + extension time |
-| Day 2 — production | 4 hrs | Labs 7–9: model choice, the trust boundary, and shipping it |
+| Day 2 — production | 4 hrs 10 | Labs 7–9: model choice, the trust boundary, and shipping it |
+| Capstone | 45 min | Lab 10: Ask Northwind. Bolt onto either day, or send home |
 | Self-paced | ~4 hrs | Day 1 labs; solutions unlocked per-lab |
 
 **Day 1 is the course, and Day 2 is optional.** Say this to the room at the
@@ -55,6 +56,14 @@ exists, because every measurement in it is a comparison against that baseline.
 
 Booking only one day is a legitimate choice, and the right one for most
 audiences. Book Day 2 when the room has a project rather than a curiosity.
+
+**Lab 10 is the capstone and it belongs to neither day.** It is the only lab
+whose subject is already deployed, so it needs no key, no local service, and no
+terminal — a learner can work it from a phone on the train home. That makes it
+the cheapest thing on this list to assign and the easiest to cut for time. Run
+it live when the room has energy left at the close of Day 2; send it home
+otherwise. It is genuinely valuable either way, and the section below says
+which beats survive being read alone.
 
 **Lab 0 is not optional and it is not a warm-up.** It is twenty minutes and it
 establishes the scoreboard every later lab re-runs. Cutting it to save time
@@ -254,9 +263,24 @@ Have 2–3 spare keys on hand. Someone's will not work.
   every request; the answer (12/12 on an attacks-only corpus) lands hard.
 - **Skipping Step 5.** Measuring what the hardening cost is the step that
   separates this from security theatre. Budget for it.
+- **Step 6 is about the control, not the model.** The room has spent an hour
+  learning that model self-reports are hypotheses. Step 6 turns that on the
+  guardrails themselves: the first `verifyCitations` flagged four real handbook
+  clauses as fabricated, because it assumed a citation must come from a tool
+  result when the whole handbook is sitting in the cached prefix. Ask who would
+  have caught that. The answer is nobody on the accuracy suite — it looked like
+  the model behaving badly, and it took a red-team run to see. If Lab 0's
+  lesson is "check the label before the model," this is "check the control
+  before you believe what it says about the model."
+- **The temptation to gate on `cited_without_search`.** Someone will propose it,
+  and it is a reasonable proposal. Walk it forward out loud: the gate goes red
+  on runs where nothing went wrong, the team learns to dismiss it, and the day
+  it fires for real it gets dismissed too. False positives spend the credibility
+  the control needs on the one occasion it matters.
 - **Timing and cost.** `eval:redteam` is ~90 seconds and ~$0.40 per learner —
   the most expensive single command in the course. On a shared key, run it once
-  on the projector.
+  on the projector. Step 6 adds ~10 minutes and costs one `/v1/resolve` call;
+  it is the step to cut if Day 2 is running long, and it reads well cold.
 
 ### Demoing the live queue
 
@@ -294,6 +318,13 @@ message is redacted — expand the message on a card and show the
 - **Concurrency confusion.** Several learners will expect concurrency to cut
   cost. It cut wall clock 91s → 60s and nudged cost UP, because in-flight
   requests raced the cache write. Parallelism buys the clock, never the price.
+- **`pool.ts` before `AdaptiveGate`.** Step 4 now opens on the forty-line
+  bounded pool, and it is worth the two minutes because the room's instinct is
+  binary: serial or `Promise.all`. Name the third option and connect it to Lab
+  3 — unbounded concurrency against a metered API is the same shape of bug as
+  an uncapped agent loop, and both are fixed by choosing a ceiling on purpose.
+  Most workloads never need the adaptive version, and a fixed limit you
+  understand beats an adaptive one you do not.
 - **The MCP step needs a client.** Have Claude Desktop or Claude Code
   pre-configured on the projector machine, or the step becomes reading a file.
 - **Timing.** Step 1 alone is ~6 minutes of wall clock and about $0.55 per
@@ -302,9 +333,47 @@ message is redacted — expand the message on a card and show the
   [batch planner](https://triage.mlynn.dev/playground/batch)
   instead.
 
+### Lab 10
+
+- **Reading it as an app tour.** The assistant is deployed and pretty, and a
+  room will happily spend fifteen minutes chatting with it. The lab is about
+  three boundaries, and the fastest way to get there is Check-your-work step 3:
+  have someone request a $900 refund on the projector and get an escalation
+  back. Then ask *why* it escalated. The answer people give is "the model
+  followed policy." The answer is that `underAuthority` rewrote the outcome —
+  the same `enforceAuthority` move from Lab 8, arriving where the model was
+  actually being persuasive rather than merely being attacked.
+- **Missing that the agent has no write tool.** This is the beat, and it is
+  easy to read past because nothing on the screen announces it. Say it as a
+  question: *"which of its four tools files the ticket?"* None of them. The
+  confirmation is the write, and it is a separate request that re-derives
+  authority, because a stored proposal is not evidence that it was ever within
+  policy.
+- **Assuming the course assistant is restricted by prompt.** It is not told to
+  avoid support actions; it is not given the tools. Withholding a capability is
+  a stronger guarantee than instructing against it — and that contrast is worth
+  drawing explicitly against Lab 8, where prompt hardening was the *last*
+  resort and bought only a probability.
+- **Second-order injection.** Everyone escapes the user's message by now. Few
+  expect `get_current_context` — a page title the browser supplied — to need
+  the same treatment. Instruction-shaped text in a tool result arrives wearing
+  the authority of a system-provided fact. If one idea from this lab survives
+  the year, make it this one.
+- **The Agent SDK argument is the most portable thing here, and rooms want to
+  argue with it.** Let them. The claim is narrow and it is not "the Agent SDK
+  is heavy": it is that a dependency configured with `tools: []`,
+  `settingSources: []` and memory off has been switched off, and what remained
+  was `messages.toolRunner`. Ask what would have to change about this
+  assistant to flip the answer. Anyone who says "a filesystem" or "a shell" or
+  "memory across sessions" has understood it.
+- **Timing and cost.** ~45 minutes, and **$0 per learner on the deployed
+  sites** — the storefront pays, and it is rate-limited and spend-capped. The
+  only lab you can assign to a room with no keys at all.
+
 ## Knowledge checks
 
-Ten checks sit inline in the labs, at the point the idea is taught rather than
+Twenty-one checks sit inline in the labs — two per lab, except Lab 4 which has
+one — at the point the idea is taught rather than
 collected at the end. They are authored as ` ```quiz ` JSON blocks in the
 markdown and rendered as components by a remark plugin, so the source stays
 plain markdown and still reads on GitHub.
