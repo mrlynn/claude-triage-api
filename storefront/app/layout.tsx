@@ -133,6 +133,13 @@ export default function RootLayout({
               >
                 triage-api
               </a>
+              . Tickets, rate limits and retention run on{" "}
+              <a
+                href="https://www.mongodb.com/atlas"
+                className="underline underline-offset-2"
+              >
+                MongoDB Atlas
+              </a>
               .
             </p>
           </div>
