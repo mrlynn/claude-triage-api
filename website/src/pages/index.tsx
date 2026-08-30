@@ -1,5 +1,6 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "@docusaurus/Link";
+import useBaseUrl from "@docusaurus/useBaseUrl";
 import Layout from "@theme/Layout";
 import Heading from "@theme/Heading";
 import { track } from "@vercel/analytics";
@@ -9,6 +10,9 @@ import styles from "./index.module.css";
 import { STOREFRONT_URL as STOREFRONT } from "../urls";
 
 const DISCUSSIONS_URL = "https://github.com/mrlynn/claude-triage-api/discussions";
+const INTRO_VIDEO_ID = "fhsAmotYggs";
+/** Shown on the poster so nobody clicks blind. Update if the cut changes. */
+const INTRO_VIDEO_RUNTIME = "2:10";
 
 function trackCourseEvent(name: string, properties: Record<string, string | number>) {
   track(name, properties);
@@ -154,8 +158,9 @@ function Hero() {
           </Link>
         </div>
         <p className={styles.heroFoot}>
-          Or read <Link to="/docs/scenario">the scenario</Link> first &mdash;
-          every design decision in the labs traces back to it.
+          Or <a href="#intro-video">watch the two-minute intro</a>, or read{" "}
+          <Link to="/docs/scenario">the scenario</Link> &mdash; every design
+          decision in the labs traces back to it.
         </p>
         <p className={styles.heroCommunity}>
           Building something with it?{" "}
@@ -210,9 +215,75 @@ function StartHere() {
   );
 }
 
+/*
+  A click-to-play facade rather than an embedded iframe.
+
+  WHY NOT A PLAIN EMBED: a YouTube iframe on load costs roughly half a
+  megabyte, drags the largest-contentful-paint behind it, and sets Google
+  cookies on a page where every other door needs no account and no key. The
+  poster is a static image; the iframe only exists after someone asks for it,
+  and it is the nocookie host when it does.
+
+  WHY IT SITS BELOW THE DOORS: the doors are the page's argument — the fastest
+  way to make someone want the course is to let them use the finished thing on
+  a sentence they wrote. A video above them would make the first offer a
+  passive one, which is the thing the doors were written to avoid. The hero
+  links down to it for the visitor who would rather be told than shown.
+*/
+function IntroVideo() {
+  const [playing, setPlaying] = useState(false);
+  const poster = useBaseUrl("/img/talk/hero-basecamp.jpg");
+
+  return (
+    <section className={styles.sectionAlt} id="intro-video">
+      <div className="container">
+        <Heading as="h2">Or let me walk you through it</Heading>
+        <p className={styles.sectionLead}>
+          Two minutes: the queue, the ticket that sat for three days, and what
+          you build to catch it.
+        </p>
+        <div className={styles.videoFrame}>
+          {playing ? (
+            <iframe
+              className={styles.videoPlayer}
+              src={`https://www.youtube-nocookie.com/embed/${INTRO_VIDEO_ID}?autoplay=1&rel=0`}
+              title="Course introduction"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          ) : (
+            <button
+              type="button"
+              className={styles.videoPoster}
+              style={{ backgroundImage: `url(${poster})` }}
+              onClick={() => {
+                setPlaying(true);
+                trackCourseEvent("Course intro video played", { source: "landing" });
+              }}
+            >
+              <span className={styles.videoPlay} aria-hidden="true" />
+              <span className={styles.videoLabel}>
+                Play the introduction <span className={styles.videoRun}>{INTRO_VIDEO_RUNTIME}</span>
+              </span>
+            </button>
+          )}
+        </div>
+        <p className={styles.sectionFoot}>
+          <a
+            href={`https://youtu.be/${INTRO_VIDEO_ID}`}
+            onClick={() => trackCourseEvent("Course intro video played", { source: "youtube" })}
+          >
+            Watch on YouTube
+          </a>
+        </p>
+      </div>
+    </section>
+  );
+}
+
 function Routes() {
   return (
-    <section className={styles.sectionAlt}>
+    <section className={styles.section}>
       <div className="container">
         <Heading as="h2">Four routes, four capabilities</Heading>
         <p className={styles.sectionLead}>
@@ -235,7 +306,7 @@ function Routes() {
 
 function Playgrounds() {
   return (
-    <section className={styles.section}>
+    <section className={styles.sectionAlt}>
       <div className="container">
         <Heading as="h2">Poke at it before you commit to it</Heading>
         <p className={styles.sectionLead}>
@@ -260,7 +331,7 @@ function Playgrounds() {
 
 function Labs() {
   return (
-    <section className={styles.sectionAlt}>
+    <section className={styles.section}>
       <div className="container">
         <Heading as="h2">The labs</Heading>
         <p className={styles.sectionLead}>
@@ -297,6 +368,7 @@ export default function Home(): ReactNode {
       <Hero />
       <main>
         <StartHere />
+        <IntroVideo />
         <Routes />
         <Playgrounds />
         <Labs />
