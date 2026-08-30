@@ -281,7 +281,18 @@ const config: Config = {
             { label: "Console", href: "https://console.anthropic.com" },
           ],
         },
+        {
+          // Google's OAuth consent screen requires reachable privacy and terms
+          // URLs, and a reviewer looks for them in the footer.
+          title: "Legal",
+          items: [
+            { label: "Privacy policy", to: "/privacy" },
+            { label: "Terms of service", to: "/terms" },
+            { label: "Cookie policy", to: "/cookies" },
+          ],
+        },
       ],
+      copyright: `© ${new Date().getFullYear()} Michael Lynn. An independent educational project.`,
     },
     prism: {
       // github is near-neutral and sits fine on Bone. dracula was the default

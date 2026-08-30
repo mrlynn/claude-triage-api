@@ -1,0 +1,87 @@
+/*
+ * Shared by /privacy, /terms and /cookies. One stylesheet rather than three:
+ * these pages are the same shape — eyebrow, title, lead, then long prose —
+ * and three near-identical modules would drift apart the first time one of
+ * them was edited.
+ */
+.page {
+  max-width: 52rem;
+  padding-top: 4rem;
+  padding-bottom: 5rem;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--ifm-color-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.page h1 {
+  margin: 0.5rem 0 1rem;
+  font-size: clamp(2.2rem, 5vw, 3.2rem);
+  letter-spacing: -0.04em;
+}
+
+.lead {
+  max-width: 46rem;
+  color: var(--ifm-color-emphasis-700);
+  font-size: 1.15rem;
+  line-height: 1.65;
+}
+
+.updated {
+  margin-top: 0.5rem;
+  color: var(--ifm-color-emphasis-600);
+  font-size: 0.9rem;
+}
+
+.page section {
+  margin-top: 2.75rem;
+}
+
+.page section h2 {
+  font-size: 1.4rem;
+  letter-spacing: -0.02em;
+}
+
+.page section p,
+.page section li {
+  color: var(--ifm-color-emphasis-700);
+  font-size: 1.02rem;
+  line-height: 1.7;
+}
+
+/*
+ * Retention and cookie facts are tabular, and a paragraph that says "the
+ * assistant session cookie lasts seven days, escalations last thirty" makes
+ * the reader hold two numbers at once to compare them.
+ */
+.table {
+  display: block;
+  width: 100%;
+  margin-top: 1rem;
+  overflow-x: auto;
+}
+
+.table table {
+  width: 100%;
+}
+
+.table th {
+  text-align: left;
+}
+
+.contact {
+  margin-top: 3rem;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 12px;
+  background: var(--ifm-color-emphasis-100);
+}
+
+.contact p {
+  margin-bottom: 0;
+}
