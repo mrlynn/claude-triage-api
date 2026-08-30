@@ -24,7 +24,8 @@
  *      days, and youtube.upload is not one of the scopes exempt from that. Left
  *      in Testing, this script works for a week and then fails on token
  *      refresh — which looks like a broken script rather than an expired grant.
- *   6. Put these in the repo-root .env.local:
+ *   6. Put these in the repo-root .env.local (GOOGLE_CLIENT_ID,
+ *      GOOGLE_CLIENT_SECRET and GOOGLE_CLIENT_REFRESH_TOKEN also work):
  *        YOUTUBE_CLIENT_ID=...
  *        YOUTUBE_CLIENT_SECRET=...
  *        YOUTUBE_REFRESH_TOKEN=...
@@ -67,13 +68,20 @@ if (!["private", "unlisted", "public"].includes(privacy)) {
 }
 
 async function accessToken() {
-  const id = fromEnv(["YOUTUBE_CLIENT_ID"], repoRoot);
-  const secret = fromEnv(["YOUTUBE_CLIENT_SECRET"], repoRoot);
-  const refresh = fromEnv(["YOUTUBE_REFRESH_TOKEN"], repoRoot);
+  // Both spellings. The credentials come from a Google Cloud OAuth client, so
+  // GOOGLE_* is at least as natural a name for them as YOUTUBE_*, and having
+  // the script insist on one of two equally sensible names is a pointless way
+  // to make someone edit a file.
+  const id = fromEnv(["YOUTUBE_CLIENT_ID", "GOOGLE_CLIENT_ID"], repoRoot);
+  const secret = fromEnv(["YOUTUBE_CLIENT_SECRET", "GOOGLE_CLIENT_SECRET"], repoRoot);
+  const refresh = fromEnv(
+    ["YOUTUBE_REFRESH_TOKEN", "GOOGLE_CLIENT_REFRESH_TOKEN", "GOOGLE_REFRESH_TOKEN"],
+    repoRoot,
+  );
   const missing = [
-    !id && "YOUTUBE_CLIENT_ID",
-    !secret && "YOUTUBE_CLIENT_SECRET",
-    !refresh && "YOUTUBE_REFRESH_TOKEN",
+    !id && "YOUTUBE_CLIENT_ID (or GOOGLE_CLIENT_ID)",
+    !secret && "YOUTUBE_CLIENT_SECRET (or GOOGLE_CLIENT_SECRET)",
+    !refresh && "YOUTUBE_REFRESH_TOKEN (or GOOGLE_CLIENT_REFRESH_TOKEN)",
   ].filter(Boolean);
   if (missing.length) {
     console.error(`Missing ${missing.join(", ")} in the environment or repo-root .env.local.`);
@@ -92,16 +100,27 @@ async function accessToken() {
   });
   if (!res.ok) {
     const body = (await res.text()).slice(0, 300);
-    const expired = /invalid_grant/.test(body);
-    throw new Error(
-      `Token refresh failed (${res.status}): ${body}` +
-        (expired
-          ? "\n\ninvalid_grant usually means the refresh token has expired. A " +
-            "project whose\nOAuth consent screen is still in \"Testing\" issues " +
-            "refresh tokens that last seven\ndays. Publish the consent screen, " +
-            "then issue a new token."
-          : ""),
-    );
+    // The two failures worth naming, because neither error string says what to
+    // do and both are easy to hit with correct-looking credentials.
+    let hint = "";
+    if (/unauthorized_client/.test(body)) {
+      hint =
+        "\n\nunauthorized_client means the refresh token was issued to a different\n" +
+        "OAuth client than the one refreshing it — almost always because the OAuth\n" +
+        "Playground's \"Use your own OAuth credentials\" box was not in effect when\n" +
+        "Authorize APIs was clicked, so the token belongs to Google's demo client.\n" +
+        "The giveaway is the consent screen: it must name your own project, not\n" +
+        "\"Google OAuth 2.0 Playground\". Tick the box, re-authorize, exchange again.\n\n" +
+        "To tell this apart from a bad client id/secret: refresh with a deliberately\n" +
+        "invalid token. invalid_grant means the client pair is fine and the token is\n" +
+        "the problem; invalid_client means the pair itself is wrong.";
+    } else if (/invalid_grant/.test(body)) {
+      hint =
+        "\n\ninvalid_grant usually means the refresh token has expired. A project\n" +
+        "whose OAuth consent screen is still in \"Testing\" issues refresh tokens that\n" +
+        "last seven days. Publish the consent screen, then issue a new token.";
+    }
+    throw new Error(`Token refresh failed (${res.status}): ${body}${hint}`);
   }
   return (await res.json()).access_token;
 }
