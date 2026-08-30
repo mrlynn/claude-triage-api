@@ -9,11 +9,22 @@
  *
  * BEFORE IT WILL WORK, once:
  *   1. Create a Google Cloud project and enable the YouTube Data API v3.
- *   2. Create an OAuth 2.0 Client ID of type "Desktop app".
- *   3. Get a refresh token for the scope
- *      https://www.googleapis.com/auth/youtube.upload — the OAuth Playground
- *      (Settings, then "use your own OAuth credentials") is the shortest path.
- *   4. Put these in the repo-root .env.local:
+ *   2. Create an OAuth 2.0 Client ID of type "Web application" — NOT "Desktop
+ *      app". The OAuth Playground in step 4 is the quickest way to a refresh
+ *      token and it only works with a web client, because it needs its own
+ *      redirect URI registered and a desktop client cannot carry one.
+ *   3. Add https://developers.google.com/oauthplayground to that client's
+ *      Authorized redirect URIs. Without it step 4 fails redirect_uri_mismatch.
+ *   4. At https://developers.google.com/oauthplayground, open the gear, tick
+ *      "Use your own OAuth credentials", paste the id and secret, authorise
+ *      the scope https://www.googleapis.com/auth/youtube.upload, then exchange
+ *      the code for a refresh token.
+ *   5. PUBLISH THE CONSENT SCREEN. While its publishing status is "Testing", an
+ *      external-user-type project issues refresh tokens that expire in seven
+ *      days, and youtube.upload is not one of the scopes exempt from that. Left
+ *      in Testing, this script works for a week and then fails on token
+ *      refresh — which looks like a broken script rather than an expired grant.
+ *   6. Put these in the repo-root .env.local:
  *        YOUTUBE_CLIENT_ID=...
  *        YOUTUBE_CLIENT_SECRET=...
  *        YOUTUBE_REFRESH_TOKEN=...
@@ -80,7 +91,17 @@ async function accessToken() {
     }),
   });
   if (!res.ok) {
-    throw new Error(`Token refresh failed (${res.status}): ${(await res.text()).slice(0, 300)}`);
+    const body = (await res.text()).slice(0, 300);
+    const expired = /invalid_grant/.test(body);
+    throw new Error(
+      `Token refresh failed (${res.status}): ${body}` +
+        (expired
+          ? "\n\ninvalid_grant usually means the refresh token has expired. A " +
+            "project whose\nOAuth consent screen is still in \"Testing\" issues " +
+            "refresh tokens that last seven\ndays. Publish the consent screen, " +
+            "then issue a new token."
+          : ""),
+    );
   }
   return (await res.json()).access_token;
 }
