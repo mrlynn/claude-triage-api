@@ -28,6 +28,29 @@
  * equivalent: skipping an empty line whose predecessor was also empty produces
  * exactly what collapsing runs of three-or-more newlines produces.
  */
+/**
+ * A markdown link whose visible text is the same as its target, backticks and
+ * surrounding space ignored. `g` is deliberately absent: this is used with
+ * .test() as well as .replace(), and a global regex carries lastIndex between
+ * calls, which would make every other test fail.
+ */
+const SELF_LINK = /\[`?([^\]`]*)`?\]\(([^)]*)\)/;
+
+/** Same, but usable in a replace-all. */
+const SELF_LINK_ALL = new RegExp(SELF_LINK.source, "g");
+
+/**
+ * The part of a path a person would actually say: the file's own name, without
+ * its directories or extension, with dashes opened out into spaces.
+ * "../next-steps.md" becomes "next steps", so a sentence whose subject is a
+ * link still has a subject.
+ */
+function speakablePath(label) {
+  const bare = label.replace(/`/g, "").trim();
+  const name = bare.split("/").pop().replace(/\.[a-z0-9]+$/i, "");
+  return name.replace(/[-_]+/g, " ").trim();
+}
+
 export function walk(md) {
   const emitted = [];
   const events = [];
@@ -67,7 +90,14 @@ export function walk(md) {
       .replace(/^#{1,6}\s+/, "")
       .replace(/^\s*>\s?/, "")
       .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
-      .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+      // A link whose visible text is its own target carries no words of its
+      // own, and reading the path aloud produced "answers solutions lab dash
+      // four dot em dee" at the end of every lab. What replaces it depends on
+      // whether the link was carrying the sentence — see below.
+      .replace(SELF_LINK_ALL, (whole, label, href) => {
+        const bare = (x) => x.replace(/`/g, "").trim();
+        return bare(label) === bare(href) ? speakablePath(label) : label;
+      })
       .replace(/`([^`]*)`/g, "$1")
       .replace(/\*\*([^*]+)\*\*/g, "$1")
       .replace(/\*([^*]+)\*/g, "$1")
@@ -77,6 +107,21 @@ export function walk(md) {
       .replace(/[ \t]+/g, " ")
       .trimEnd();
     if (heading && text && !/[.?!:]$/.test(text)) text += ".";
+    // A self-link that was the whole point of its line leaves a stranded
+    // label behind — "Answers:" is not a sentence, and a voice reading it
+    // lands on a colon and moves on. Drop the line in that case, and only
+    // that case: where the link was the subject of a real sentence, the
+    // speakable name stays and the sentence still parses. Deliberately narrow
+    // — "Run this:" introducing a code fence is still worth speaking.
+    if (!heading && SELF_LINK.test(raw)) {
+      const without = raw
+        .replace(SELF_LINK_ALL, (w, label, href) =>
+          label.replace(/`/g, "").trim() === href.replace(/`/g, "").trim() ? "" : label,
+        )
+        .replace(/[*`>#]/g, "")
+        .trim();
+      if (/^[^.?!]{0,40}:$/.test(without)) text = "";
+    }
 
     // The inline equivalent of collapsing /\n{3,}/ to "\n\n" afterwards.
     if (text === "" && emitted.length > 0 && emitted[emitted.length - 1] === "") {
