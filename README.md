@@ -290,7 +290,11 @@ upstream stream or you keep paying for tokens nobody will read.
 Counts tokens server-side with the real tokenizer and projects monthly cost at
 a given volume, cached and uncached. No inference, so it's free.
 
-It also reports `cache_minimum_tokens` and `prefix_meets_cache_minimum`. The
+The server also checks this at boot: `src/lib/preflight.ts` measures the frozen
+prefix against the configured model's minimum with one free `countTokens` call
+and prints a loud block if caching is off. Set `PREFLIGHT=off` to skip it. The
+estimate route reports the same thing on demand — it returns
+`cache_minimum_tokens` and `prefix_meets_cache_minimum`. The
 minimum is a per-model property (512 on Opus 5, 1024 on Sonnet 5, 4096 on Haiku
 4.5), so it is read from the catalog rather than hardcoded — below it the API
 silently declines to cache, with no error.
