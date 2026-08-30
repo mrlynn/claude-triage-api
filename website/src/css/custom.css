@@ -468,6 +468,25 @@ html[data-theme="dark"] .theme-doc-markdown .mermaid .actor {
   background: var(--ifm-background-surface-color);
 }
 
+.docs-doc-id-glossary .theme-doc-markdown .nw-glossary-card--beyond {
+  border-style: dashed;
+  background: var(--ifm-color-emphasis-100);
+}
+
+.docs-doc-id-glossary .theme-doc-markdown .nw-glossary-card--beyond > p:first-of-type em {
+  display: inline-block;
+  margin-bottom: 0.35rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  font-style: normal;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ifm-color-emphasis-700);
+  background: var(--ifm-color-emphasis-200);
+}
+
 .docs-doc-id-glossary .theme-doc-markdown .nw-glossary-card h2 {
   margin: 0 0 0.4rem;
   font-size: 1.05rem;
@@ -480,6 +499,10 @@ html[data-theme="dark"] .theme-doc-markdown .mermaid .actor {
   font-size: 0.92rem;
   line-height: 1.45;
   color: var(--ifm-color-emphasis-800);
+}
+
+.docs-doc-id-glossary .theme-doc-markdown .nw-glossary-card p + p {
+  margin-top: 0.55rem;
 }
 
 @media (max-width: 720px) {
