@@ -39,9 +39,15 @@
  *   npm run upload -- --dry-run          # what would go, and under what title
  *   npm run upload -- --only lab-3       # one lab
  *   npm run upload -- --privacy unlisted # default is private
+ *   npm run upload -- --thumbs-only      # (re)set thumbnails on uploaded videos
  *
  * Uploaded ids are recorded in video-out/uploaded.json, so re-running skips
  * what is already up rather than posting it twice.
+ *
+ * --thumbs-only exists because a thumbnail can go missing from an upload
+ * without the upload failing — the file was not rendered yet, or video-out
+ * was moved between rendering and uploading — and the fix must not re-upload
+ * the video. It pushes the .thumb.jpg for every video already in the ledger.
  */
 import { readFileSync, writeFileSync, existsSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -57,6 +63,7 @@ const UPLOAD = "https://www.googleapis.com/upload/youtube/v3";
 
 const args = process.argv.slice(2);
 const dryRun = args.includes("--dry-run");
+const thumbsOnly = args.includes("--thumbs-only");
 const onlyAt = args.indexOf("--only");
 const only = onlyAt === -1 ? null : args[onlyAt + 1];
 const privacyAt = args.indexOf("--privacy");
@@ -239,6 +246,33 @@ const jobs = readdirSync(outDir)
   .map((f) => JSON.parse(readFileSync(join(outDir, f), "utf8")))
   .filter((m) => !only || m.slug.includes(only));
 
+if (thumbsOnly) {
+  const targets = jobs
+    .map((meta) => ({ meta, entry: ledger[meta.slug] }))
+    .filter(({ meta, entry }) => {
+      if (!entry) {
+        console.warn(`skip    ${meta.slug} — not in the ledger; upload it first`);
+        return false;
+      }
+      if (!existsSync(join(outDir, meta.thumbnail))) {
+        console.warn(`skip    ${meta.slug} — ${meta.thumbnail} is missing`);
+        return false;
+      }
+      return true;
+    });
+  if (targets.length === 0) {
+    console.log("No thumbnails to set.");
+    process.exit(0);
+  }
+  const token = await accessToken();
+  for (const { meta, entry } of targets) {
+    process.stdout.write(`thumbnail ${meta.slug} → ${entry.videoId}… `);
+    await setThumbnail(token, entry.videoId, join(outDir, meta.thumbnail));
+    console.log("done");
+  }
+  process.exit(0);
+}
+
 const pending = [];
 for (const meta of jobs) {
   if (ledger[meta.slug]) {
@@ -273,15 +307,21 @@ for (const { meta, video } of pending) {
   const videoId = await uploadVideo(token, meta, video);
   process.stdout.write("video ");
 
+  // Missing files are loud, not silent: an upload that quietly goes out
+  // without its thumbnail looks finished and is only discovered on YouTube.
   const thumb = join(outDir, meta.thumbnail);
   if (existsSync(thumb)) {
     await setThumbnail(token, videoId, thumb);
     process.stdout.write("thumbnail ");
+  } else {
+    process.stdout.write(`NO THUMBNAIL (${meta.thumbnail} missing; fix with --thumbs-only) `);
   }
   const srt = join(outDir, meta.captions);
   if (existsSync(srt)) {
     await addCaptions(token, videoId, srt);
     process.stdout.write("captions ");
+  } else {
+    process.stdout.write(`NO CAPTIONS (${meta.captions} missing) `);
   }
 
   ledger[meta.slug] = { videoId, uploadedAt: new Date().toISOString(), privacy };
