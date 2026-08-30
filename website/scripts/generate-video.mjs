@@ -39,6 +39,7 @@ import { dirname, join, resolve } from "node:path";
 import { chromium } from "playwright";
 import { createRequire } from "node:module";
 import { narration, walk } from "./lib/narration.mjs";
+import { chapters, cues, toSrt, description, stamp } from "./lib/youtube-meta.mjs";
 
 // Prism ships CommonJS language definitions, and registering a language is a
 // side effect on the shared object rather than an export.
@@ -81,12 +82,48 @@ const CODE_BOX = { w: 1640, h: 720 };
 
 const BRAND = { pine: "#1f3d33", spruce: "#5c9a86", bone: "#f2ede4", ember: "#d9642a" };
 
+const COURSE_URL = "https://triage.mlynn.dev";
+const SHOP_URL = "https://northwind.mlynn.dev";
+const REPO_URL = "https://github.com/mrlynn/claude-triage-api";
+/* YouTube's own recommendation, and what its player expects. */
+const THUMB = { w: 1280, h: 720 };
+
 function ffprobeDuration(file) {
   return Number(
     execFileSync("ffprobe", [
       "-v", "quiet", "-show_entries", "format=duration", "-of", "csv=p=0", file,
     ]).toString().trim(),
   );
+}
+
+/**
+ * The lab's opening prose, as the description's first lines.
+ *
+ * Taken from the lab rather than written fresh, because a description that
+ * disagrees with the lab it describes is worse than a short one. It starts
+ * after the first section heading — above that is the title and a "Time /
+ * Prerequisites" line, which tell a reader nothing about what the lab is —
+ * and accumulates whole paragraphs rather than taking the first one over a
+ * length threshold. Lab 2 opens on "Northwind already had a classifier that
+ * hit 84% accuracy. They cancelled it.", which is 72 characters and is the
+ * best sentence in the lab; a threshold skipped it for the paragraph after.
+ */
+function labSummary(md, fallback) {
+  const afterFirstHeading = md.split(/^##\s+.+$/m).slice(1).join("\n\n");
+  const out = [];
+  let length = 0;
+  for (const para of (afterFirstHeading || md).split(/\n\s*\n/)) {
+    if (/^\s*(#|\||>|!\[|```)/.test(para)) continue;
+    if (/\*\*(Time|Prerequisites|Answers):\*\*/.test(para)) continue;
+    const text = narration(para).replace(/\s*\n+\s*/g, " ").trim();
+    if (!text) continue;
+    out.push(text);
+    length += text.length;
+    if (length >= 200 || out.length >= 2) break;
+  }
+  const joined = out.join("\n\n").trim();
+  if (!joined) return fallback;
+  return joined.length > 700 ? `${joined.slice(0, 697)}…` : joined;
 }
 
 function labTitle(md) {
@@ -216,7 +253,7 @@ const display = (s) => String(s ?? "").replace(/\.$/, "");
 function shell(inner, { footerRight, progress }) {
   return `<!doctype html><meta charset="utf-8"><style>
     *{margin:0;padding:0;box-sizing:border-box}
-    body{width:${WIDTH}px;height:${HEIGHT}px;background:${BRAND.pine};color:${BRAND.bone};
+    body{width:100vw;height:100vh;background:${BRAND.pine};color:${BRAND.bone};
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
       display:flex;flex-direction:column;justify-content:center;padding:120px 140px;position:relative;
       background-image:radial-gradient(ellipse at 78% 12%, rgba(92,154,134,.30), transparent 62%);}
@@ -311,7 +348,7 @@ for (const file of readdirSync(labsDir).filter((f) => f.endsWith(".md")).sort())
   const duration = ffprobeDuration(mp3);
   const title = labTitle(md) ?? slug;
   const cards = schedule(walk(md).events, text.length, duration, title);
-  work.push({ id, slug, mp3, duration, cards, title });
+  work.push({ id, slug, mp3, duration, cards, title, text, summary: labSummary(md, title) });
 }
 
 for (const [id, why] of stale) console.warn(`skip    ${id} — ${why}`);
@@ -396,10 +433,57 @@ for (const lab of work) {
     "-t", lab.duration.toFixed(3),
     out,
   ]);
+  // --- everything the upload needs that is not the video file ---
+  const chapterList = chapters(lab.cards, lab.title);
+  const srt = toSrt(cues(lab.text, lab.duration));
+  const title = `${lab.title} — Claude API course`;
+  const meta = {
+    slug: lab.slug,
+    title: title.length > 100 ? `${title.slice(0, 99)}…` : title,
+    description: description({
+      labTitle: lab.title,
+      summary: lab.summary,
+      chapterList,
+      labUrl: `${COURSE_URL}/docs/labs/${lab.slug}`,
+      courseUrl: COURSE_URL,
+      shopUrl: SHOP_URL,
+      repoUrl: REPO_URL,
+      solutionsNote: "Solutions for every lab are in the course repository.",
+    }),
+    tags: ["Claude API", "Anthropic", "LLM", "structured outputs", "tool use", "streaming", "prompt caching", "evals"],
+    categoryId: "28", // Science & Technology
+    defaultLanguage: "en",
+    video: `${lab.slug}.mp4`,
+    captions: `${lab.slug}.srt`,
+    thumbnail: `${lab.slug}.thumb.jpg`,
+    chapters: chapterList.map((c) => ({ at: stamp(c.start), title: c.title })),
+  };
+  writeFileSync(join(outDir, `${lab.slug}.srt`), srt);
+  // A plain-text title and description alongside the JSON, because uploading
+  // by hand is a perfectly good option and copying prose out of a JSON string
+  // with escaped newlines in it is not.
+  writeFileSync(join(outDir, `${lab.slug}.txt`), `${meta.title}\n\n${meta.description}`);
+  writeFileSync(join(outDir, `${lab.slug}.json`), `${JSON.stringify(meta, null, 2)}\n`);
+
+  // The thumbnail is the title card at YouTube's size, not a frame grab: a
+  // grab lands on whatever card happened to be up and is usually a code block.
+  await page.setViewportSize({ width: THUMB.w, height: THUMB.h });
+  await page.setContent(
+    headingCard({ eyebrow: "Claude API course", title: lab.title, footerRight: "", progress: 0 }),
+  );
+  await page.screenshot({ path: join(outDir, `${lab.slug}.thumb.jpg`), type: "jpeg", quality: 88 });
+  await page.setViewportSize({ width: WIDTH, height: HEIGHT });
+
   const mb = readFileSync(out).length / 1024 / 1024;
-  console.log(`${(lab.duration / 60).toFixed(1)} min, ${mb.toFixed(1)} MB`);
+  console.log(
+    `${(lab.duration / 60).toFixed(1)} min, ${mb.toFixed(1)} MB, ` +
+      `${chapterList.length} chapters, ${srt.split("\n\n").length - 1} cues`,
+  );
 }
 
 await browser.close();
 rmSync(tmpDir, { recursive: true, force: true });
-console.log(`\nWrote ${work.length} file(s) to ${outDir}`);
+console.log(
+  `\nWrote ${work.length} video(s) to ${outDir}, each with .srt captions, ` +
+    "a .thumb.jpg and a .json the uploader reads.",
+);
