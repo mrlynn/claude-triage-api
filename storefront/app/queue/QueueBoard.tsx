@@ -1,13 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import {
+  CATEGORY_CHIP,
+  HUMAN_CHIP,
+  urgencyChip,
+} from "@/lib/triage-ui";
 
 /**
  * The reviewer board.
  *
- * Columns by status, newest first. Deliberately plain: the interesting thing
- * about this page is that it exists at all, not its interaction design. Before
- * it, `requires_human` was a boolean the schema produced and nothing acted on.
+ * Columns by status, newest first. Always shows all four columns (empty
+ * states included) so the board reads as an ops desk rather than a list that
+ * collapses when quiet.
  */
 
 type Status = "new" | "claimed" | "resolved" | "dismissed";
@@ -18,7 +23,6 @@ interface Escalation {
   channel: string;
   message_redacted: string;
   redactions: { kind: string; at: number }[];
-  /** Form-submitted rows only. No classifier runs on the assistant path. */
   triage?: {
     category: string;
     urgency: string;
@@ -29,7 +33,6 @@ interface Escalation {
     confidence: number;
   };
   source?: "form" | "assistant";
-  /** Assistant-filed rows only, in place of `triage`. */
   assistant?: {
     proposalId: string;
     action: string;
@@ -59,14 +62,6 @@ const COLUMNS: { id: Status; label: string }[] = [
   { id: "dismissed", label: "Dismissed" },
 ];
 
-const URGENCY_STYLE: Record<string, string> = {
-  low: "bg-pine/10 text-pine/70",
-  normal: "bg-pine/10 text-pine/70",
-  high: "bg-ember/15 text-ember",
-  urgent: "bg-ember/25 text-ember",
-};
-
-/** Next status a reviewer can move a ticket to, and the button label. */
 const ACTIONS: Record<Status, { to: Status; label: string }[]> = {
   new: [
     { to: "claimed", label: "Claim" },
@@ -80,16 +75,6 @@ const ACTIONS: Record<Status, { to: Status; label: string }[]> = {
   dismissed: [{ to: "new", label: "Reopen" }],
 };
 
-/**
- * Relative age, falling back to an absolute date.
- *
- * The demo fixtures are dated on Northwind's fictional timeline, which runs
- * ahead of the real clock. Clamping that to zero rendered every card as
- * "0s ago" — a relative time is only meaningful against a shared present, and
- * a board where everything arrived this instant is not one anybody would
- * believe. Anything future-dated or more than a week old shows its date
- * instead.
- */
 function age(iso: string): string {
   const sec = (Date.now() - new Date(iso).getTime()) / 1000;
   if (sec < 0 || sec > 7 * 86400) {
@@ -104,16 +89,21 @@ function age(iso: string): string {
   return `${Math.round(sec / 86400)}d ago`;
 }
 
+function urgencyBar(urgency?: string): string {
+  if (urgency === "urgent") return "bg-ember";
+  if (urgency === "high") return "bg-ember/50";
+  if (urgency === "normal") return "bg-spruce/60";
+  return "bg-pine/25";
+}
+
 export default function QueueBoard() {
   const [items, setItems] = useState<Escalation[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
-  // Demo mode hides the mutation buttons rather than letting them 401. A
-  // control that is visible and always fails teaches the wrong thing about
-  // the system.
   const [mode, setMode] = useState<Mode>("demo");
+  const [highlight, setHighlight] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -138,9 +128,21 @@ export default function QueueBoard() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    const id = window.location.hash.replace(/^#/, "");
+    if (!id) return;
+    setHighlight(id);
+    // Wait a tick for cards to paint, then scroll the target into view.
+    const t = window.setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 80);
+    return () => window.clearTimeout(t);
+  }, [items, loading]);
+
   async function clearAll() {
-    // A destructive action on real customer messages gets a confirm. The rows
-    // have a 30-day TTL and no backup, so this is not undoable.
     if (
       !window.confirm(
         `Delete all ${items.length} escalation(s)? They are not recoverable.`,
@@ -182,7 +184,20 @@ export default function QueueBoard() {
   }
 
   if (loading) {
-    return <p className="text-sm text-pine/60">Loading the queue…</p>;
+    return (
+      <div className="space-y-5" aria-busy="true" aria-label="Loading the queue">
+        <div className="h-24 animate-pulse rounded-lg bg-pine/8" />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {COLUMNS.map((col) => (
+            <div key={col.id} className="space-y-3">
+              <div className="h-3 w-20 animate-pulse rounded bg-pine/10" />
+              <div className="h-36 animate-pulse rounded-lg bg-pine/8" />
+              <div className="h-28 animate-pulse rounded-lg bg-pine/6" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -238,134 +253,156 @@ export default function QueueBoard() {
         )
       )}
 
-      {items.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-pine/20 bg-white/20 p-6 text-sm text-pine/60">
-          Nothing queued. File a ticket on{" "}
-          <a className="underline" href="/support">
-            the support form
-          </a>{" "}
-          describing something a human would have to handle — an injury, a legal
-          threat, a large refund — and it will land here.
-        </div>
-      ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
-          {COLUMNS.map((col) => {
-            const inCol = items.filter((i) => i.status === col.id);
-            if (inCol.length === 0) return null;
-            return (
-              <section key={col.id} className="space-y-3">
-                <h2 className="text-[11px] uppercase tracking-wide text-pine/50">
-                  {col.label} ({inCol.length})
-                </h2>
-                {inCol.map((item) => (
-                  <article
-                    key={item._id}
-                    className="rounded-lg border border-pine/15 bg-white/40 p-5"
-                  >
-                    <div className="flex items-baseline justify-between gap-3">
-                      <span className="font-mono text-sm text-pine">{item._id}</span>
-                      <span className="text-[11px] text-pine/50">
-                        {age(item.created_at)}
-                      </span>
-                    </div>
-
-                    {/* A row carries a triage block or an assistant block, never
-                        both. The two paths reach this board differently: the form
-                        classifies and routes, the assistant proposes and a customer
-                        confirms. Rendering the same chips for both would imply a
-                        classification that never ran. */}
-                    {item.triage && (
-                      <>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <Chip>{item.triage.category}</Chip>
-                          <span
-                            className={`rounded px-2 py-1 text-xs ${
-                              URGENCY_STYLE[item.triage.urgency] ?? "bg-pine/10 text-pine/70"
-                            }`}
-                          >
-                            {item.triage.urgency}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {COLUMNS.map((col) => {
+          const inCol = items.filter((i) => i.status === col.id);
+          return (
+            <section key={col.id} className="min-w-0 space-y-3">
+              <h2 className="flex items-baseline justify-between gap-2 text-[11px] uppercase tracking-wide text-pine/50">
+                <span>{col.label}</span>
+                <span className="font-mono tabular-nums">{inCol.length}</span>
+              </h2>
+              {inCol.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-pine/20 bg-white/20 px-3 py-8 text-center text-xs text-pine/45">
+                  {col.id === "new" && items.length === 0 ? (
+                    <>
+                      Nothing waiting. File something a human must handle on{" "}
+                      <a className="underline" href="/support">
+                        support
+                      </a>
+                      .
+                    </>
+                  ) : (
+                    "Empty"
+                  )}
+                </div>
+              ) : (
+                inCol.map((item) => {
+                  const source = item.source ?? (item.assistant ? "assistant" : "form");
+                  const lit = highlight === item._id;
+                  return (
+                    <article
+                      key={item._id}
+                      id={item._id}
+                      className={`overflow-hidden rounded-lg border bg-white/40 ${
+                        lit
+                          ? "border-ember ring-2 ring-ember/30"
+                          : "border-pine/15"
+                      }`}
+                    >
+                      <div
+                        className={`h-1 ${urgencyBar(item.triage?.urgency)}`}
+                        aria-hidden
+                      />
+                      <div className="p-4">
+                        <div className="flex items-baseline justify-between gap-3">
+                          <span className="font-mono text-sm text-pine">{item._id}</span>
+                          <span className="text-[11px] text-pine/50">
+                            {age(item.created_at)}
                           </span>
-                          <Chip>{item.triage.sentiment}</Chip>
                         </div>
 
-                        <p className="mt-3 text-sm text-pine/85">{item.triage.summary}</p>
-
-                        {item.triage.escalation_reason && (
-                          <p className="mt-2 border-l-2 border-ember pl-3 text-xs text-pine/70">
-                            {item.triage.escalation_reason}
-                          </p>
-                        )}
-                      </>
-                    )}
-
-                    {item.assistant && (
-                      <>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <Chip>Ask Northwind</Chip>
-                          <Chip>{item.assistant.action}</Chip>
-                          {typeof item.assistant.amountUsd === "number" && (
-                            <Chip>${item.assistant.amountUsd.toFixed(2)}</Chip>
-                          )}
-                        </div>
-
-                        <p className="mt-3 text-sm text-pine/85">
-                          Customer confirmed this with the assistant. Nothing has been
-                          issued — this row is the request to action it.
-                        </p>
-                      </>
-                    )}
-
-                    <details className="mt-3">
-                      <summary className="cursor-pointer text-xs text-pine/60">
-                        {item.assistant ? "Assistant rationale (redacted)" : "Customer message (redacted)"}
-                      </summary>
-                      <p className="mt-2 whitespace-pre-wrap rounded bg-pine/5 p-3 font-mono text-[11px] leading-relaxed text-pine/80">
-                        {item.message_redacted}
-                      </p>
-                      {item.redactions.length > 0 && (
-                        <p className="mt-1 text-[11px] text-ember">
-                          {item.redactions.length} identifier
-                          {item.redactions.length === 1 ? "" : "s"} removed before
-                          storage
-                        </p>
-                      )}
-                    </details>
-
-                    <p className="mt-3 font-mono text-[11px] tabular-nums text-pine/50">
-                      {item.triage ? `conf ${item.triage.confidence.toFixed(2)} · ` : ""}
-                      ${item.cost_usd.toFixed(4)} · {item.model}
-                      {item.claimed_by ? ` · ${item.claimed_by}` : ""}
-                    </p>
-
-                    {mode === "live" && ACTIONS[item.status].length > 0 && (
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {ACTIONS[item.status].map((a) => (
-                          <button
-                            key={a.to}
-                            type="button"
-                            disabled={busy === item._id}
-                            onClick={() => move(item._id, a.to)}
-                            className="rounded-md border border-pine/20 px-3 py-1.5 text-xs text-pine hover:bg-pine hover:text-bone disabled:opacity-50"
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          <span
+                            className={
+                              source === "assistant"
+                                ? "rounded bg-spruce/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-pine"
+                                : "rounded bg-pine/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-pine/70"
+                            }
                           >
-                            {a.label}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </article>
-                ))}
-              </section>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
+                            {source === "assistant" ? "Ask Northwind" : "Support form"}
+                          </span>
+                        </div>
 
-function Chip({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="rounded bg-pine/10 px-2 py-1 text-xs text-pine/80">{children}</span>
+                        {item.triage && (
+                          <>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              <span className={CATEGORY_CHIP}>{item.triage.category}</span>
+                              <span className={urgencyChip(item.triage.urgency)}>
+                                {item.triage.urgency}
+                              </span>
+                              {item.triage.requires_human && (
+                                <span className={HUMAN_CHIP}>human</span>
+                              )}
+                            </div>
+                            <p className="mt-3 text-sm text-pine/85">{item.triage.summary}</p>
+                            {item.triage.escalation_reason && (
+                              <p className="mt-2 border-l-2 border-ember pl-3 text-xs text-pine/70">
+                                {item.triage.escalation_reason}
+                              </p>
+                            )}
+                          </>
+                        )}
+
+                        {item.assistant && (
+                          <>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              <span className={CATEGORY_CHIP}>{item.assistant.action}</span>
+                              {typeof item.assistant.amountUsd === "number" && (
+                                <span className={CATEGORY_CHIP}>
+                                  ${item.assistant.amountUsd.toFixed(2)}
+                                </span>
+                              )}
+                            </div>
+                            <p className="mt-3 text-sm text-pine/85">
+                              Customer confirmed this with the assistant. Nothing
+                              has been issued — this row is the request to action
+                              it.
+                            </p>
+                          </>
+                        )}
+
+                        <details className="mt-3">
+                          <summary className="cursor-pointer text-xs text-pine/60">
+                            {item.assistant
+                              ? "Assistant rationale (redacted)"
+                              : "Customer message (redacted)"}
+                          </summary>
+                          <p className="mt-2 whitespace-pre-wrap rounded bg-pine/5 p-3 font-mono text-[11px] leading-relaxed text-pine/80">
+                            {item.message_redacted}
+                          </p>
+                          {item.redactions.length > 0 && (
+                            <p className="mt-1 text-[11px] text-ember">
+                              {item.redactions.length} identifier
+                              {item.redactions.length === 1 ? "" : "s"} removed
+                              before storage
+                            </p>
+                          )}
+                        </details>
+
+                        <p className="mt-3 font-mono text-[11px] tabular-nums text-pine/50">
+                          {item.triage
+                            ? `conf ${item.triage.confidence.toFixed(2)} · `
+                            : ""}
+                          ${item.cost_usd.toFixed(4)} · {item.model}
+                          {item.claimed_by ? ` · ${item.claimed_by}` : ""}
+                        </p>
+
+                        {mode === "live" && ACTIONS[item.status].length > 0 && (
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            {ACTIONS[item.status].map((a) => (
+                              <button
+                                key={a.to}
+                                type="button"
+                                disabled={busy === item._id}
+                                onClick={() => move(item._id, a.to)}
+                                className="rounded-md border border-pine/20 px-3 py-1.5 text-xs text-pine hover:bg-pine hover:text-bone disabled:opacity-50"
+                              >
+                                {a.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })
+              )}
+            </section>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

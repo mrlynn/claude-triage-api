@@ -2,6 +2,11 @@
 
 import { useState } from "react";
 import payloads from "@/data/injections.json";
+import {
+  CATEGORY_CHIP,
+  HUMAN_CHIP,
+  urgencyChip,
+} from "@/lib/triage-ui";
 
 /**
  * Live injection playground.
@@ -44,13 +49,6 @@ interface Result {
 }
 
 const CASES = payloads as unknown as Payload[];
-
-const URGENCY_STYLE: Record<string, string> = {
-  low: "bg-pine/10 text-pine/70",
-  normal: "bg-pine/10 text-pine/70",
-  high: "bg-ember/15 text-ember",
-  urgent: "bg-ember/20 text-ember",
-};
 
 export default function InjectionPlayground() {
   const [message, setMessage] = useState(CASES[0]?.message ?? "");
@@ -199,23 +197,13 @@ export default function InjectionPlayground() {
               </div>
 
               <div className="mt-3 flex flex-wrap gap-2">
-                <span className="rounded bg-pine/10 px-2 py-1 text-xs text-pine/80">
-                  {result.triage.category}
-                </span>
-                <span
-                  className={`rounded px-2 py-1 text-xs ${
-                    URGENCY_STYLE[result.triage.urgency] ?? "bg-pine/10 text-pine/70"
-                  }`}
-                >
+                <span className={CATEGORY_CHIP}>{result.triage.category}</span>
+                <span className={urgencyChip(result.triage.urgency)}>
                   {result.triage.urgency}
                 </span>
-                <span className="rounded bg-pine/10 px-2 py-1 text-xs text-pine/80">
-                  {result.triage.sentiment}
-                </span>
+                <span className={CATEGORY_CHIP}>{result.triage.sentiment}</span>
                 {result.triage.requires_human && (
-                  <span className="rounded bg-ember/15 px-2 py-1 text-xs text-ember">
-                    human required
-                  </span>
+                  <span className={HUMAN_CHIP}>human required</span>
                 )}
               </div>
 
@@ -239,7 +227,29 @@ export default function InjectionPlayground() {
               <h2 className="text-sm font-semibold text-pine">
                 What the model was actually shown
               </h2>
-              <p className="mt-1 text-xs text-pine/60">
+              <div className="mt-3 grid grid-cols-2 gap-2 text-center text-[11px]">
+                <div
+                  className={`rounded-md border px-2 py-2 ${
+                    result.defended
+                      ? "border-spruce/40 bg-spruce/10 text-pine"
+                      : "border-pine/15 bg-pine/5 text-pine/45"
+                  }`}
+                >
+                  <p className="font-semibold uppercase tracking-wide">Escaped</p>
+                  <p className="mt-0.5 text-pine/65">&lt; → &amp;lt;</p>
+                </div>
+                <div
+                  className={`rounded-md border px-2 py-2 ${
+                    !result.defended
+                      ? "border-ember/40 bg-ember/10 text-ember"
+                      : "border-pine/15 bg-pine/5 text-pine/45"
+                  }`}
+                >
+                  <p className="font-semibold uppercase tracking-wide">Raw</p>
+                  <p className="mt-0.5">tags stay real</p>
+                </div>
+              </div>
+              <p className="mt-3 text-xs text-pine/60">
                 {result.defended
                   ? "Every < in the payload became &lt;, so the only real tags in this block are the two we wrote."
                   : "Raw interpolation. Any tags in the payload are real tags here."}

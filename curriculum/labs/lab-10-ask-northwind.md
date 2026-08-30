@@ -34,6 +34,30 @@ They set an opaque, httpOnly seven-day session cookie for `.mlynn.dev`, check
 the allowed origins, and run the loop server-side. The browser never sees an
 Anthropic key.
 
+```mermaid
+sequenceDiagram
+    participant Learner
+    participant Course as Course / shop UI
+    participant API as /api/assistant/*
+    participant Claude
+    participant Tools as typed tools
+    participant Queue as escalation queue
+
+    Learner->>Course: ask / confirm
+    Course->>API: session cookie · page context
+    API->>API: wrapUntrusted(user + tool results)
+    loop until done or turn cap
+        API->>Claude: messages.toolRunner
+        Claude-->>API: tool_use or text
+        API->>Tools: find_learning_step / propose_…
+        Tools-->>API: tool_result
+    end
+    API-->>Course: streamed reply · optional proposal
+    Learner->>Course: confirm proposal
+    Course->>API: confirm (re-check authority)
+    API->>Queue: file ticket · no classifier invents fields
+```
+
 The agent's whole surface is `find_learning_step` and `get_current_context`,
 plus `get_support_policy` and `propose_support_action` on the storefront. The
 course surface is not *told* to avoid support actions — it is not given the

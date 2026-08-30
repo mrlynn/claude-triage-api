@@ -24,6 +24,15 @@ theirs.
 
 ---
 
+```try
+{
+  "tool": "stream",
+  "title": "Watch tokens arrive — then break the stream",
+  "lead": "Offline replay of text / thinking / done. Flip Fail mid-stream to see an in-band error after HTTP 200 — the status code stays green; the UI must not.",
+  "href": null
+}
+```
+
 ## Objectives
 
 - Stream a response and handle the event types you actually care about

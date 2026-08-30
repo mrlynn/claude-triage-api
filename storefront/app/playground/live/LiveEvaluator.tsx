@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import {
+  SENTIMENT_CHIP,
+  URGENCY_CHIP,
+  ERROR_BANNER,
+} from "@/lib/triage-ui";
 
 /**
  * The as-you-type evaluator.
@@ -77,19 +82,8 @@ interface Verdict {
 const MIN_CHARS = 12;
 const DEBOUNCE_MS = 600;
 
-const SENTIMENT_STYLE: Record<string, string> = {
-  angry: "bg-ember/20 text-ember",
-  frustrated: "bg-ember/12 text-ember",
-  neutral: "bg-pine/10 text-pine/70",
-  positive: "bg-spruce/20 text-pine",
-};
-
-const URGENCY_STYLE: Record<string, string> = {
-  low: "bg-pine/10 text-pine/60",
-  normal: "bg-pine/10 text-pine/70",
-  high: "bg-ember/15 text-ember",
-  urgent: "bg-ember/25 text-ember",
-};
+const SENTIMENT_STYLE = SENTIMENT_CHIP;
+const URGENCY_STYLE = URGENCY_CHIP;
 
 const EXAMPLES = [
   {
@@ -343,11 +337,7 @@ export default function LiveEvaluator() {
               The preview is Haiku. This runs the classifier a real ticket gets.
             </span>
           </div>
-          {commitError && (
-            <p className="mt-3 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800">
-              {commitError}
-            </p>
-          )}
+          {commitError && <p className={`mt-3 ${ERROR_BANNER}`}>{commitError}</p>}
         </div>
 
         {/* ---- The live panel --------------------------------------- */}

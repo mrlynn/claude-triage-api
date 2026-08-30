@@ -27,9 +27,14 @@ thing in this lab, and you will measure it yourself in Step 3.
 
 ---
 
-> **See the matrix without running it.** The
-> [model matrix playground](https://triage.mlynn.dev/playground/models)
-> renders a checked-in run, including the per-case disagreement grid.
+```try
+{
+  "tool": "models",
+  "title": "See the matrix without running it",
+  "lead": "A checked-in eval:models run — accuracy, calibration gap, and the per-case disagreement grid. The cheap tier's failures concentrate where two rules touch.",
+  "href": "/playground/models"
+}
+```
 
 ## Objectives
 

@@ -22,6 +22,35 @@ flowchart TB
     Messages --> Cache["cache_control<br/>(cost of the prefix)"]
 ```
 
+```path
+[
+  {
+    "label": "Structured outputs",
+    "param": "output_config.format",
+    "detail": "Shape the model is allowed to emit — Lab 2.",
+    "to": "/docs/labs/lab-2-structured-outputs"
+  },
+  {
+    "label": "Tool use",
+    "param": "tools / toolRunner",
+    "detail": "Facts the model cannot invent — Lab 3.",
+    "to": "/docs/labs/lab-3-tool-use"
+  },
+  {
+    "label": "Streaming",
+    "param": ".stream() / SSE",
+    "detail": "Perceived latency for a human waiting — Lab 4.",
+    "to": "/docs/labs/lab-4-streaming"
+  },
+  {
+    "label": "Prompt caching",
+    "param": "cache_control",
+    "detail": "Byte-identical prefix economics — Lab 5.",
+    "to": "/docs/labs/lab-5-prompt-caching"
+  }
+]
+```
+
 Structured outputs, tool use, and streaming are **not three different APIs**.
 They are three parameters on the same request. This is the single most
 useful thing to internalize early: once you can make one Messages call, every

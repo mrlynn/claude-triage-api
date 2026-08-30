@@ -144,6 +144,19 @@ curl -s localhost:8787/v1/estimate -H 'content-type: application/json' \
   -d '{"message":"In one sentence: what is a zipper slider?"}' | jq .cost_usd
 ```
 
+```receipt
+{
+  "title": "scratch/hello.ts — representative",
+  "note": "Small prompt, no handbook. Your numbers will move; the four fields are the point.",
+  "input": 18,
+  "output": 42,
+  "cacheWrite": 0,
+  "cacheRead": 0,
+  "cost": "$0.0011",
+  "stopReason": "end_turn"
+}
+```
+
 **Q1.** Why is the estimate's input count so much larger than your script's?
 
 ## Step 4 — break it on purpose

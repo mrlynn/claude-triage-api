@@ -21,14 +21,21 @@ guessing.*
 
 Get that field wrong and you ship the 2024 classifier again.
 
+![An escalation queue card: a child's illness linked to a flaking bottle lining, tagged safety and urgent](../../assets/readme/queue.jpg)
+
 ---
 
-> **See what the fields are for.** The
-> [inbound queue](https://triage.mlynn.dev/playground/queue) runs
-> this schema over twenty tickets and sorts a real support queue with the
-> result, and the [Northwind storefront](https://northwind.mlynn.dev/support) runs it live on
-> anything you type. Every classification in both came from the code you are
-> about to edit.
+```try
+{
+  "tool": "queue",
+  "title": "See what the fields are for",
+  "lead": "Start on As received and try to find the safety report before you switch. Every classification on this queue came from the real /v1/triage route.",
+  "href": "/playground/queue"
+}
+```
+
+The [Northwind storefront](https://northwind.mlynn.dev/support) runs the same
+schema live on anything you type.
 
 ## Objectives
 
@@ -43,6 +50,27 @@ flowchart LR
     Format --> API["Claude API<br/>constrained generation"]
     API --> Parse["messages.parse()"]
     Parse --> Typed["typed TriageResult"]
+```
+
+### When the enum fails open
+
+A category set that includes a catch-all `other` (or that lets the model invent
+labels) is how a safety report lands in billing again. Fail closed: every value
+the model may emit is one you have routing for, and anything else is rejected
+before it touches the queue.
+
+```mermaid
+flowchart TB
+    subgraph open["Fails open — ships the 2024 classifier"]
+        M1["model emits category"] --> O["other / invented label"]
+        O --> B["routed somewhere 'reasonable'"]
+        B --> Lost["safety report sits unread"]
+    end
+    subgraph closed["Fails closed — schema is the control"]
+        M2["model emits category"] --> E{"in enum?"}
+        E -->|yes| Route["known queue / policy"]
+        E -->|no| Reject["parse fails · requires_human"]
+    end
 ```
 
 ---

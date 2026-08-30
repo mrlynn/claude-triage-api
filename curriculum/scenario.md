@@ -4,6 +4,8 @@
 
 Every design decision in this repo came from somewhere. This is the somewhere.
 
+![The Northwind Outfitters storefront: a tent pitched at sunrise](../assets/talk/shop-home.jpg)
+
 ## Why this matters
 
 A support queue is the place where a company finds out it hurt someone.
@@ -18,6 +20,8 @@ You can try this yourself. The
 [inbound queue](https://triage.mlynn.dev/playground/queue) shows
 twenty real tickets as an agent sees them, unsorted. One is a parent reporting
 that their child got sick. See how long it takes you to find it.
+
+![Escalation queue after triage — safety and urgent float to the top](../assets/talk/escalation-queue.jpg)
 
 Right now that somebody is a human reading 4,100 messages a week, and in
 December it is a seasonal hire on their fifth day who has not read the policy
@@ -51,6 +55,8 @@ is a working storefront: the catalog, the warranty terms, a fake order
 history, and a support form that runs the real triage service on whatever you
 type into it. Everything below is easier to hold once you have looked at the
 price tag on a jacket you are about to complain about.
+
+![The support form on the Northwind storefront](../assets/talk/support-form.jpg)
 
 Northwind Outfitters sells outdoor gear. Technical shells, packs, insulated
 bottles, tents. Roughly $180M a year, about 78% of it direct to consumer

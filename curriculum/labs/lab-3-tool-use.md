@@ -24,10 +24,14 @@ control surface for whether the model checks its facts.
 
 ---
 
-> **Step through the loop first.** The
-> [agentic loop stepper](https://triage.mlynn.dev/playground/trace)
-> walks a real three-turn run and shows the usage trap in Step 3 visually. No
-> key, no server.
+```try
+{
+  "tool": "trace",
+  "title": "Step through the loop first",
+  "lead": "Walk a real three-turn /v1/resolve run. Watch the context grow, then check whether the last turn's usage is the whole bill. No key, no server.",
+  "href": "/playground/trace"
+}
+```
 
 ## Objectives
 
@@ -52,6 +56,23 @@ sequenceDiagram
     Claude-->>Route: final resolution JSON
 ```
 
+### The usage trap
+
+Each turn resends the whole conversation. Input tokens grow; the last turn is
+usually the most expensive. Reporting only that turn's `usage` under-reports
+spend — and not by a neat 1/N factor.
+
+```mermaid
+flowchart LR
+    T1["Turn 1<br/>prefix write + tools"] --> T2["Turn 2<br/>prefix read + growing messages"]
+    T2 --> T3["Turn 3<br/>largest request"]
+    T3 --> Wrong["Last-turn usage only<br/>under-reports total"]
+    T1 --> Sum["Sum every turn"]
+    T2 --> Sum
+    T3 --> Sum
+    Sum --> Bill["Actual spend"]
+```
+
 ---
 
 ## Step 1 — watch it think
@@ -61,6 +82,18 @@ curl -s localhost:8787/v1/resolve -H 'content-type: application/json' -d '{
   "message":"UPS says NW-48211 was delivered but nothing is on my porch.",
   "customer_email":"dana.k@example.com"
 }' | jq '{resolution, tools: [.tool_trace[].tool], iterations: .meta.iterations}'
+```
+
+```receipt
+{
+  "title": "Three-turn /v1/resolve — summed",
+  "note": "Representative shape from the stepper. Last-turn usage alone is not this total.",
+  "input": 890,
+  "output": 312,
+  "cacheWrite": 4711,
+  "cacheRead": 9422,
+  "cost": "$0.042"
+}
 ```
 
 You did not tell Claude which tools to call. Read the trace order and reconstruct

@@ -1,0 +1,135 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 0.85rem;
+}
+
+.primary,
+.ghost {
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border-radius: 4px;
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+}
+
+.primary {
+  border: 1px solid var(--nw-pine);
+  background: var(--nw-pine);
+  color: var(--nw-bone);
+}
+
+.ghost {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  background: transparent;
+  color: var(--ifm-font-color-base);
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--ifm-color-emphasis-700);
+  cursor: pointer;
+}
+
+.panels {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 0.75rem;
+}
+
+@media (max-width: 720px) {
+  .panels {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panel {
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 4px;
+  padding: 0.75rem 0.85rem;
+  background: var(--ifm-background-color);
+  min-height: 10rem;
+}
+
+.label {
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ifm-color-emphasis-600);
+}
+
+.draft {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  min-height: 4.5rem;
+  white-space: pre-wrap;
+}
+
+.caret {
+  display: inline-block;
+  width: 0.45em;
+  height: 1em;
+  margin-left: 1px;
+  background: var(--nw-ember);
+  vertical-align: text-bottom;
+  animation: blink 0.9s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.thinking {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.thinking summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.thinking p {
+  margin: 0.35rem 0 0;
+}
+
+.error {
+  margin: 0.75rem 0 0;
+  padding: 0.55rem 0.65rem;
+  border-left: 3px solid var(--nw-ember);
+  background: rgba(217, 100, 42, 0.1);
+  font-size: 0.88rem;
+}
+
+.done {
+  margin: 0.75rem 0 0;
+  font-size: 0.88rem;
+  color: var(--ifm-color-primary);
+  font-weight: 600;
+}
+
+.log {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--ifm-color-emphasis-700);
+}

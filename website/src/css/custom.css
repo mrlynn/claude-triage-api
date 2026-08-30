@@ -389,6 +389,105 @@ html[data-theme="dark"] .markdown a:not(.hash-link) {
   text-align: center;
 }
 
+/*
+ * Northwind-tinted Mermaid. Default Infima blue/pink fights Pine/Bone; keep
+ * nodes quiet and edges readable in both colour modes.
+ */
+.theme-doc-markdown .mermaid .node rect,
+.theme-doc-markdown .mermaid .node polygon,
+.theme-doc-markdown .mermaid .node circle,
+.theme-doc-markdown .mermaid .node path {
+  fill: rgba(92, 154, 134, 0.12) !important;
+  stroke: var(--nw-spruce) !important;
+}
+
+.theme-doc-markdown .mermaid .nodeLabel,
+.theme-doc-markdown .mermaid .edgeLabel,
+.theme-doc-markdown .mermaid .label {
+  color: var(--nw-pine) !important;
+  fill: var(--nw-pine) !important;
+}
+
+.theme-doc-markdown .mermaid .edgePath .path,
+.theme-doc-markdown .mermaid .flowchart-link {
+  stroke: var(--nw-spruce) !important;
+}
+
+.theme-doc-markdown .mermaid .actor,
+.theme-doc-markdown .mermaid .actor-line {
+  stroke: var(--nw-spruce) !important;
+}
+
+.theme-doc-markdown .mermaid .actor {
+  fill: rgba(92, 154, 134, 0.12) !important;
+}
+
+html[data-theme="dark"] .theme-doc-markdown .mermaid .nodeLabel,
+html[data-theme="dark"] .theme-doc-markdown .mermaid .edgeLabel,
+html[data-theme="dark"] .theme-doc-markdown .mermaid .label,
+html[data-theme="dark"] .theme-doc-markdown .mermaid .actor {
+  color: var(--nw-bone) !important;
+  fill: var(--nw-bone) !important;
+}
+
+html[data-theme="dark"] .theme-doc-markdown .mermaid .node rect,
+html[data-theme="dark"] .theme-doc-markdown .mermaid .node polygon,
+html[data-theme="dark"] .theme-doc-markdown .mermaid .actor {
+  fill: rgba(92, 154, 134, 0.18) !important;
+}
+
+/* Story photos in labs / scenario — full width of the prose column, quiet. */
+.theme-doc-markdown img[src*="/img/talk/"],
+.theme-doc-markdown img[src*="/img/readme/"] {
+  display: block;
+  width: 100%;
+  max-width: 40rem;
+  margin: 1.25rem 0 1.75rem;
+  border-radius: 4px;
+  border: 1px solid var(--ifm-color-emphasis-200);
+}
+
+/* TryThis embeds sit flush; don't double-margin the inner playground wrap. */
+.theme-doc-markdown .nw-try-this {
+  max-width: 48rem;
+}
+
+/* Glossary cards — sync-docs wraps each ## term in .nw-glossary-card. */
+.docs-doc-id-glossary .theme-doc-markdown .nw-glossary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0 0;
+}
+
+.docs-doc-id-glossary .theme-doc-markdown .nw-glossary-card {
+  margin: 0;
+  padding: 0.85rem 0.95rem 0.95rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 6px;
+  background: var(--ifm-background-surface-color);
+}
+
+.docs-doc-id-glossary .theme-doc-markdown .nw-glossary-card h2 {
+  margin: 0 0 0.4rem;
+  font-size: 1.05rem;
+  border: none;
+  padding: 0;
+}
+
+.docs-doc-id-glossary .theme-doc-markdown .nw-glossary-card p {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--ifm-color-emphasis-800);
+}
+
+@media (max-width: 720px) {
+  .docs-doc-id-glossary .theme-doc-markdown .nw-glossary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* The sidebar is a table of contents, not a menu bar. Quieter by default,
    Pine when it is where you are. */
 .menu__link {

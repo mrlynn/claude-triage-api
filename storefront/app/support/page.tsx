@@ -7,7 +7,7 @@ export const metadata = { title: "Support | Northwind Outfitters" };
 export default function SupportPage() {
   return (
     <>
-      <h1 className="text-3xl font-extrabold tracking-tight">Contact support</h1>
+      <h1 className="font-display text-3xl font-extrabold tracking-tight">Contact support</h1>
       <p className="mt-2 max-w-2xl text-sm leading-relaxed text-pine/75">
         Tell us what went wrong and we will get it to the right person. Because
         this is a workshop demo, we also show you the part a customer never
