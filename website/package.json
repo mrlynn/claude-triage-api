@@ -13,7 +13,8 @@
     "clear": "docusaurus clear",
     "deploy": "docusaurus deploy",
     "typecheck": "tsc",
-    "video": "node scripts/generate-video.mjs"
+    "video": "node scripts/generate-video.mjs",
+    "upload": "node scripts/upload-youtube.mjs"
   },
   "dependencies": {
     "@docusaurus/core": "3.10.2",
