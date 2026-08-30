@@ -8,6 +8,8 @@ import styles from "./index.module.css";
 
 import { STOREFRONT_URL as STOREFRONT } from "../urls";
 
+const DISCUSSIONS_URL = "https://github.com/mrlynn/claude-triage-api/discussions";
+
 function trackCourseEvent(name: string, properties: Record<string, string | number>) {
   track(name, properties);
 }
@@ -154,6 +156,16 @@ function Hero() {
         <p className={styles.heroFoot}>
           Or read <Link to="/docs/scenario">the scenario</Link> first &mdash;
           every design decision in the labs traces back to it.
+        </p>
+        <p className={styles.heroCommunity}>
+          Building something with it?{" "}
+          <a
+            href={DISCUSSIONS_URL}
+            onClick={() => trackCourseEvent("Course discussion opened", { source: "hero" })}
+          >
+            Ask a question or share your build on GitHub Discussions
+          </a>
+          .
         </p>
       </div>
     </header>

@@ -29,6 +29,12 @@
   flex-wrap: wrap;
 }
 
+.heroCommunity {
+  margin: 1.25rem auto 0;
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.95rem;
+}
+
 .section {
   padding: 3.5rem 0;
 }
