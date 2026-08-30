@@ -29,6 +29,9 @@ import {
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
+// Shared with generate-video.mjs, which times picture against this exact
+// text. See lib/narration.mjs for why there is only one copy.
+import { narration } from "./lib/narration.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const websiteDir = resolve(here, "..");
@@ -64,46 +67,6 @@ function apiKey() {
     }
   }
   return null;
-}
-
-/**
- * Turn lab markdown into text worth listening to. Code fences, tables, and
- * images are dropped rather than read aloud — a voice spelling out a curl
- * command helps nobody, and the fences alone are a third of the character
- * count. Headings keep their text and gain a period so the voice pauses.
- */
-function narration(md) {
-  const out = [];
-  let inFence = false;
-  for (const raw of md.split("\n")) {
-    if (/^\s*(```|~~~)/.test(raw)) {
-      inFence = !inFence;
-      continue;
-    }
-    if (inFence) continue;
-    if (/^\s*\|/.test(raw)) continue; // table rows
-    if (/^\s*!\[/.test(raw)) continue; // image lines
-    if (/^\s*<[^>]*>\s*$/.test(raw)) continue; // bare HTML lines
-
-    const isHeading = /^#{1,6}\s/.test(raw);
-    let line = raw
-      .replace(/<!--[\s\S]*?-->/g, "")
-      .replace(/^#{1,6}\s+/, "")
-      .replace(/^\s*>\s?/, "")
-      .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
-      .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
-      .replace(/`([^`]*)`/g, "$1")
-      .replace(/\*\*([^*]+)\*\*/g, "$1")
-      .replace(/\*([^*]+)\*/g, "$1")
-      .replace(/<[^>]+>/g, "")
-      .replace(/·/g, ",")
-      .replace(/→/g, " to ")
-      .replace(/[ \t]+/g, " ")
-      .trimEnd();
-    if (isHeading && line && !/[.?!:]$/.test(line)) line += ".";
-    out.push(line);
-  }
-  return out.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
 /** Split on paragraph boundaries so no request exceeds the API's text cap. */
@@ -142,7 +105,25 @@ async function synthesize(text, key) {
       },
     );
     if (!res.ok) {
-      throw new Error(`ElevenLabs ${res.status}: ${(await res.text()).slice(0, 300)}`);
+      const body = await res.text();
+      // Running out of credits mid-run is an ordinary outcome, not a crash. A
+      // stack trace here buries the one number that matters and makes a
+      // resumable stop look like a broken script. There is no pre-flight for
+      // it: a TTS-scoped key gets 401 from /v1/user/subscription, so the first
+      // reliable word on the balance is this response.
+      let quota = null;
+      try {
+        const parsed = JSON.parse(body);
+        if (parsed?.detail?.status === "quota_exceeded") quota = parsed.detail.message;
+      } catch {
+        /* Not JSON. Fall through to the generic error below. */
+      }
+      if (quota) {
+        const err = new Error(quota);
+        err.quotaExceeded = true;
+        throw err;
+      }
+      throw new Error(`ElevenLabs ${res.status}: ${body.slice(0, 300)}`);
     }
     parts.push(Buffer.from(await res.arrayBuffer()));
   }
@@ -195,9 +176,29 @@ if (!key) {
 }
 
 mkdirSync(audioDir, { recursive: true });
+let done = 0;
 for (const w of work) {
   process.stdout.write(`voicing ${w.id} (${w.text.length.toLocaleString()} chars)… `);
-  const audio = await synthesize(w.text, key);
+  let audio;
+  try {
+    audio = await synthesize(w.text, key);
+  } catch (err) {
+    if (!err.quotaExceeded) throw err;
+    const left = work.slice(done);
+    const chars = left.reduce((n, x) => n + x.text.length, 0);
+    console.log("out of credits\n");
+    console.error(`ElevenLabs: ${err.message}\n`);
+    console.error(
+      `${done} page(s) voiced and recorded. ${left.length} still to do, ` +
+        `${chars.toLocaleString()} chars ≈ ${Math.ceil(chars * CREDITS_PER_CHAR).toLocaleString()} credits:`,
+    );
+    for (const x of left) console.error(`  ${x.id}`);
+    console.error(
+      "\nNothing was lost — the manifest is written after every page, so " +
+        "re-running picks up exactly here once the quota resets or the plan changes.",
+    );
+    process.exit(1);
+  }
   writeFileSync(w.mp3, audio);
   manifest[w.id] = {
     hash: w.hash,
@@ -209,4 +210,5 @@ for (const w of work) {
   // Rewritten after every page so a failure mid-run loses nothing.
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   console.log(`${(audio.length / 1024 / 1024).toFixed(1)} MB`);
+  done++;
 }

@@ -12,7 +12,8 @@
     "serve": "docusaurus serve",
     "clear": "docusaurus clear",
     "deploy": "docusaurus deploy",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "video": "node scripts/generate-video.mjs"
   },
   "dependencies": {
     "@docusaurus/core": "3.10.2",
@@ -35,6 +36,8 @@
     "@docusaurus/tsconfig": "3.10.2",
     "@docusaurus/types": "3.10.2",
     "@types/react": "^19.0.0",
+    "playwright": "^1.62.1",
+    "prismjs": "^1.30.0",
     "typescript": "~7.0.0"
   },
   "browserslist": {

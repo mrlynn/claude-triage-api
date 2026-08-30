@@ -10,3 +10,6 @@ docs-manifest.json
 # screenshots: tracking them would put a second copy of every regeneration in
 # history for no benefit.
 static/img/readme/
+
+# Rendered lab videos (npm run video). YouTube uploads, not site assets.
+video-out/
