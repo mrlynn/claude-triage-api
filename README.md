@@ -10,6 +10,10 @@ A reference implementation of a customer-support triage service built on the
 Claude API, plus the course that teaches it — written to be **read and taught
 from**, not just run.
 
+> **Personal project.** This course is an independent educational resource.
+> The views expressed here are my own and are not affiliated with or endorsed
+> by Cursor.
+
 Four routes, four capabilities, one coherent domain. Each route introduces
 exactly one new idea and builds on the one before it.
 

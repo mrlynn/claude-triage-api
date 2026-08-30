@@ -167,6 +167,10 @@ function Hero() {
           </a>
           .
         </p>
+        <p className={styles.heroDisclosure}>
+          Personal educational project. Views are my own and are not affiliated
+          with or endorsed by Cursor.
+        </p>
       </div>
     </header>
   );
