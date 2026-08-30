@@ -1,0 +1,27 @@
+.menuExternalLink {
+  align-items: center;
+}
+
+.menuLinkWithIcon {
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.icon {
+  flex-shrink: 0;
+  opacity: 0.55;
+  color: var(--ifm-menu-color);
+}
+
+:global(.menu__link--active) > .icon {
+  opacity: 0.85;
+  color: var(--ifm-menu-color-active);
+}
+
+.linkLabel {
+  overflow: hidden;
+  display: -webkit-box;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
