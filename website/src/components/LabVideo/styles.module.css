@@ -1,0 +1,79 @@
+/* A fixed 16:9 box so the poster and the iframe that replaces it occupy the
+   same space, and swapping one for the other moves nothing below it. */
+.frame {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  margin: 0 0 2rem;
+  overflow: hidden;
+  border-radius: var(--ifm-global-radius);
+  border: 1px solid var(--ifm-toc-border-color);
+  background: var(--nw-pine, #1f3d33);
+}
+
+.player,
+.poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.poster {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  cursor: pointer;
+  padding: 1rem;
+  color: var(--nw-bone, #f2ede4);
+  background: var(--nw-pine, #1f3d33);
+  background-image: radial-gradient(
+    ellipse at 78% 12%,
+    rgba(92, 154, 134, 0.35),
+    transparent 62%
+  );
+}
+
+.play {
+  width: 3.6rem;
+  height: 3.6rem;
+  border-radius: 50%;
+  background: rgba(242, 237, 228, 0.94);
+  position: relative;
+  transition: transform 120ms ease, background 120ms ease;
+}
+
+.play::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 54%;
+  transform: translate(-50%, -50%);
+  border-style: solid;
+  border-width: 0.66rem 0 0.66rem 1.1rem;
+  border-color: transparent transparent transparent #1f3d33;
+}
+
+.poster:hover .play,
+.poster:focus-visible .play {
+  transform: scale(1.08);
+  background: var(--nw-spruce, #5c9a86);
+}
+
+.label {
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.sub {
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .play {
+    transition: none;
+  }
+}
