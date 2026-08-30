@@ -1,18 +1,19 @@
-# Claude and Cursor, for the same job
+# Model APIs and agent runtimes: different primitives, different jobs
 
-This course builds Northwind's triage service on the Claude API. There is a
-sibling repository that builds **the same four routes, for the same fictional
-company, against a different API**:
+This course builds Northwind's triage service on the Claude API. A sibling
+repository builds **the same four routes, for the same fictional company, with
+Cursor's Agent SDK**:
 [mrlynn/cursor-triage-api](https://github.com/mrlynn/cursor-triage-api).
 
-Same HTTP spine. Same Zod field names on classification and resolution. Same
-handbook, same fake order system, same `enforceAuthority` re-check. The only
-thing that changes is the primitive underneath.
+The comparison is not a vendor scorecard. It is an architecture note about a
+useful distinction: a Messages API is a request/response primitive, while an
+agent runtime is designed to run work across tools, a workspace, MCP servers,
+and developer workflows. Read [why this course exists](https://triage.mlynn.dev/why-this-course-exists)
+for the author’s context and independence disclosure.
 
-That is what makes it worth reading. Holding everything else fixed is the only
-way a comparison says anything: when the service, the taxonomy and the eval set
-are identical, a difference in the output is a difference between the APIs
-rather than a difference between two teams' code.
+The two repositories hold the HTTP spine, Zod field names, handbook, fake order
+system, and `enforceAuthority` re-check constant. That controlled setup makes
+the design tradeoffs legible without suggesting the products are interchangeable.
 
 **The shape of the difference, in one line.** The Messages API is a *call*.
 Cursor's SDK is an *agent run*. Almost everything below follows from that.
@@ -83,7 +84,7 @@ feature checklist, but how much of the curriculum survives the port.
 
 ---
 
-## When you would pick each
+## Choosing the right primitive
 
 **Pick the Messages API** when the job is classify, draft, or run a cheap tool
 loop against your own backend; when you need a JSON schema the API enforces;
@@ -92,10 +93,11 @@ wants a cache breakpoint on it. That is nearly all of Northwind triage, which
 is why this course is built the way it is.
 
 **Pick the Cursor Agent SDK** when the job is *run the agent*: a workspace, repo
-edits, a shell, MCP servers, cloud VMs, opening a PR. Support triage *can* sit
-on that primitive — the sibling repo is the proof — but it is a heavier one.
-You will parse JSON yourself, pay agent-run latency, and go without a free
-tokenizer.
+edits, a shell, MCP servers, cloud VMs, or opening a PR. These are developer
+workflow and workspace tasks the Messages API is not designed to operate.
+Support triage can also sit on that primitive—the sibling repository is a
+working reference—but its response contract and cost controls are shaped
+differently.
 
 **This half of the page is the part to trust the rest by.** A comparison
 published by one of the two vendors that never concedes anything is marketing
