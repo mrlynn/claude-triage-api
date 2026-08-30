@@ -37,6 +37,7 @@
     "@docusaurus/types": "3.10.2",
     "@types/react": "^19.0.0",
     "playwright": "^1.62.1",
+    "prismjs": "^1.30.0",
     "typescript": "~7.0.0"
   },
   "browserslist": {

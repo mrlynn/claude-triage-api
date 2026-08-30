@@ -37,7 +37,16 @@ import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 import { chromium } from "playwright";
-import { narration, sections } from "./lib/narration.mjs";
+import { createRequire } from "node:module";
+import { narration, walk } from "./lib/narration.mjs";
+
+// Prism ships CommonJS language definitions, and registering a language is a
+// side effect on the shared object rather than an export.
+const require_ = createRequire(import.meta.url);
+const Prism = require_("prismjs");
+for (const lang of ["bash", "typescript", "javascript", "json"]) {
+  require_(`prismjs/components/prism-${lang}.js`);
+}
 
 const here = dirname(fileURLToPath(import.meta.url));
 const websiteDir = resolve(here, "..");
@@ -54,9 +63,21 @@ const tmpDir = join(outDir, ".cards");
 const WIDTH = 1920;
 const HEIGHT = 1080;
 const FPS = 30;
-/* Below this a card reads as a flicker rather than a beat, so a short section
-   is folded into the one before it instead of getting its own. */
-const MIN_CARD_SECONDS = 6;
+/* Below this a card reads as a flicker rather than a beat, so a short one is
+   folded into the card before it instead of getting its own. */
+const MIN_CARD_SECONDS = 4;
+
+/* Fence languages that are prose or a custom Docusaurus block rather than code
+   a viewer would want to read. `mermaid` is a diagram and belongs on a card
+   eventually, but rendering one needs more than a syntax highlighter. */
+const NOT_CODE = new Set(["quiz", "try", "receipt", "mermaid"]);
+
+/* Prism's name for the languages the labs actually use. */
+const PRISM_LANG = { ts: "typescript", js: "javascript", sh: "bash", shell: "bash", "": null };
+
+/* The code box, in pixels. Sized to the body's content width so the card and
+   the heading cards share a left edge. */
+const CODE_BOX = { w: 1640, h: 720 };
 
 const BRAND = { pine: "#1f3d33", spruce: "#5c9a86", bone: "#f2ede4", ember: "#d9642a" };
 
@@ -74,26 +95,49 @@ function labTitle(md) {
 }
 
 /**
- * The character-proportional split, with short sections folded left.
+ * Turn one lab's landmarks into the cards that will be held over its audio.
  *
- * Durations are derived from a running cumulative position rather than by
- * rounding each section independently, so they sum to the audio length exactly
- * and the last card cannot end early.
+ * Headings and code fences both become cards, at the character offset where
+ * the narration reaches them. A fence contributes no characters — the voice
+ * never reads it — so its card appears exactly as the narrator crosses from
+ * the prose that introduced the code to the prose that explains it, which is
+ * the moment a viewer wants to be looking at it.
+ *
+ * Durations come from a running cumulative position rather than by rounding
+ * each card independently, so they sum to the audio length exactly and the
+ * last card cannot end early.
  */
-function schedule(secs, duration) {
-  const total = secs.reduce((n, s) => n + s.text.length, 0);
-  const out = [];
-  let charsSoFar = 0;
-  let prevEnd = 0;
-  for (const s of secs) {
-    charsSoFar += s.text.length;
-    const end = (charsSoFar / total) * duration;
-    out.push({ ...s, start: prevEnd, duration: end - prevEnd });
-    prevEnd = end;
+function schedule(events, totalChars, duration, labTitle) {
+  const cards = [];
+  let heading = labTitle;
+  for (const e of events) {
+    if (e.kind === "heading") {
+      heading = e.text;
+      cards.push({ kind: "heading", title: e.text, eyebrow: labTitle, at: e.at });
+      continue;
+    }
+    const lang = e.lang ?? "";
+    if (NOT_CODE.has(lang)) continue;
+    if (!e.code.trim()) continue;
+    cards.push({ kind: "code", code: e.code, lang, eyebrow: heading, at: e.at });
   }
 
+  // The lab opens on its own title until the first landmark.
+  if (cards.length === 0 || cards[0].at > 0) {
+    cards.unshift({ kind: "heading", title: labTitle, eyebrow: labTitle, at: 0 });
+  }
+
+  let prevEnd = 0;
+  const timed = cards.map((card, i) => {
+    const nextAt = i + 1 < cards.length ? cards[i + 1].at : totalChars;
+    const end = (nextAt / totalChars) * duration;
+    const out = { ...card, start: prevEnd, duration: end - prevEnd };
+    prevEnd = end;
+    return out;
+  });
+
   const merged = [];
-  for (const card of out) {
+  for (const card of timed) {
     const last = merged[merged.length - 1];
     if (last && card.duration < MIN_CARD_SECONDS) {
       last.duration += card.duration;
@@ -104,34 +148,129 @@ function schedule(secs, duration) {
   return merged;
 }
 
-/** One card. Deliberately sparse: the narration is carrying the content. */
-function cardHtml({ eyebrow, title, index, count, progress }) {
-  const esc = (s) =>
-    String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
-  // narration() appends a full stop to every heading so the voice pauses on
-  // it. That is right for the ear and wrong on a card. Question and
-  // exclamation marks are the author's and stay.
-  const display = (s) => String(s ?? "").replace(/\.$/, "");
+/**
+ * Trim a block that cannot be held legibly in one frame.
+ *
+ * The font size itself is settled in the browser by `fitToFrame` — guessing it
+ * from a monospace advance-width constant got a curl line clipped off the
+ * right edge, because the estimate missed the pre's own padding. Measuring
+ * beats estimating when a measuring device is already open. What has to happen
+ * here is the cut: a 60-line file shrunk until it fits is not a visual aid, it
+ * is a texture, so past a line budget it is truncated instead.
+ */
+function fitCode(code) {
+  const MAX_LINES = 26;
+  const lines = code.replace(/\s+$/, "").split("\n");
+  if (lines.length <= MAX_LINES) return lines;
+  return [...lines.slice(0, MAX_LINES), "…"];
+}
+
+/**
+ * Grow the code to fill the frame, then shrink it until it actually fits.
+ *
+ * One round trip: the loop runs in the page, where scrollWidth against
+ * clientWidth is ground truth for both axes rather than an approximation of
+ * them. Growing first matters as much as shrinking — a six-line snippet set at
+ * a size chosen for a thirty-line one is unreadable on a phone.
+ */
+async function fitToFrame(page) {
+  return page.evaluate(
+    ({ min, max }) => {
+      const pre = document.querySelector("pre");
+      if (!pre) return null;
+      const fits = () =>
+        pre.scrollWidth <= pre.clientWidth && pre.scrollHeight <= pre.clientHeight;
+      let size = parseFloat(getComputedStyle(pre).fontSize);
+      while (size < max && fits()) {
+        size += 1;
+        pre.style.fontSize = `${size}px`;
+      }
+      while (size > min && !fits()) {
+        size -= 1;
+        pre.style.fontSize = `${size}px`;
+      }
+      return size;
+    },
+    { min: 12, max: 46 },
+  );
+}
+
+function highlight(lines, lang) {
+  const name = lang in PRISM_LANG ? PRISM_LANG[lang] : lang;
+  const grammar = name ? Prism.languages[name] : null;
+  const text = lines.join("\n");
+  if (!grammar) {
+    return text.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+  }
+  return Prism.highlight(text, grammar, name);
+}
+
+const esc = (s) =>
+  String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+// narration() appends a full stop to every heading so the voice pauses on it.
+// That is right for the ear and wrong on a card. Question and exclamation
+// marks are the author's and stay.
+const display = (s) => String(s ?? "").replace(/\.$/, "");
+
+/* Shared chrome, so a code card and a heading card are visibly the same deck. */
+function shell(inner, { footerRight, progress }) {
   return `<!doctype html><meta charset="utf-8"><style>
     *{margin:0;padding:0;box-sizing:border-box}
     body{width:${WIDTH}px;height:${HEIGHT}px;background:${BRAND.pine};color:${BRAND.bone};
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
-      display:flex;flex-direction:column;justify-content:center;padding:150px 170px;position:relative;
+      display:flex;flex-direction:column;justify-content:center;padding:120px 140px;position:relative;
       background-image:radial-gradient(ellipse at 78% 12%, rgba(92,154,134,.30), transparent 62%);}
-    .eyebrow{font-size:34px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;
-      color:${BRAND.spruce};margin-bottom:46px}
+    .eyebrow{font-size:30px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+      color:${BRAND.spruce};margin-bottom:38px}
     h1{font-size:104px;line-height:1.08;letter-spacing:-.02em;font-weight:700;max-width:23ch}
     .rule{width:132px;height:8px;background:${BRAND.ember};border-radius:4px;margin-top:60px}
-    footer{position:absolute;left:170px;right:170px;bottom:104px;display:flex;
-      justify-content:space-between;align-items:center;font-size:28px;color:rgba(242,237,228,.62)}
+    pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      background:rgba(0,0,0,.26);border:1px solid rgba(242,237,228,.13);border-radius:14px;
+      padding:38px 44px;overflow:hidden;white-space:pre;tab-size:2;line-height:1.55;
+      /* max-height, not height: the box hugs short snippets instead of leaving
+         a cavern around three lines, and still caps at a frame's worth so
+         scrollHeight vs clientHeight detects vertical overflow. */
+      max-height:${CODE_BOX.h}px;width:${CODE_BOX.w}px}
+    .lang{position:absolute;top:-15px;left:44px;background:${BRAND.ember};color:#1b1b1b;
+      font:700 22px/1 -apple-system,BlinkMacSystemFont,sans-serif;letter-spacing:.12em;
+      text-transform:uppercase;padding:9px 16px;border-radius:6px}
+    .wrap{position:relative}
+    footer{position:absolute;left:140px;right:140px;bottom:74px;display:flex;
+      justify-content:space-between;align-items:center;font-size:26px;color:rgba(242,237,228,.62)}
     .track{position:absolute;left:0;right:0;bottom:0;height:12px;background:rgba(242,237,228,.14)}
     .fill{height:100%;width:${(progress * 100).toFixed(2)}%;background:${BRAND.spruce}}
-  </style>
-  <div class="eyebrow">${esc(display(eyebrow))}</div>
-  <h1>${esc(display(title))}</h1>
-  <div class="rule"></div>
-  <footer><span>triage.mlynn.dev</span><span>${index} / ${count}</span></footer>
+    .token.comment{color:rgba(242,237,228,.44);font-style:italic}
+    .token.string,.token.attr-value{color:#a9d6c3}
+    .token.keyword,.token.operator,.token.parameter{color:#e79a68}
+    .token.function,.token.class-name{color:${BRAND.bone};font-weight:600}
+    .token.number,.token.boolean{color:#d9a05a}
+    .token.builtin,.token.property,.token.constant{color:#8fc9b3}
+    .token.punctuation{color:rgba(242,237,228,.55)}
+    .token.variable{color:#cfe6dc}
+  </style>${inner}
+  <footer><span>triage.mlynn.dev</span><span>${esc(footerRight)}</span></footer>
   <div class="track"><div class="fill"></div></div>`;
+}
+
+function headingCard({ eyebrow, title, footerRight, progress }) {
+  return shell(
+    `<div class="eyebrow">${esc(display(eyebrow))}</div>
+     <h1>${esc(display(title))}</h1>
+     <div class="rule"></div>`,
+    { footerRight, progress },
+  );
+}
+
+function codeCard({ eyebrow, code, lang, footerRight, progress }) {
+  const lines = fitCode(code);
+  return shell(
+    `<div class="eyebrow">${esc(display(eyebrow))}</div>
+     <div class="wrap">
+       ${lang ? `<span class="lang">${esc(lang)}</span>` : ""}
+       <pre style="font-size:22px"><code>${highlight(lines, lang)}</code></pre>
+     </div>`,
+    { footerRight, progress },
+  );
 }
 
 const args = process.argv.slice(2);
@@ -170,8 +309,9 @@ for (const file of readdirSync(labsDir).filter((f) => f.endsWith(".md")).sort())
   }
 
   const duration = ffprobeDuration(mp3);
-  const cards = schedule(sections(md), duration);
-  work.push({ id, slug, mp3, duration, cards, title: labTitle(md) ?? slug });
+  const title = labTitle(md) ?? slug;
+  const cards = schedule(walk(md).events, text.length, duration, title);
+  work.push({ id, slug, mp3, duration, cards, title });
 }
 
 for (const [id, why] of stale) console.warn(`skip    ${id} — ${why}`);
@@ -188,7 +328,11 @@ console.log(
     `${Math.round(totalSeconds / 60)} min of video. No API calls, no credits.`,
 );
 for (const w of work) {
-  console.log(`  ${w.slug.padEnd(26)} ${String(w.cards.length).padStart(3)} cards  ${(w.duration / 60).toFixed(1)} min`);
+  const code = w.cards.filter((c) => c.kind === "code").length;
+  console.log(
+    `  ${w.slug.padEnd(26)} ${String(w.cards.length).padStart(3)} cards ` +
+      `(${String(code).padStart(2)} code)  ${(w.duration / 60).toFixed(1)} min`,
+  );
 }
 if (dryRun) process.exit(0);
 
@@ -214,15 +358,16 @@ for (const lab of work) {
   const pngs = [];
   for (let i = 0; i < lab.cards.length; i++) {
     const card = lab.cards[i];
+    const common = {
+      footerRight: `${i + 1} / ${lab.cards.length}`,
+      progress: (card.start + card.duration) / lab.duration,
+    };
     await page.setContent(
-      cardHtml({
-        eyebrow: lab.title,
-        title: card.title ?? lab.title,
-        index: i + 1,
-        count: lab.cards.length,
-        progress: (card.start + card.duration) / lab.duration,
-      }),
+      card.kind === "code"
+        ? codeCard({ eyebrow: card.eyebrow, code: card.code, lang: card.lang, ...common })
+        : headingCard({ eyebrow: card.eyebrow, title: card.title, ...common }),
     );
+    if (card.kind === "code") await fitToFrame(page);
     const png = join(tmpDir, `${lab.slug}-${String(i).padStart(3, "0")}.png`);
     await page.screenshot({ path: png });
     pngs.push(png);

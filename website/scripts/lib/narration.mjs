@@ -1,5 +1,5 @@
 /**
- * Lab markdown to spoken text, and the section boundaries inside it.
+ * Lab markdown to spoken text, and the landmarks inside it.
  *
  * WHY THIS IS SHARED: generate-audio.mjs turns this text into an MP3, and
  * generate-video.mjs times the picture against that MP3 by counting characters
@@ -8,37 +8,55 @@
  * character would desynchronise every card in the course, silently, with
  * nothing failing. So there is one copy and both import it.
  *
- * Changing anything here changes the audio hash and re-voices all 11 labs on
- * the next `npm run audio`. That costs credits. Check `--dry-run` first.
+ * Changing anything that affects `narration()` changes the audio hash and
+ * re-voices all 11 labs on the next `npm run audio`. That costs credits. Check
+ * `--dry-run` first. Adding to `walk()`'s events is free — the video reads
+ * those and the voice never sees them.
  */
 
 /**
- * Turn lab markdown into text worth listening to. Code fences, tables, and
- * images are dropped rather than read aloud — a voice spelling out a curl
- * command helps nobody, and the fences alone are a third of the character
- * count. Headings keep their text and gain a period so the voice pauses.
+ * One pass over the markdown, producing both the spoken text and the position
+ * of every landmark inside it.
+ *
+ * WHY ONE PASS: a card is placed at a character offset into the narration, and
+ * that offset has to be exact. Computing the text and the offsets separately
+ * means two traversals that can disagree — which is the same trap the shared
+ * module exists to avoid, one level down.
+ *
+ * The blank-line collapse happens inline rather than as a `\n{3,}` pass at the
+ * end, because a post-hoc collapse shifts every offset already recorded. It is
+ * equivalent: skipping an empty line whose predecessor was also empty produces
+ * exactly what collapsing runs of three-or-more newlines produces.
  */
-export function narration(md) {
-  return lines(md)
-    .map((l) => l.text)
-    .join("\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-}
-
-/**
- * The same pass, but keeping which lines were headings and at what level.
- * `narration()` is this joined; nothing else may reimplement the cleaning.
- */
-export function lines(md) {
-  const out = [];
+export function walk(md) {
+  const emitted = [];
+  const events = [];
   let inFence = false;
+  let fenceLang = "";
+  let fenceLines = [];
+
   for (const raw of md.split("\n")) {
-    if (/^\s*(```|~~~)/.test(raw)) {
-      inFence = !inFence;
+    const fence = raw.match(/^\s*(?:```|~~~)(.*)$/);
+    if (fence) {
+      if (inFence) {
+        events.push({
+          kind: "code",
+          lang: fenceLang.trim().toLowerCase(),
+          code: fenceLines.join("\n"),
+          line: emitted.length,
+        });
+        inFence = false;
+        fenceLines = [];
+      } else {
+        inFence = true;
+        fenceLang = fence[1];
+      }
       continue;
     }
-    if (inFence) continue;
+    if (inFence) {
+      fenceLines.push(raw);
+      continue;
+    }
     if (/^\s*\|/.test(raw)) continue; // table rows
     if (/^\s*!\[/.test(raw)) continue; // image lines
     if (/^\s*<[^>]*>\s*$/.test(raw)) continue; // bare HTML lines
@@ -59,47 +77,46 @@ export function lines(md) {
       .replace(/[ \t]+/g, " ")
       .trimEnd();
     if (heading && text && !/[.?!:]$/.test(text)) text += ".";
-    out.push({ text, level: heading ? heading[1].length : 0 });
+
+    // The inline equivalent of collapsing /\n{3,}/ to "\n\n" afterwards.
+    if (text === "" && emitted.length > 0 && emitted[emitted.length - 1] === "") {
+      continue;
+    }
+    if (heading && text) {
+      events.push({ kind: "heading", level: heading[1].length, text, line: emitted.length });
+    }
+    emitted.push(text);
   }
-  return out;
+
+  const joined = emitted.join("\n");
+  const text = joined.trim();
+  // trim() removes leading blank lines, which shifts every recorded offset.
+  const lead = joined.length - joined.trimStart().length;
+
+  // Offset of emitted line i is the length of everything before it plus the
+  // newlines between. Accumulated once rather than re-summed per event.
+  const lineOffset = [];
+  let at = 0;
+  for (const line of emitted) {
+    lineOffset.push(at);
+    at += line.length + 1;
+  }
+  lineOffset.push(at);
+
+  for (const e of events) {
+    e.at = Math.max(0, Math.min(text.length, (lineOffset[e.line] ?? joined.length) - lead));
+    delete e.line;
+  }
+
+  return { text, events };
 }
 
 /**
- * Split the narration into the chunks a card will be held over.
- *
- * Splits at h2 — h3 is usually a step inside one idea, and a card per step
- * flickers. The returned `text` values concatenate back to exactly what
- * `narration()` returns, which is what makes character-proportional timing
- * land on the audio instead of near it. `assertSectionsMatchNarration` in
- * generate-video.mjs enforces that rather than trusting this comment.
+ * Turn lab markdown into text worth listening to. Code fences, tables, and
+ * images are dropped rather than read aloud — a voice spelling out a curl
+ * command helps nobody, and the fences alone are a third of the character
+ * count. Headings keep their text and gain a period so the voice pauses.
  */
-export function sections(md, { splitAtLevel = 2 } = {}) {
-  const full = narration(md);
-  const headings = lines(md)
-    .filter((l) => l.level > 0 && l.level <= splitAtLevel && l.text)
-    .map((l) => l.text);
-
-  const found = [];
-  let cursor = 0;
-  for (const h of headings) {
-    // Match the heading as a whole line, from where the last one ended, so a
-    // heading whose words also appear in prose cannot steal the boundary.
-    const at = full.indexOf(`\n${h}\n`, cursor);
-    if (at === -1) continue;
-    found.push({ title: h, start: at + 1 });
-    cursor = at + h.length;
-  }
-
-  if (found.length === 0) return [{ title: null, text: full }];
-
-  const out = [];
-  // Anything before the first heading is the lab's own opening.
-  if (found[0].start > 0) {
-    out.push({ title: null, text: full.slice(0, found[0].start) });
-  }
-  for (let i = 0; i < found.length; i++) {
-    const end = i + 1 < found.length ? found[i + 1].start : full.length;
-    out.push({ title: found[i].title, text: full.slice(found[i].start, end) });
-  }
-  return out;
+export function narration(md) {
+  return walk(md).text;
 }
