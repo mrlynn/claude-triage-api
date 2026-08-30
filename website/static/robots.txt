@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://triage.mlynn.dev/sitemap.xml

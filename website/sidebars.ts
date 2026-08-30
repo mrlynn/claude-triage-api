@@ -26,6 +26,23 @@ const sidebars: SidebarsConfig = {
     doc("glossary", "library"),
     {
       type: "category",
+      label: "Practical guides",
+      collapsed: true,
+      link: {
+        type: "generated-index",
+        title: "Practical Claude API guides",
+        description: "Short, focused guides that lead into the full hands-on labs.",
+        slug: "/guides",
+      },
+      items: [
+        "guides/claude-api-tutorial",
+        "guides/structured-outputs-typescript-zod",
+        "guides/claude-tool-use",
+        "guides/prompt-caching-and-evals",
+      ],
+    },
+    {
+      type: "category",
       label: "Labs",
       collapsed: false,
       customProps: { icon: "flask" },
