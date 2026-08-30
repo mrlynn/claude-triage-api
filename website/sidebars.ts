@@ -28,6 +28,7 @@ const sidebars: SidebarsConfig = {
       type: "category",
       label: "Practical guides",
       collapsed: true,
+      customProps: { icon: "book" },
       link: {
         type: "generated-index",
         title: "Practical Claude API guides",

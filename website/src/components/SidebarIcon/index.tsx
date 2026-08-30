@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowRight,
+  BookOpen,
   Boxes,
   Compass,
   FlaskConical,
@@ -21,6 +22,7 @@ import type { ReactNode } from "react";
  */
 export const SIDEBAR_ICONS = {
   compass: Compass,
+  book: BookOpen,
   map: Map,
   wrench: Wrench,
   network: Network,
