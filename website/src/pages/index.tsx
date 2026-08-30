@@ -2,11 +2,15 @@ import type { ReactNode } from "react";
 import Link from "@docusaurus/Link";
 import Layout from "@theme/Layout";
 import Heading from "@theme/Heading";
+import { track } from "@vercel/analytics";
 
 import styles from "./index.module.css";
 
 import { STOREFRONT_URL as STOREFRONT } from "../urls";
 
+function trackCourseEvent(name: string, properties: Record<string, string | number>) {
+  track(name, properties);
+}
 
 /**
  * The landing page assumes nothing.
@@ -132,12 +136,17 @@ function Hero() {
           needs.
         </p>
         <div className={styles.heroButtons}>
-          <Link className="button button--primary button--lg" to={STOREFRONT}>
+          <Link
+            className="button button--primary button--lg"
+            to={STOREFRONT}
+            onClick={() => trackCourseEvent("Course demo opened", { source: "hero" })}
+          >
             See it running
           </Link>
           <Link
             className="button button--secondary button--lg"
             to="/start"
+            onClick={() => trackCourseEvent("Course path selected", { path: "hero-start-from-zero" })}
           >
             Start from zero
           </Link>
@@ -168,7 +177,11 @@ function StartHere() {
               </Heading>
               <p className={styles.doorBody}>{d.body}</p>
               <div className={styles.doorFoot}>
-                <Link className="button button--primary" to={d.to}>
+                <Link
+                  className="button button--primary"
+                  to={d.to}
+                  onClick={() => trackCourseEvent("Course path selected", { path: d.budget })}
+                >
                   {d.cta}
                 </Link>
                 <span className={styles.doorNote}>{d.note}</span>
@@ -242,7 +255,12 @@ function Labs() {
         </p>
         <div className={styles.labList}>
           {LABS.map((lab) => (
-            <Link key={lab.to} to={lab.to} className={styles.labRow}>
+            <Link
+              key={lab.to}
+              to={lab.to}
+              className={styles.labRow}
+              onClick={() => trackCourseEvent("Course lab opened", { lab: lab.n })}
+            >
               <span className={styles.labNumber}>{lab.n}</span>
               <span className={styles.labTitle}>{lab.title}</span>
               <span className={styles.labTime}>{lab.time}</span>

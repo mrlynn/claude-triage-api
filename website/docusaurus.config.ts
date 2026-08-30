@@ -51,6 +51,45 @@ const SITE_URL =
 const BASE_URL =
   process.env.DOCS_BASE_URL ?? (ON_VERCEL ? "/" : `/${GITHUB_REPO}/`);
 
+const PUBLIC_SITE_URL = new URL(BASE_URL, `${SITE_URL}/`).toString();
+
+// Machine-readable context for search engines and AI assistants. This
+// describes the course as a whole; individual pages still own their titles,
+// descriptions, canonical URLs, and social images.
+const COURSE_SCHEMA = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": `${PUBLIC_SITE_URL}#website`,
+      url: PUBLIC_SITE_URL,
+      name: "Claude Triage API",
+      description: "A hands-on course for developers building with the Claude API.",
+      inLanguage: "en",
+    },
+    {
+      "@type": "Course",
+      "@id": `${PUBLIC_SITE_URL}#course`,
+      name: "Claude API hands-on course",
+      description:
+        "Learn the Claude API by building an auditable customer-support triage service with structured outputs, tool use, streaming, prompt caching, and evals.",
+      url: PUBLIC_SITE_URL,
+      inLanguage: "en",
+      educationalLevel: "Intermediate",
+      timeRequired: "PT4H",
+      isAccessibleForFree: true,
+      about: ["Claude API", "LLM application development", "TypeScript"],
+      hasCourseInstance: { "@type": "CourseInstance", courseMode: "online" },
+      provider: {
+        "@type": "Organization",
+        name: "Claude Triage API",
+        url: PUBLIC_SITE_URL,
+        sameAs: [GITHUB_REPO_URL],
+      },
+    },
+  ],
+};
+
 /**
  * Docs content is GENERATED into ./docs by scripts/sync-docs.mjs from the
  * markdown in the repo root. Edit the repo markdown, not ./docs.
@@ -66,6 +105,13 @@ const config: Config = {
   baseUrl: BASE_URL,
   organizationName: GITHUB_ORG,
   projectName: GITHUB_REPO,
+  headTags: [
+    {
+      tagName: "script",
+      attributes: { type: "application/ld+json" },
+      innerHTML: JSON.stringify(COURSE_SCHEMA),
+    },
+  ],
 
   // A broken link means a lab sends a learner to a 404 mid-exercise, so fail
   // the build rather than ship it.
@@ -177,6 +223,7 @@ const config: Config = {
             { type: "doc", docId: "scenario", label: "Scenario" },
             { type: "doc", docId: "setup", label: "Setup" },
             { to: "/start", label: "Start from zero" },
+            { to: "/docs/guides", label: "Practical guides" },
           ],
         },
         // Not `type: docSidebar` — that resolves to the sidebar's first doc,
