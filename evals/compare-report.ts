@@ -106,12 +106,29 @@ function costs(envs: ComparisonEnvelope[]): string {
         `| $${c.monthly_projection.toFixed(0)}${flag} | ${c.basis} |`,
     );
   }
-  const bases = new Set(envs.map((e) => e.metrics.cost?.basis).filter(Boolean));
-  if (bases.size > 1) {
-    lines.push("");
+  // Comparability is decided by basis_kind, not by the prose. Two runs that
+  // both priced off a published $/MTok table ARE comparable even though their
+  // basis sentences name different files; a list-price estimate and a settled
+  // invoice are not, however similarly they read.
+  const kinds = new Set(
+    envs.map((e) => e.metrics.cost?.basis_kind).filter((k): k is NonNullable<typeof k> => Boolean(k)),
+  );
+  lines.push("");
+  if (kinds.size > 1) {
     lines.push(
       "> These figures are **not comparable as a subtraction**. They rest on different " +
-        "bases — read each under its own, and do not put a delta between them on a slide.",
+        "kinds of basis — one is a published list-price estimate, one is settled billing. " +
+        "Read each under its own, and do not put a delta between them on a slide.",
+    );
+  } else if (kinds.size === 1 && envs.length > 1) {
+    const kind = [...kinds][0];
+    lines.push(
+      kind === "published_list_price"
+        ? "> Both figures are published list-price estimates, so they are comparable to " +
+          "each other. Neither is an invoice: they exclude plan discounts, included-usage " +
+          "pools, and any per-plan surcharge."
+        : "> Both figures are settled billing, so they reflect real money on the plans " +
+          "these runs were made under — and will not generalise to a different plan.",
     );
   }
   return lines.join("\n");

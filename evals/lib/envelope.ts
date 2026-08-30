@@ -22,8 +22,17 @@
  * afterwards and never makes a network call.
  */
 
-/** Bump when a field changes meaning. The report hard-fails on a mismatch. */
-export const ENVELOPE_VERSION = 1;
+/**
+ * Bump when a field changes meaning. The report hard-fails on a mismatch.
+ *
+ * v2 added `basis_kind`. v1 recorded only a prose `basis` string, so the
+ * report could tell that two costs disagreed but not whether they disagreed
+ * in a way that mattered — and it refused every cross-runtime cost
+ * comparison as a result. Cursor publishes per-token list prices, so both
+ * sides CAN be put on one basis; `basis_kind` is what lets the report know
+ * when they have been.
+ */
+export const ENVELOPE_VERSION = 2;
 
 /**
  * The cases both repos run.
@@ -90,13 +99,24 @@ export interface EnvelopeMetrics {
 
 export interface EnvelopeCost {
   /**
-   * How this number was arrived at. The report prints this next to every
-   * cost figure and REFUSES to compare figures across differing bases.
-   * An estimate off a checked-in price table and a settled invoice from a
-   * usage API are not the same kind of number, and subtracting one from the
-   * other produces a slide nobody should trust.
+   * How this number was arrived at, in prose. Printed next to every cost
+   * figure so a reader always knows what they are looking at.
    */
   basis: string;
+  /**
+   * The COMPARABILITY class of `basis`. The report may difference two costs
+   * only when this matches on both sides.
+   *
+   * `published_list_price` — computed from a checked-in table of the
+   *   vendor's published $/MTok. Reproducible, an estimate, and directly
+   *   comparable to another list-price estimate.
+   * `settled_billing`      — read back from the vendor's billing API. Real
+   *   money, reflects your plan and pools, and therefore NOT comparable to
+   *   someone else's list-price estimate.
+   *
+   * Both are honest numbers. Subtracting one from the other is not.
+   */
+  basis_kind: "published_list_price" | "settled_billing";
   currency: "USD";
   per_case: number;
   per_ticket: number;
@@ -195,10 +215,12 @@ export function metricsFor(
 export function projectCost(
   perCase: number,
   basis: string,
+  basisKind: EnvelopeCost["basis_kind"],
 ): EnvelopeCost {
   const monthly = perCase * TICKETS_PER_WEEK * (52 / 12);
   return {
     basis,
+    basis_kind: basisKind,
     currency: "USD",
     per_case: perCase,
     per_ticket: perCase,

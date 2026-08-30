@@ -46,12 +46,14 @@ supplying one.
 | **Prompt cache** | You place `cache_control` breakpoints; ~1024-token minimum | `cacheReadTokens` / `cacheWriteTokens` are reported; you set nothing, and no TTL knob is documented | **Observability maps. Control does not** |
 | **Token count before a call** | `messages.countTokens()` — free, no inference | Not documented. Their `/v1/estimate` refuses to invent one | **Does not map** |
 | **Usage after a call** | `usage` on the Message | `run.usage`; dollars via `agent.getUsage()` (`rawCostCents`, `chargedCents`) | **Maps**, different fields and a different billing API |
+| **Published prices** | List prices per model, per MTok | The same — [Models & Pricing](https://cursor.com/docs/models-and-pricing), cache-read rate included | **Maps.** Both sides can be priced from a published table |
 | **Batch** | Batches API, half rate | No batch-inference API in the docs read. Cloud agents are a different product | **Does not map** |
 | **MCP** | [Lab 10](../curriculum/labs/lab-10-ask-northwind.md) exposes an MCP server *of* these tools | Agents *consume* MCP as a first-class input | **Maps, in the other direction** |
 | **Rate limits** | Anthropic rate-limit headers, read off the last call | `Cursor.me()` plus published text. Cloud Agents publishes no number | **Partial** |
 | **Auth** | `ANTHROPIC_API_KEY` | `CURSOR_API_KEY`, user or service-account | **Maps.** One env var each |
 | **Typed errors** | `AuthenticationError`, `RateLimitError`, … | The same, plus `AgentBusyError` — a state Messages has no equivalent for | **Maps** |
-| **Models** | A small catalog and list prices, in `src/config.ts` | `Cursor.models.list()`, live | **Do not copy one catalog onto the other** |
+| **Models** | A small catalog and list prices, in `src/config.ts` | `Cursor.models.list()`, live. Currently `grok-4.6`, `grok-4.5`, `composer-2.5`, plus third-party entries | **Do not copy one catalog onto the other** |
+| **Effort levels** | `output_config.effort`, rejected by some models — Lab 7 reports which | Grok 4.6 publishes four: `xhigh`, `high` (default), `medium`, `low` | **Maps**, and neither side's default is the other's |
 
 ---
 
@@ -114,6 +116,26 @@ event loop, a DNS cache and a machine, and the latency column — the headline
 number of the whole comparison — would quietly become a measurement of
 contention between two clients.
 
+### Run the same model on both sides
+
+`claude-opus-5` is in *Cursor's* catalog. So the sharpest run available is not
+Claude-versus-Cursor at all:
+
+```bash
+npm run eval:compare -- --model claude-opus-5   # on both sides
+```
+
+That holds the **model** fixed and varies only the **primitive**, which is the
+only version of this comparison that is not confounded. Compare each side's
+default instead — `grok-4.6` there against `claude-opus-5` here — and two
+things move at once while the conclusion names one of them. Both runs are
+worth having; only the matched one supports a sentence beginning "the
+difference is the API."
+
+This is the same discipline [Lab 7](../curriculum/labs/lab-7-choosing-a-model.md)
+applies to model tiers, and the same one `compare-models.ts` enforces by
+pinning the judge: vary one thing, or a moved number has two possible causes.
+
 ### What gets measured
 
 **Schema adherence** is the sharpest of them. `output_config.format` makes a
@@ -128,6 +150,13 @@ Then: **latency** p50/p95, **accuracy** on the shared cases, **tokens per
 decision**, **cost** projected onto Northwind's real load, and the
 **calibration gap** from [Lab 6](../curriculum/labs/lab-6-evals.md).
 
+One cost caveat that only shows up on the matched run: on Teams and Enterprise
+plans, routing a third-party model through Cursor adds a $0.25/MTok Cursor
+Token Rate on top of that model's own API price. Running `claude-opus-5`
+through the agent therefore costs the Messages price *plus* a documented
+surcharge — which is, usefully, a published number for what the heavier
+primitive costs you.
+
 ### What the report refuses to do
 
 Three refusals, each enforced in code. Each would make the output shorter and
@@ -136,11 +165,12 @@ each would make it a lie.
 1. **It will not merge envelopes across versions.** Two repos drift. A table
    whose columns mean different things on different rows is worse than no
    table, because it still looks right.
-2. **It will not difference costs across bases.** This side estimates from a
-   checked-in price table; the Cursor side reports settled `chargedCents`.
-   Those are not the same kind of number, and subtracting one from the other
-   produces a slide nobody should trust. They print as separate rows, each
-   under its own basis.
+2. **It will not difference costs across kinds of basis.** Both vendors
+   publish per-token list prices, so two list-price estimates *are* comparable
+   and the report will say so. A list-price estimate against settled billing
+   from a vendor's usage API is a different matter — that one reflects a plan
+   and its included-usage pools — so every figure carries a `basis_kind` and
+   the report subtracts only within a kind.
 3. **It will not quote accuracy without the sample size.** Three cases cannot
    support a percentage. The disagreement matrix is the output that answers
    "would I ship this."
@@ -165,9 +195,15 @@ sample size. Nothing on this page will be a number that was typed by hand.
 
 ## What this page will not claim
 
-No cost bake-off has been run. No Claude list price has been multiplied onto a
-Cursor token. No Cloud Agents requests-per-minute figure has been invented,
-because none is published.
+No cost bake-off has been run — the harness makes one possible, and possible is
+not the same as done. No Claude list price has been multiplied onto a Cursor
+token: each side is priced from its own vendor's published table, and the dates
+those tables were verified are checked in beside them. No Cloud Agents
+requests-per-minute figure has been invented, because none is published.
+
+Model ids move. The ones named on this page were read from Cursor's docs on
+**30 August 2026**; `Cursor.models.list()` is the live authority and the
+service validates against it on every request.
 
 If you find a number here that you cannot reproduce from a command in one of
 the two repositories, it is a bug, and it is a more serious one than a wrong

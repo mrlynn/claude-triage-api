@@ -195,6 +195,7 @@ async function main(): Promise<void> {
     ? projectCost(
         priced.reduce((a, b) => a + b, 0) / priced.length,
         "estimated from the list-price table in src/config.ts (NOT settled billing)",
+        "published_list_price",
       )
     : null;
 
