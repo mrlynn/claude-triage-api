@@ -29,6 +29,9 @@ import {
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
+// Shared with generate-video.mjs, which times picture against this exact
+// text. See lib/narration.mjs for why there is only one copy.
+import { narration } from "./lib/narration.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const websiteDir = resolve(here, "..");
@@ -64,46 +67,6 @@ function apiKey() {
     }
   }
   return null;
-}
-
-/**
- * Turn lab markdown into text worth listening to. Code fences, tables, and
- * images are dropped rather than read aloud — a voice spelling out a curl
- * command helps nobody, and the fences alone are a third of the character
- * count. Headings keep their text and gain a period so the voice pauses.
- */
-function narration(md) {
-  const out = [];
-  let inFence = false;
-  for (const raw of md.split("\n")) {
-    if (/^\s*(```|~~~)/.test(raw)) {
-      inFence = !inFence;
-      continue;
-    }
-    if (inFence) continue;
-    if (/^\s*\|/.test(raw)) continue; // table rows
-    if (/^\s*!\[/.test(raw)) continue; // image lines
-    if (/^\s*<[^>]*>\s*$/.test(raw)) continue; // bare HTML lines
-
-    const isHeading = /^#{1,6}\s/.test(raw);
-    let line = raw
-      .replace(/<!--[\s\S]*?-->/g, "")
-      .replace(/^#{1,6}\s+/, "")
-      .replace(/^\s*>\s?/, "")
-      .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
-      .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
-      .replace(/`([^`]*)`/g, "$1")
-      .replace(/\*\*([^*]+)\*\*/g, "$1")
-      .replace(/\*([^*]+)\*/g, "$1")
-      .replace(/<[^>]+>/g, "")
-      .replace(/·/g, ",")
-      .replace(/→/g, " to ")
-      .replace(/[ \t]+/g, " ")
-      .trimEnd();
-    if (isHeading && line && !/[.?!:]$/.test(line)) line += ".";
-    out.push(line);
-  }
-  return out.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
 /** Split on paragraph boundaries so no request exceeds the API's text cap. */
