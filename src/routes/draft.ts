@@ -18,6 +18,7 @@ import { anthropic } from "../anthropic.js";
 import { MODEL, MAX_TOKENS, EFFORT } from "../config.js";
 import { TicketInput } from "../schemas.js";
 import { buildSystem, volatileContext } from "../prompts.js";
+import { outputConfigFor, thinkingFor } from "../lib/requests.js";
 import { summarizeUsage } from "../lib/usage.js";
 import { toHttpError } from "../lib/errors.js";
 import { wrapUntrusted } from "../lib/untrusted.js";
@@ -32,6 +33,8 @@ draftRoute.post("/", async (c) => {
   }
   const ticket = parsedBody.data;
 
+  const { thinking } = thinkingFor(MODEL);
+
   const stream = anthropic.messages.stream({
     model: MODEL,
     max_tokens: MAX_TOKENS.streaming,
@@ -42,11 +45,12 @@ draftRoute.post("/", async (c) => {
         customerEmail: ticket.customer_email,
       }),
     ),
-    output_config: { effort: EFFORT.draft },
-    // `display: "summarized"` is opt-in. Without it, thinking blocks stream
-    // with EMPTY text on Opus 5 — from a UI's point of view that looks like a
-    // long silent pause before the answer appears.
-    thinking: { type: "adaptive", display: "summarized" },
+    // Both of these are capability-gated, NOT hardcoded. Haiku 4.5 rejects
+    // `effort` and rejects adaptive thinking, each with its own 400. This
+    // route used to send both unconditionally, so pointing TRIAGE_MODEL at the
+    // cheap tier broke drafting outright — see src/lib/requests.ts.
+    output_config: outputConfigFor(MODEL, EFFORT.draft).config,
+    ...(thinking ? { thinking } : {}),
     messages: [
       {
         role: "user",

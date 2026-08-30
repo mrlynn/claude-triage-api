@@ -57,7 +57,7 @@ supplying one.
 | **Structured outputs** | `output_config.format` + `messages.parse()` | Prompt for JSON, then Zod in your own process | **Does not map.** The teaching point, not a hidden bug |
 | **Tool use** | Messages `tools` / `toolRunner`, wherever Messages works | `local.customTools`, local only. On cloud it is MCP servers, not this callback | **Partial** |
 | **Streaming** | `messages.stream()` token deltas | `run.stream()` `SDKMessage`, or `onDelta` | **Maps** as "stream the run," not as Messages events |
-| **Prompt cache** | You place `cache_control` breakpoints; ~1024-token minimum | `cacheReadTokens` / `cacheWriteTokens` are reported; you set nothing, and no TTL knob is documented | **Observability maps. Control does not** |
+| **Prompt cache** | You place `cache_control` breakpoints; per-model minimum (512–4096) | `cacheReadTokens` / `cacheWriteTokens` are reported; you set nothing, and no TTL knob is documented | **Observability maps. Control does not** |
 | **Token count before a call** | `messages.countTokens()` — free, no inference | Not documented. Their `/v1/estimate` refuses to invent one | **Does not map** |
 | **Usage after a call** | `usage` on the Message | `run.usage`; dollars via `agent.getUsage()` (`rawCostCents`, `chargedCents`) | **Maps**, different fields and a different billing API |
 | **Batch** | Batches API, half rate | No batch-inference API in the docs read. Cloud agents are a different product | **Does not map** |

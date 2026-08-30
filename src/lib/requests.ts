@@ -55,6 +55,35 @@ export function outputConfigFor(
 }
 
 /**
+ * Applies `thinking` in a way the target model actually accepts.
+ *
+ * The sibling of `outputConfigFor`, and it exists for the same reason: Haiku
+ * 4.5 predates adaptive thinking and returns
+ * `adaptive thinking is not supported on this model` — a 400, not a
+ * degradation. The catalog already knew this (`supportsAdaptiveThinking`); for
+ * a while nothing read the flag, so `/v1/draft` and `/v1/resolve` sent
+ * adaptive thinking to every model and simply broke on the cheap tier.
+ *
+ * `display: "summarized"` is opt-in. Without it, thinking blocks stream with
+ * EMPTY text on Opus 5 — from a UI's point of view that looks like a long
+ * silent pause before the answer appears.
+ *
+ * TEACHING NOTE: the honest answer for a model that cannot do this is to send
+ * nothing, not to translate into the older `budget_tokens` shape. A silent
+ * translation would make two tiers look comparable when they are running
+ * different reasoning configurations, which is exactly the kind of hidden
+ * variable Lab 7 is about.
+ */
+export function thinkingFor(
+  model: string,
+): { thinking?: { type: "adaptive"; display: "summarized" }; thinkingApplied: boolean } {
+  if (!specFor(model).supportsAdaptiveThinking) {
+    return { thinkingApplied: false };
+  }
+  return { thinking: { type: "adaptive", display: "summarized" }, thinkingApplied: true };
+}
+
+/**
  * The `/v1/triage` request body.
  *
  * Kept byte-identical to what the route sent before extraction — the cached

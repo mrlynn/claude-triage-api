@@ -105,16 +105,67 @@ curl -s localhost:8787/v1/estimate -H 'content-type: application/json' \
   -d '{"message":"test","role":"triage"}' | jq '{tokens, meta}'
 ```
 
+Now point the whole service at the cheap tier and run the smoke test, which
+makes two identical-prefix calls and asserts on `cache_hit`:
+
 ```bash
-TRIAGE_MODEL=claude-haiku-4-5 npm run dev
+TRIAGE_MODEL=claude-haiku-4-5 npm run smoke
 ```
 
-Re-run the estimate against that and read `meta.warning`.
+It **fails**, and the failure is the finding:
 
-The cached prefix is ~3,400 tokens. Haiku 4.5's minimum cacheable prefix is
-**4,096**. The breakpoint is accepted and ignored: HTTP 200, correct answers,
+```
+"cache_minimum_tokens": 4096,
+"prefix_meets_cache_minimum": false,
+"warning": "The cacheable prefix is 2749 tokens, below the 4096-token
+            minimum for claude-haiku-4-5. The cache_control breakpoint will
+            be accepted and ignored: no error, no cache."
+...
+cache_creation_input_tokens: 0
+cache_read_input_tokens: 0
+cache_hit: false          ← on BOTH identical calls
+```
+
+The breakpoint is accepted and ignored: HTTP 200, correct answers,
 `cache_read_input_tokens: 0`, forever. Every Haiku row in this lab paid full
 input rate on the handbook, on every one of those twelve cases.
+
+Note the prefix is **2,749** tokens here, not the ~3,400 you saw on Opus 5.
+Nothing about the prompt changed — models tokenize differently, so even the
+size of your prefix is a per-model number. It happens not to matter this time
+(both are under 4,096), but a prefix sitting near a boundary could cross it on
+a tier change with no diff to the prompt at all.
+
+Two things about how that assertion is built, because both were decided the
+hard way.
+
+**It fails rather than warning.** A model that cannot cache is behaving exactly
+as designed, so there is a real argument for a passing test and a printed note.
+That argument was tried and rejected: "expected" is not "fine". This
+configuration pays full input rate on the handbook forever, roughly 3.7× per
+ticket what the same prompt costs on a tier that caches, and a green tick on a
+wasteful config is precisely how this survives long enough to get printed in a
+cost table. It already did exactly that — the table you read in Step 1.
+
+**It does not reproduce the old diagnosis.** An earlier version of this script
+asserted against a hardcoded 1,024 and told you a 2,749-token prefix was "under
+1024 tokens — lengthen `data/policies.md`". False statement, wrong remedy,
+attached to a real failure. Failing is right; blaming the prompt was not. The
+prompt is fine. The *pairing* of prompt and model is not, and the message says
+so — including "do not lengthen `data/policies.md` to chase the minimum",
+because adding 1,347 tokens of policy text to win a cache discount is a real
+temptation and a terrible reason to edit a legal document.
+
+The cache-hit assertion in section 3 inverts rather than repeating the failure:
+on a model under its minimum, smoke fails if a hit ever *does* appear, since
+that would mean `src/config.ts` is stale and this lab's cost table needs
+re-deriving.
+
+**Q1b.** The failure above is loud, correct, and fires on every run — and it
+still would not have caught the original bug, because nobody ran smoke against
+Haiku until someone already suspected the cost column. Where would this have
+been caught *first*: a startup check, CI, a dashboard, or code review? Name the
+instrument, then say what it would have to know that a test does not.
 
 Check the arithmetic on the two scenarios at 17,800 tickets a month, using the
 representative shape from Lab 5 (112 input, 134 output, 3,358 prefix):

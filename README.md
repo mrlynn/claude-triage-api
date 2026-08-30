@@ -290,7 +290,9 @@ upstream stream or you keep paying for tokens nobody will read.
 Counts tokens server-side with the real tokenizer and projects monthly cost at
 a given volume, cached and uncached. No inference, so it's free.
 
-It also reports `prefix_meets_cache_minimum` — below ~1024 tokens the API
+It also reports `cache_minimum_tokens` and `prefix_meets_cache_minimum`. The
+minimum is a per-model property (512 on Opus 5, 1024 on Sonnet 5, 4096 on Haiku
+4.5), so it is read from the catalog rather than hardcoded — below it the API
 silently declines to cache, with no error.
 
 ### Attachments — the photo of the zipper

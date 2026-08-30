@@ -21,6 +21,7 @@ import { anthropic } from "../anthropic.js";
 import { MODEL, MAX_TOKENS, EFFORT } from "../config.js";
 import { ResolutionSchema, TicketInput } from "../schemas.js";
 import { buildSystem, volatileContext } from "../prompts.js";
+import { outputConfigFor } from "../lib/requests.js";
 import { summarizeUsage, sumUsage, type UsageReport } from "../lib/usage.js";
 import { toHttpError } from "../lib/errors.js";
 import { enforceAuthority } from "../lib/authority.js";
@@ -59,7 +60,11 @@ resolveRoute.post("/", async (c) => {
         }),
       ),
       output_config: {
-        effort: EFFORT.resolve,
+        // Capability-gated rather than hardcoded: Haiku 4.5 rejects `effort`
+        // with a 400, so this route used to fail outright whenever TRIAGE_MODEL
+        // pointed at the cheap tier. `format` is unconditional — all three
+        // tiers produce valid structured output, which Lab 7 relies on.
+        ...outputConfigFor(MODEL, EFFORT.resolve).config,
         // Constrains the FINAL answer. Intermediate turns still emit tool_use
         // blocks normally — the format applies to the text Claude settles on.
         format: betaZodOutputFormat(ResolutionSchema),

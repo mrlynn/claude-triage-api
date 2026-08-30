@@ -95,11 +95,24 @@ export interface ModelPricing {
  * cheaper tiers differ in ways that break a request, not just a budget.
  *
  * `supportsEffort: false` means `output_config.effort` returns a 400 on that
- * model. Haiku 4.5 predates the effort parameter and uses the older
- * `thinking: {type: "enabled", budget_tokens: N}` shape instead — which is why
- * `buildTriageRequest` drops both fields rather than translating between them.
- * A classifier does not need thinking, so dropping it is the honest answer
- * here; a reasoning-heavy route would need a real translation layer.
+ * model. `supportsAdaptiveThinking: false` means `thinking: {type: "adaptive"}`
+ * does too, with a separate 400. Haiku 4.5 predates both and uses the older
+ * `thinking: {type: "enabled", budget_tokens: N}` shape instead.
+ *
+ * Both flags are consulted by `outputConfigFor()` and `thinkingFor()` in
+ * `src/lib/requests.ts`, and every route goes through them. That sentence used
+ * to describe only `buildTriageRequest`, and it was wrong about the rest:
+ * `/v1/draft` and `/v1/resolve` built their bodies inline and sent both fields
+ * unconditionally, so pointing TRIAGE_MODEL at the cheap tier 400'd two routes
+ * while triage carried on working. A capability flag that only some call sites
+ * consult is worse than none, because it reads like coverage.
+ *
+ * Dropping rather than translating is deliberate. A classifier does not need
+ * thinking, and silently converting to `budget_tokens` would make two tiers
+ * look comparable while running different reasoning configurations — a hidden
+ * variable inside the exact comparison Lab 7 exists to make. A reasoning-heavy
+ * route that genuinely needed parity would need a real translation layer, and
+ * should say so out loud.
  */
 export interface ModelSpec extends ModelPricing {
   /** Rejects `output_config.effort` when false. */

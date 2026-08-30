@@ -115,7 +115,9 @@ after the breakpoint.
   built per request.
 - *Stable order.* Tools are constructed in a fixed order in `createTools()`;
   reordering a tool array is another silent invalidator.
-- *Sufficient length.* The prefix must clear ~1024 tokens or the API declines
+- *Sufficient length.* The prefix must clear the model's minimum — 512 tokens
+  on Opus 5, but 4096 on Haiku 4.5, so this is a property of the tier you ship
+  and not of your prompt — or the API declines
   to cache with no error. `/v1/estimate` reports
   `prefix_meets_cache_minimum` so this is measurable, not assumed.
 

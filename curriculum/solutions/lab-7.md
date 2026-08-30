@@ -24,6 +24,38 @@ that the table reads as a coherent story about tiers. Errors that produce
 implausible output get caught. This one produced a plausible story, which is
 why it survived.
 
+**Q1b. Where would this have been caught first?**
+
+A **startup check**, and the gap is not effort — it is timing and knowledge.
+
+What it would have to know that a test does not: *its own configuration at the
+moment it boots*. The service knows its model and can measure its prefix in one
+free `countTokens` call. That pairing is the entire bug, and it is knowable
+before the first request is served. A test only ever asserts what someone
+already thought to check, and the whole failure here is that nobody thought to
+check the cheap tier — smoke would have caught this on day one if anyone had
+run it with `TRIAGE_MODEL` set, and for months nobody did.
+
+Ranked by how early each instrument fires:
+
+| instrument | when it fires | why it missed |
+|---|---|---|
+| startup check | boot, every deploy | does not exist in this repo |
+| CI matrix | on the PR that changes the tier | smoke runs against the default model only |
+| code review | on the diff | nobody memorizes per-model cache minimums |
+| dashboard | after you are already paying | `cache_hit_rate` flat at zero is unmissable *if* someone looks |
+| smoke test | only when someone runs it with the right env var | nobody did |
+
+The honest ranking puts the test **fifth**. That is worth sitting with, because
+the test is the thing this lab just spent a page improving. Making it fail
+loudly was right — it now tells the truth to whoever runs it — but a correct
+assertion nobody triggers is not a control. It is documentation with a CI
+badge.
+
+The transferable rule: **a check that requires someone to have already
+suspected the problem is not a control.** Controls fire on their own schedule,
+not on your suspicion. Startup and CI qualify; a manual smoke run does not.
+
 **Q1. What does the headroom do to the tier argument?**
 
 It removes it. At 4,100 tickets a week the flagship costs about **$137 a
