@@ -459,6 +459,10 @@ for (const lab of work) {
     chapters: chapterList.map((c) => ({ at: stamp(c.start), title: c.title })),
   };
   writeFileSync(join(outDir, `${lab.slug}.srt`), srt);
+  // A plain-text title and description alongside the JSON, because uploading
+  // by hand is a perfectly good option and copying prose out of a JSON string
+  // with escaped newlines in it is not.
+  writeFileSync(join(outDir, `${lab.slug}.txt`), `${meta.title}\n\n${meta.description}`);
   writeFileSync(join(outDir, `${lab.slug}.json`), `${JSON.stringify(meta, null, 2)}\n`);
 
   // The thumbnail is the title card at YouTube's size, not a frame grab: a
