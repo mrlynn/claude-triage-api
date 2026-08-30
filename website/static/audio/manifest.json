@@ -1,0 +1,79 @@
+{
+  "labs/lab-0-scoreboard": {
+    "hash": "bd8d6a92329fde408b6b10983250c348d01fbcb8d8a0f4bd9a062c72e063e53d",
+    "voiceId": "JBFqnCBsd6RMkjVDRZzb",
+    "modelId": "eleven_flash_v2_5",
+    "chars": 6023,
+    "generatedAt": "2026-08-30T08:12:19.735Z"
+  },
+  "labs/lab-1-first-call": {
+    "hash": "8b0922ad91f40ad3b56858b1559c27616993137570492e2f21a9ea8cb6e431cc",
+    "voiceId": "JBFqnCBsd6RMkjVDRZzb",
+    "modelId": "eleven_flash_v2_5",
+    "chars": 3474,
+    "generatedAt": "2026-08-30T08:20:25.353Z"
+  },
+  "labs/lab-10-ask-northwind": {
+    "hash": "c511cfee9bc4832ce482d8d99a97a1a06c77366a3ed08a3fd62f6e2f6f5a4b4e",
+    "voiceId": "JBFqnCBsd6RMkjVDRZzb",
+    "modelId": "eleven_flash_v2_5",
+    "chars": 5466,
+    "generatedAt": "2026-08-30T08:20:33.632Z"
+  },
+  "labs/lab-2-structured-outputs": {
+    "hash": "0ab711daf0ecfaac02e32ecdb8c81508b5fd618e65bf74e72624dd5744ec0176",
+    "voiceId": "JBFqnCBsd6RMkjVDRZzb",
+    "modelId": "eleven_flash_v2_5",
+    "chars": 6937,
+    "generatedAt": "2026-08-30T08:20:43.695Z"
+  },
+  "labs/lab-3-tool-use": {
+    "hash": "d432ea8b704f377945ea58502070cdf7ac75dcd51f85b68391da9c9c46dd20d4",
+    "voiceId": "JBFqnCBsd6RMkjVDRZzb",
+    "modelId": "eleven_flash_v2_5",
+    "chars": 4700,
+    "generatedAt": "2026-08-30T08:20:51.072Z"
+  },
+  "labs/lab-4-streaming": {
+    "hash": "722a43aa9b1a286aa7c43c55338e176687b65f5f1e94be943ce1d7b7b518e7ca",
+    "voiceId": "JBFqnCBsd6RMkjVDRZzb",
+    "modelId": "eleven_flash_v2_5",
+    "chars": 3938,
+    "generatedAt": "2026-08-30T08:20:57.191Z"
+  },
+  "labs/lab-5-prompt-caching": {
+    "hash": "05c6bd298301f4eb1d5c46601746acf1850a8efc6e316f9df0f799de8c413344",
+    "voiceId": "JBFqnCBsd6RMkjVDRZzb",
+    "modelId": "eleven_flash_v2_5",
+    "chars": 4934,
+    "generatedAt": "2026-08-30T08:21:04.998Z"
+  },
+  "labs/lab-6-evals": {
+    "hash": "68533b6026130f394ca85fb1da07ca7ddd6c878435850d7174c6f4c9ead1cd0a",
+    "voiceId": "JBFqnCBsd6RMkjVDRZzb",
+    "modelId": "eleven_flash_v2_5",
+    "chars": 5560,
+    "generatedAt": "2026-08-30T08:21:13.088Z"
+  },
+  "labs/lab-7-choosing-a-model": {
+    "hash": "0f629c5cf14a9d46a27d11454bd060162171f065ffb2be06b4c1e0a05bcfb9f2",
+    "voiceId": "JBFqnCBsd6RMkjVDRZzb",
+    "modelId": "eleven_flash_v2_5",
+    "chars": 7606,
+    "generatedAt": "2026-08-30T08:21:23.972Z"
+  },
+  "labs/lab-8-trust-boundary": {
+    "hash": "1a39f0887f2e0e2bf4a77f30783df50cf20c1be95393e0c0c73f9eeb63fd5fd1",
+    "voiceId": "JBFqnCBsd6RMkjVDRZzb",
+    "modelId": "eleven_flash_v2_5",
+    "chars": 10773,
+    "generatedAt": "2026-08-30T08:21:39.768Z"
+  },
+  "labs/lab-9-shipping-it": {
+    "hash": "26902d7ca1ee5ce79fc976b2a55819c69a9d7360d366d28b749514588fd25087",
+    "voiceId": "JBFqnCBsd6RMkjVDRZzb",
+    "modelId": "eleven_flash_v2_5",
+    "chars": 7761,
+    "generatedAt": "2026-08-30T08:21:50.716Z"
+  }
+}

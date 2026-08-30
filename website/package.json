@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "sync": "node scripts/sync-docs.mjs",
+    "audio": "node scripts/generate-audio.mjs",
     "prestart": "node scripts/sync-docs.mjs",
     "start": "docusaurus start",
     "prebuild": "node scripts/sync-docs.mjs",
