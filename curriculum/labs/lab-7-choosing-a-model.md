@@ -105,16 +105,51 @@ curl -s localhost:8787/v1/estimate -H 'content-type: application/json' \
   -d '{"message":"test","role":"triage"}' | jq '{tokens, meta}'
 ```
 
+Now point the whole service at the cheap tier and run the smoke test, which
+makes two identical-prefix calls and asserts on `cache_hit`:
+
 ```bash
-TRIAGE_MODEL=claude-haiku-4-5 npm run dev
+TRIAGE_MODEL=claude-haiku-4-5 npm run smoke
 ```
 
-Re-run the estimate against that and read `meta.warning`.
+It passes — and the interesting part is *why* it passes:
 
-The cached prefix is ~3,400 tokens. Haiku 4.5's minimum cacheable prefix is
-**4,096**. The breakpoint is accepted and ignored: HTTP 200, correct answers,
+```
+"cache_minimum_tokens": 4096,
+"prefix_meets_cache_minimum": false,
+"warning": "The cacheable prefix is 2749 tokens, below the 4096-token
+            minimum for claude-haiku-4-5. The cache_control breakpoint will
+            be accepted and ignored: no error, no cache."
+...
+cache_creation_input_tokens: 0
+cache_read_input_tokens: 0
+cache_hit: false          ← on BOTH identical calls
+```
+
+The breakpoint is accepted and ignored: HTTP 200, correct answers,
 `cache_read_input_tokens: 0`, forever. Every Haiku row in this lab paid full
 input rate on the handbook, on every one of those twelve cases.
+
+Note the prefix is **2,749** tokens here, not the ~3,400 you saw on Opus 5.
+Nothing about the prompt changed — models tokenize differently, so even the
+size of your prefix is a per-model number. It happens not to matter this time
+(both are under 4,096), but a prefix sitting near a boundary could cross it on
+a tier change with no diff to the prompt at all.
+
+The smoke test does not fail here, and that is a deliberate design choice
+worth arguing with. A cache miss on two identical calls is normally the most
+expensive silent failure in this repo, and the script asserts on it. But on a
+model that *cannot* cache this prefix, the miss is the expected result, and
+failing would attach a confidently wrong diagnosis — "something in your prefix
+is varying, lengthen `data/policies.md`" — to a prompt with nothing wrong with
+it. So the assertion inverts: on a model under its minimum, smoke fails if a
+cache hit ever *does* appear, because that would mean the minimum in
+`src/config.ts` is stale and this lab's cost table is wrong again.
+
+**Q1b.** Argue the other side. Smoke now passes on a configuration that costs
+roughly 3.7× more per ticket than it needs to. Is "expected" the same as
+"fine", and where should that fact fail loudly instead — a test, a startup
+check, a dashboard, a code review? Say who you expect to catch it and when.
 
 Check the arithmetic on the two scenarios at 17,800 tickets a month, using the
 representative shape from Lab 5 (112 input, 134 output, 3,358 prefix):

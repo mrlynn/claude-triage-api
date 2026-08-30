@@ -42,13 +42,29 @@ async function main() {
   assertCredentials();
 
   head("1. POST /v1/estimate — token counting, no inference");
-  const est = await (await post("/v1/estimate", { message: TICKET.message })).json();
+  const est = (await (await post("/v1/estimate", { message: TICKET.message })).json()) as any;
   console.log(JSON.stringify(est, null, 2));
-  check(
-    (est as any).tokens?.prefix_meets_cache_minimum,
-    "cacheable prefix is under 1024 tokens — the API will silently decline to " +
-      "cache it, with no error. Lengthen data/policies.md.",
-  );
+
+  // Whether this prefix can cache AT ALL on the configured model. Read from
+  // the response rather than hardcoded, because the minimum is a per-model
+  // property: 512 on Opus 5, 4096 on Haiku 4.5. This script asserted against a
+  // literal 1024 until it was pointed at the cheap tier and reported that a
+  // 2,749-token prefix was "under 1024 tokens" — a false statement attached to
+  // a real failure, which is worse than either alone.
+  const canCache: boolean = est.tokens?.prefix_meets_cache_minimum ?? false;
+  const prefixTokens: number = est.tokens?.cacheable_prefix ?? 0;
+  const cacheMinimum: number = est.tokens?.cache_minimum_tokens ?? 0;
+  const model: string = est.meta?.model ?? "(unknown)";
+
+  if (!canCache) {
+    console.log(
+      `\n  NOTE — ${model} will not cache this prefix: ${prefixTokens} tokens ` +
+        `against a ${cacheMinimum}-token minimum. That is a property of the ` +
+        `model, not a bug in the prompt, so the cache assertions below are ` +
+        `relaxed accordingly. Every request will pay full input rate on the ` +
+        `handbook. See curriculum/labs/lab-7-choosing-a-model.md.`,
+    );
+  }
 
   head("2. POST /v1/triage — structured outputs (call 1, cold cache)");
   const t1 = (await (await post("/v1/triage", TICKET)).json()) as any;
@@ -73,11 +89,26 @@ async function main() {
   // is the single most expensive silent failure in the repo — it does not
   // error, it just multiplies the bill by five. Printing "CACHE MISS" and
   // exiting 0 made this a demo; failing makes it a test.
-  check(
-    t2.meta.usage.cache_hit,
-    "second identical-prefix call did not hit the cache — something in the " +
-      "prefix is varying (a timestamp, a rebuilt tool list, a reordered schema)",
-  );
+  // Only a bug if caching was possible in the first place. Asserting
+  // unconditionally made this script blame a varying prefix for a miss that
+  // was really the model's minimum — a confidently wrong diagnosis pointing at
+  // the wrong file. When the model cannot cache, the miss IS the expected
+  // result and the useful assertion is the inverse one.
+  if (canCache) {
+    check(
+      t2.meta.usage.cache_hit,
+      "second identical-prefix call did not hit the cache — something in the " +
+        "prefix is varying (a timestamp, a rebuilt tool list, a reordered schema)",
+    );
+  } else {
+    check(
+      !t2.meta.usage.cache_hit,
+      `${model} reported a cache hit on a ${prefixTokens}-token prefix, below ` +
+        `its ${cacheMinimum}-token minimum. Either the minimum in ` +
+        `src/config.ts is stale or the estimate is wrong — both are worth ` +
+        `knowing, and both invalidate the cost table in Lab 7.`,
+    );
+  }
 
   head("4. POST /v1/resolve — tool-use agentic loop");
   const r = (await (await post("/v1/resolve", TICKET)).json()) as any;

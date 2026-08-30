@@ -24,6 +24,32 @@ that the table reads as a coherent story about tiers. Errors that produce
 implausible output get caught. This one produced a plausible story, which is
 why it survived.
 
+**Q1b. Is "expected" the same as "fine"?**
+
+No. They are answers to different questions. "Expected" says the system is
+behaving as designed; "fine" says the design is right. Conflating them is how a
+3.7× cost multiplier gets a passing test.
+
+Where it should fail loudly, in rough order of how early it catches the
+problem:
+
+- **Startup check.** The service knows its model and its prefix length at boot.
+  A one-line warning at startup — "this prefix will not cache on this model" —
+  costs nothing and is the earliest possible signal. This is the strongest
+  option and the repo does not do it.
+- **Code review.** A diff that changes `TRIAGE_MODEL` should be read by someone
+  who knows the minimums. In practice nobody memorizes them, which is why the
+  number belongs in the catalog and the check belongs in code.
+- **Dashboard.** `cache_hit_rate` at a flat zero is unmissable *if* someone is
+  looking. Nobody looks at a dashboard for a config they believe is fine.
+- **Test.** The weakest, because a test can only assert what someone already
+  thought to check — and the whole failure here is that nobody thought to.
+
+The honest summary: a smoke test is the wrong instrument for this. It answers
+"does this configuration work", and the configuration does work. It costs more
+than it should, which is a different question, and cost questions do not have a
+green tick — they have a number that someone has to divide.
+
 **Q1. What does the headroom do to the tier argument?**
 
 It removes it. At 4,100 tickets a week the flagship costs about **$137 a
