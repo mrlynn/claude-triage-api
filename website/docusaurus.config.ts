@@ -263,6 +263,7 @@ const config: Config = {
             { label: "Assessment", to: "/assessment" },
             { label: "Playground", to: "/playground" },
             { label: "Northwind mission", to: "/mission" },
+            { label: "Why this course exists", to: "/why-this-course-exists" },
           ],
         },
         {
