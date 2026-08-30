@@ -20,6 +20,7 @@ import { resolveRoute } from "./routes/resolve.js";
 import { draftRoute } from "./routes/draft.js";
 import { estimateRoute } from "./routes/estimate.js";
 import { limitsRoute } from "./routes/limits.js";
+import { runPreflight } from "./lib/preflight.js";
 
 export const app = new Hono();
 
@@ -59,5 +60,10 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   serve({ fetch: app.fetch, port: PORT }, (info) => {
     console.log(`\n  claude-triage-api  ->  http://localhost:${info.port}`);
     console.log(`  model: ${MODEL}\n`);
+    // Fired AFTER the listener is up, and deliberately not awaited. Preflight
+    // is a free countTokens round trip, but a diagnostic that delays or blocks
+    // startup is a worse bug than the one it diagnoses. It prints when it
+    // knows; the service is already serving.
+    void runPreflight();
   });
 }

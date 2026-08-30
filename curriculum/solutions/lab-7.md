@@ -40,7 +40,7 @@ Ranked by how early each instrument fires:
 
 | instrument | when it fires | why it missed |
 |---|---|---|
-| startup check | boot, every deploy | does not exist in this repo |
+| startup check | boot, every deploy | **now exists** — `src/lib/preflight.ts`, added because of this bug |
 | CI matrix | on the PR that changes the tier | smoke runs against the default model only |
 | code review | on the diff | nobody memorizes per-model cache minimums |
 | dashboard | after you are already paying | `cache_hit_rate` flat at zero is unmissable *if* someone looks |
@@ -55,6 +55,30 @@ badge.
 The transferable rule: **a check that requires someone to have already
 suspected the problem is not a control.** Controls fire on their own schedule,
 not on your suspicion. Startup and CI qualify; a manual smoke run does not.
+
+**What was actually built.** [`src/lib/preflight.ts`](../../src/lib/preflight.ts)
+runs on every boot, measures the frozen prefix against the configured model's
+minimum with one free `countTokens` call, and prints a loud block when caching
+is off. Three details are worth copying into your own version:
+
+1. **It measures `system[0]` only** — the frozen block that holds the
+   breakpoint. Counting the whole request would include the volatile block and
+   the user message, which sit after the breakpoint and do not count toward the
+   minimum. That version passes while the real prefix falls short: a check that
+   measures the wrong span is worse than no check, because it also removes the
+   suspicion that something needs checking.
+2. **It never blocks or throws.** It fires after the listener is up and is not
+   awaited. A diagnostic that can take production down is a worse bug than the
+   one it diagnoses. On any failure — offline, bad key, API error — it says it
+   could not check and returns, and `willCache: false` is always paired with an
+   `error` so "unknown" is never read as "confirmed broken".
+3. **It names the wrong remedy explicitly.** The obvious reading of "prefix too
+   short" is "make the prefix longer", which here means padding a legal
+   document with ~1,300 tokens to win a discount. The message says not to.
+
+Note what it still does not do: it warns, it does not exit non-zero. That is
+deliberate for a dev server and arguably wrong for a deploy pipeline. Deciding
+where that line sits for your own service is the actual exercise.
 
 **Q1. What does the headroom do to the tier argument?**
 

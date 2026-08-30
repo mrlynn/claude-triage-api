@@ -161,11 +161,24 @@ on a model under its minimum, smoke fails if a hit ever *does* appear, since
 that would mean `src/config.ts` is stale and this lab's cost table needs
 re-deriving.
 
-**Q1b.** The failure above is loud, correct, and fires on every run — and it
-still would not have caught the original bug, because nobody ran smoke against
-Haiku until someone already suspected the cost column. Where would this have
-been caught *first*: a startup check, CI, a dashboard, or code review? Name the
-instrument, then say what it would have to know that a test does not.
+Start the server on the cheap tier and watch what it says before you send it
+anything:
+
+```bash
+TRIAGE_MODEL=claude-haiku-4-5 npm run dev
+```
+
+`src/lib/preflight.ts` measures the frozen prefix against the configured
+model's minimum on every boot — one free `countTokens` call — and prints a
+block telling you caching is off. That check exists because of the bug in this
+lab, and it is the only instrument here that fires without anyone first
+suspecting a problem.
+
+**Q1b.** The smoke failure above is loud and correct, and it still would not
+have caught the original bug: nobody ran smoke against Haiku until someone
+already suspected the cost column. Rank the instruments — startup check, CI,
+dashboard, code review, smoke test — by how early each one fires. Then say what
+the winner knows that the others do not.
 
 Check the arithmetic on the two scenarios at 17,800 tickets a month, using the
 representative shape from Lab 5 (112 input, 134 output, 3,358 prefix):

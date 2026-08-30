@@ -121,6 +121,15 @@ after the breakpoint.
   to cache with no error. `/v1/estimate` reports
   `prefix_meets_cache_minimum` so this is measurable, not assumed.
 
+  This is checked at boot by [`src/lib/preflight.ts`](../src/lib/preflight.ts)
+  rather than left to a comment, because the minimum is a property of the
+  *model*: the same prompt caches on one tier and silently does not on another,
+  with no diff to the prompt at all. The check measures `system[0]` only — the
+  frozen block that holds the breakpoint — since counting the whole request
+  would include content that sits after it and does not count toward the
+  minimum. It warns and never blocks: a diagnostic that can take the service
+  down is a worse bug than the one it diagnoses.
+
 Each of the three roles maintains its own cache entry, because the role text is
 part of the prefix. That is the correct tradeoff here: three warm entries beat
 one entry that thrashes.
