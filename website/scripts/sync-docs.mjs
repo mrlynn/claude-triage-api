@@ -93,11 +93,28 @@ const routeBySource = new Map(PAGES.map((p) => [p.source, `/docs/${p.out}`]));
 // conservative: a glossary should be a handrail for a newcomer, not turn
 // every paragraph into a chain of blue links. Fenced/inline code, headings,
 // and links already authored in the curriculum are parked before this runs.
+// Longer / more specific phrases first so they win over substrings.
+// Beyond-course terms are intentionally omitted — linking "RAG" or "LLM" on
+// every page would turn the curriculum into a blue carpet.
 const GLOSSARY_TERMS = [
+  ["Evaluator-optimizer", "evaluator-optimizer"],
+  ["Orchestrator-workers", "orchestrator-workers"],
+  ["Human-in-the-loop", "human-in-the-loop"],
+  ["Prompt chaining", "prompt-chaining"],
   ["Messages API", "messages-api"],
   ["System prompt", "system-prompt"],
   ["prompt caching", "prompt-caching"],
   ["structured outputs", "structured-outputs--schema"],
+  ["Batches API", "batches-api"],
+  ["function calling", "function-calling"],
+  ["perceived latency", "latency--perceived-latency"],
+  ["cache breakpoint", "cache_control--cache-breakpoint"],
+  ["gold set", "gold-set"],
+  ["stop_details", "stop_details"],
+  ["stop_reason", "stop_reason"],
+  ["cache_control", "cache_control--cache-breakpoint"],
+  ["output_config", "output_config"],
+  ["budget_tokens", "budget_tokens"],
   ["content blocks?", "content-block"],
   ["tool trace", "tool-trace"],
   ["tool use", "tool-use"],
@@ -105,9 +122,12 @@ const GLOSSARY_TERMS = [
   ["untrusted input", "prompt-injection--untrusted-input"],
   ["rate limit", "rate-limit"],
   ["context window", "context-window"],
+  ["single call", "single-call"],
+  ["multimodal", "vision--multimodal"],
   ["streaming", "streaming--sse"],
   ["SSE", "streaming--sse"],
   ["guardrails?", "guardrail"],
+  ["max_tokens", "max_tokens"],
   ["usage", "usage-and-cost"],
   ["schemas?", "structured-outputs--schema"],
   ["tokens?", "token"],
@@ -168,7 +188,11 @@ function wrapGlossaryCards(body) {
     const nl = chunk.indexOf("\n");
     const title = (nl === -1 ? chunk : chunk.slice(0, nl)).trim();
     const rest = (nl === -1 ? "" : chunk.slice(nl + 1)).trim();
-    return `<div class="nw-glossary-card">\n\n## ${title}\n\n${rest}\n\n</div>`;
+    const beyond = /^\*Beyond this course\.\*/.test(rest);
+    const cls = beyond
+      ? "nw-glossary-card nw-glossary-card--beyond"
+      : "nw-glossary-card";
+    return `<div class="${cls}">\n\n## ${title}\n\n${rest}\n\n</div>`;
   });
   return `${intro}\n\n<div class="nw-glossary-grid">\n\n${cards.join("\n\n")}\n\n</div>\n`;
 }
