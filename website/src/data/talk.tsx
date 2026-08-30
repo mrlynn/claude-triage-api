@@ -438,7 +438,8 @@ export const SLIDES: Slide[] = [
           </li>
           <li>
             <b>Caching only helps a repeated prefix.</b> It cannot help the first
-            request, and it cannot help a prefix under ~1024 tokens.
+            request, and it cannot help a prefix under the model's minimum —
+            512 tokens on Opus 5, 4096 on Haiku 4.5.
           </li>
           <li>
             <b>Cache writes cost more than fresh tokens.</b> 1.25× to write,

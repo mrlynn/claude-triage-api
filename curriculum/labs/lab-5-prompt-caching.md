@@ -11,15 +11,23 @@ week is 11,300 tickets, about 45,000 in a peak month. That is just under nine
 cents per ticket for everything — triage, resolution, and a drafted reply.
 
 The cached prefix — role instructions plus the full handbook — measures about
-3,400 tokens, and it goes out on every request,
-because legal changes it weekly and it cannot be baked into a prompt. Priced at
-full input rate on every call, the handbook alone consumes the entire budget
-before you have generated a single word of output.
+3,400 tokens, and it goes out on every request, because legal changes it weekly
+and it cannot be baked into a prompt. Priced at full input rate on a peak
+month that is about **$765** in handbook tokens alone, before a single word of
+output. Caching drops the same line to roughly $75.
 
-Caching that prefix is what makes the unit economics work. And the failure mode
-you will spend most of this lab on is the reason it deserves a whole lab: every
-way of breaking the cache succeeds silently. HTTP 200, correct answer, bill
-roughly ten times what you planned. Nobody notices until finance does.
+Be honest about what that does and does not prove. $765 is not the whole
+$4,000, and Lab 7 will measure the entire flagship pipeline at about $137 a
+month — this system is not close to its budget ceiling, and anyone who tells
+you caching is what makes it ship is selling something. What caching buys here
+is a **fivefold cost headroom on the largest single line item**, which is the
+difference between "we can afford to send the handbook on every request" and
+"we start trimming the handbook to save money" — and a trimmed handbook is an
+accuracy problem, not a cost one.
+
+The failure mode is the real reason this deserves a whole lab: every way of
+breaking the cache succeeds silently. HTTP 200, correct answer, and a prefix
+line item that jumps 10×. Nobody notices until finance does.
 
 ---
 
@@ -71,7 +79,7 @@ flowchart TB
     API --> OK["HTTP 200 · correct JSON"]
     OK --> U{"cache_read_input_tokens > 0?"}
     U -->|yes| Hit["planned unit cost"]
-    U -->|no| Miss["~10× handbook cost<br/>finance notices later"]
+    U -->|no| Miss["10× on the handbook line<br/>~5× the whole request<br/>finance notices later"]
 ```
 
 ---
@@ -117,8 +125,13 @@ text: `Generated at ${new Date().toISOString()}\n${roleText}\n\n---\n\n${POLICY_
 **Break B — move the breakpoint.** Put `cache_control` on the *volatile* block
 instead of the frozen one.
 
-**Break C — shorten the prefix.** Replace `POLICY_HANDBOOK` with
-`POLICY_HANDBOOK.slice(0, 1500)` (~350 tokens).
+**Break C — drop under the floor.** Replace the whole frozen block's `text`
+with `POLICY_HANDBOOK.slice(0, 400)` — roughly 110 tokens, and note that you
+have to drop the role text too. The role instructions alone measure ~554
+tokens, which already clears Opus 5's 512-token minimum on their own; trimming
+only the handbook would leave the prefix cacheable and this break would quietly
+demonstrate nothing. Getting a "below the minimum" repro is fiddlier than it
+looks, which is itself the point.
 
 **Break D — reorder tools.** In `src/tools/index.ts`, return the tools array
 reversed, then hit `/v1/resolve` twice.
@@ -129,8 +142,13 @@ Which is the most dangerous in production, and why?
 Restore everything.
 
 > **The signature of a cache bug is silence.** Every break above succeeds with
-> HTTP 200 and a correct answer. The only symptom is a bill roughly 10× what
-> you budgeted. `cache_read_input_tokens` is your only detector — alert on it.
+> HTTP 200 and a correct answer. The only symptom is money: the handbook line
+> goes to 10× (a cache read is 90% off, so losing it multiplies that line by
+> ten), and the request as a whole to roughly 5×, because output tokens are
+> never cached and they dominate a small request. Run the numbers on the
+> receipt above before you quote either figure — "10× the bill" is the version
+> of this that gets repeated and it is wrong.
+> `cache_read_input_tokens` is your only detector — alert on it.
 
 ```quiz
 [
@@ -139,10 +157,10 @@ Restore everything.
     "options": [
       "The request errors with an invalid cache_control",
       "Nothing \u2014 the date is small compared with the handbook",
-      "Every request misses the cache, silently, at roughly 10x the intended cost"
+      "Every request misses the cache, silently \u2014 10x on the handbook line, ~5x on the request"
     ],
     "answer": 2,
-    "explain": "Caching is a prefix match. Any byte change anywhere in the prefix invalidates everything after it. The request still succeeds and the answer is still correct \u2014 the only symptom is the bill.",
+    "explain": "Caching is a prefix match. Any byte change anywhere in the prefix invalidates everything after it. The request still succeeds and the answer is still correct \u2014 the only symptom is the bill. Note the two different multipliers: a cache read is 90% off, so the prefix line goes to 10x, but output tokens were never cached and they dominate a small request, so the whole call rises about 5x. Quoting the 10x as the bill overstates it twofold.",
     "note": "`cache_read_input_tokens` staying at zero is the one detector you have. Alert on it."
   },
   {
@@ -159,16 +177,35 @@ Restore everything.
 ]
 ```
 
-## Step 3 — the 1024-token floor
+## Step 3 — the floor, and why it is not a number you can memorize
 
 ```bash
 curl -s localhost:8787/v1/estimate -H 'content-type: application/json' \
   -d '{"message":"test","role":"triage"}' | jq .tokens
 ```
 
-**Q3.** `prefix_meets_cache_minimum` is computed against 1024. What happens if
-you set a breakpoint on a 400-token prefix — error, warning, or silence? What
-does that imply about how you validate a caching change before shipping it?
+Note `cache_minimum_tokens` in that output. It is read from `MODEL_CATALOG` in
+[`src/config.ts`](../../src/config.ts) for the *configured* model, not written
+as a literal, because the minimum is a per-model property:
+
+| model | shortest cacheable prefix |
+|---|---:|
+| `claude-opus-5` | 512 |
+| `claude-sonnet-5` | 1024 |
+| `claude-haiku-4-5` | 4096 |
+
+Two things about that table. First, it is **not monotonic** — the cheap tier
+requires the *longest* prefix, eight times the flagship's. Any intuition of the
+form "smaller model, smaller everything" gets this exactly backwards. Second,
+this service's prefix is ~3,400 tokens, which sits between the two: it caches
+on Opus 5 and Sonnet 5 and does **not** cache on Haiku 4.5. You will meet the
+consequence of that in Lab 7, where it is hiding inside a cost table.
+
+**Q3.** `prefix_meets_cache_minimum` is computed against the configured model.
+What happens if you set a breakpoint on a 400-token prefix — error, warning, or
+silence? Now the harder version: what happens to a prefix that has always been
+comfortably over the line when someone changes `TRIAGE_MODEL`? What does that
+imply about how you validate a caching change before shipping it?
 
 ## Step 4 — where does the breakpoint go?
 
@@ -227,7 +264,7 @@ production failure the lab is about. `git diff` before you conclude anything.
 
 - [ ] What is the one field that proves caching is working?
 - [ ] Name three silent invalidators.
-- [ ] What is the minimum cacheable prefix, and what happens below it?
+- [ ] What is the minimum cacheable prefix *for the model you configured*, and what happens below it?
 - [ ] When is caching a net loss?
 - [ ] Scoreboard re-run; you can say why it did or did not move
 

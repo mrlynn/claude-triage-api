@@ -21,7 +21,7 @@ the write pays for itself after about two subsequent reads.
 |---|---|---|---|
 | A — timestamp in prefix | false, always | none | The prefix differs every request; nothing is ever reusable |
 | B — breakpoint on volatile block | false | none | The prefix now includes varying content, so it never matches |
-| C — 350-token prefix | false | none | Below the ~1024-token minimum; the API silently declines |
+| C — ~110-token prefix | false | none | Below the 512-token minimum Opus 5 applies; the API silently declines |
 | D — reordered tools | false | none | Tools render *before* system; reordering changes the prefix |
 
 **A is the most dangerous in production**, because it is the most likely to be
@@ -29,18 +29,29 @@ introduced by a well-meaning change ("let's tell the model today's date") and
 the least likely to be caught in review. B and D at least look structural when
 you read the diff; C usually shows up during development. A looks harmless.
 
-None of the four produce an error. All four produce correct answers at roughly
-10× the intended cost.
+None of the four produce an error. All four produce correct answers, with the
+handbook line item at 10× and the request as a whole at roughly 5× — output
+tokens were never cached and they dominate a request this small. Watch for the
+"10× the bill" shorthand; it is the prefix multiplier doing duty as a total,
+and it overstates the damage twofold.
 
-**Q3. What happens below 1024 tokens?**
+**Q3. What happens below the minimum?**
 
 Silence. Not an error, not a warning, not a header — the `cache_control` marker
 is simply ignored and `cache_creation_input_tokens` stays 0.
 
+The harder half of the question is the one that bites in production: **the
+minimum is a property of the model, not of your prompt.** A ~3,400-token prefix
+clears it on Opus 5 (512) and Sonnet 5 (1024) and falls short on Haiku 4.5
+(4096). Nothing about your prompt changed; someone edited `TRIAGE_MODEL` and
+your caching stopped, silently, with no diff to the prompt at all. Lab 7 has
+this failure sitting in a checked-in cost table.
+
 The implication: **you cannot validate a caching change by reading the code or
 by checking that the request succeeded.** You must make two identical requests
 and assert that the second reports non-zero `cache_read_input_tokens`. That
-assertion belongs in your test suite, and the metric belongs on a dashboard.
+assertion belongs in your test suite — `src/lib/cache-minimum.test.ts` pins the
+prefix against both boundaries — and the metric belongs on a dashboard.
 
 **Q4. Breakpoint placement.**
 

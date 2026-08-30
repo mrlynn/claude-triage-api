@@ -181,9 +181,11 @@ expensive if it happens on every deploy.
 
 Concretely, after a prompt edit: make two identical calls and confirm
 `cache_read_input_tokens` is non-zero on the second (`npm run smoke` does this),
-and confirm the prefix is still over the ~1024-token minimum via
-`/v1/estimate`. A prompt edit that pushed the prefix below the minimum would
-silently stop caching with no error at all — the failure mode
+and confirm the prefix still clears the configured model's minimum via
+`/v1/estimate` — read `tokens.cache_minimum_tokens`, which is per model (512 on
+Opus 5, 4096 on Haiku 4.5) rather than a constant you can memorize. A prompt
+edit that pushed the prefix below the minimum would silently stop caching with
+no error at all — the failure mode
 [Lab 5](../labs/lab-5-prompt-caching.md) is built around.
 
 Two other things worth a look, both cheap: the drafter and resolver roles were

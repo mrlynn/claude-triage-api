@@ -68,11 +68,18 @@ Three models, twelve cases, four in flight. About ninety seconds and $0.19.
 Read the table top to bottom before you read any single column. The measured
 result on this repo, across four runs:
 
-| model | accuracy | p50 | p95 | $/mo @ 4,100/wk | calibration gap |
-|---|---|---|---|---|---|
-| `claude-opus-5` | 10–12 / 12 | 17.8s | 22.4s | ~$137 | 0.35–0.41 |
-| `claude-sonnet-5` | 7–9 / 12 | 15.7s | 18.2s | ~$70–98 | 0.20–0.30 |
-| `claude-haiku-4-5` | 6–8 / 12 | 9.1s | 9.7s | ~$67–74 | −0.06 to +0.13 |
+| model | accuracy | p50 | p95 | $/mo @ 4,100/wk | calibration gap | prefix cached? |
+|---|---|---|---|---|---|---|
+| `claude-opus-5` | 10–12 / 12 | 17.8s | 22.4s | ~$137 | 0.35–0.41 | yes |
+| `claude-sonnet-5` | 7–9 / 12 | 15.7s | 18.2s | ~$70–98 † | 0.20–0.30 | yes |
+| `claude-haiku-4-5` | 6–8 / 12 | 9.1s | 9.7s | ~$67–74 | −0.06 to +0.13 | **no** |
+
+† The Sonnet projection was measured while `MODEL_CATALOG` encoded $3/$15 for
+Sonnet 5. That rate has since been corrected to **$2/$10**, so a re-run lands
+roughly a third lower. The `$/mo` column is computed from `specFor()` at run
+time, not hardcoded, so `npm run eval:models` gives you the current figure — and
+the fact that a stale rate in one file silently propagated into a printed table
+in another is the same lesson this step is already about.
 
 The latency columns come from the same run and almost nobody reads them either.
 Two things about how they were measured, because a latency number without its
@@ -83,9 +90,69 @@ are also whole-request times through the local route, not time-to-first-token �
 `/v1/triage` does not stream, and for a classifier that is the number that
 matters.
 
-Note that Haiku is roughly **half** the wall clock of Opus while costing about
-half as much and losing three to five cases in twelve. Cost and latency move
-together down the tiers; accuracy moves against them.
+### The cost column is lying to you, and Lab 5 told you how
+
+Haiku is roughly half the wall clock of Opus and appears to cost about half as
+much. Stop on that second number, because it does not survive five seconds of
+arithmetic. Haiku 4.5 is **$1/$5** per MTok against Opus 5's **$5/$25** — five
+times cheaper per token. A tier that is five times cheaper per token is not
+half the price unless something else is going on.
+
+Something else is going on. Work it out before reading further:
+
+```bash
+curl -s localhost:8787/v1/estimate -H 'content-type: application/json' \
+  -d '{"message":"test","role":"triage"}' | jq '{tokens, meta}'
+```
+
+```bash
+TRIAGE_MODEL=claude-haiku-4-5 npm run dev
+```
+
+Re-run the estimate against that and read `meta.warning`.
+
+The cached prefix is ~3,400 tokens. Haiku 4.5's minimum cacheable prefix is
+**4,096**. The breakpoint is accepted and ignored: HTTP 200, correct answers,
+`cache_read_input_tokens: 0`, forever. Every Haiku row in this lab paid full
+input rate on the handbook, on every one of those twelve cases.
+
+Check the arithmetic on the two scenarios at 17,800 tickets a month, using the
+representative shape from Lab 5 (112 input, 134 output, 3,358 prefix):
+
+| | prefix | input | output | $/mo |
+|---|---|---|---|---|
+| Haiku, cache working | 3,358 × $0.10/M | 112 × $1/M | 134 × $5/M | **~$20** |
+| Haiku, cache silently off | 3,358 × $1/M | 112 × $1/M | 134 × $5/M | **~$74** |
+
+The measured column says $67–74. That is not "Haiku costs about half as much."
+That is Lab 5's silent cache miss, sitting inside a cost table in a different
+lab, wearing a tier comparison as a disguise — and it was in this table for
+some time before anyone divided $5 by $1 and asked why the answer was not five.
+
+The checked-in run in
+[`website/src/data/model-matrix.json`](../../website/src/data/model-matrix.json)
+settles it without needing a new run. Read `cost_per_ticket`:
+
+| model | $/ticket, measured |
+|---|---|
+| `claude-opus-5` | 0.0076 |
+| `claude-sonnet-5` | 0.0039 |
+| `claude-haiku-4-5` | 0.0038 |
+
+Sonnet and Haiku cost **the same per ticket**, to two significant figures,
+while Sonnet's per-token rate is double Haiku's. There is no version of that
+which is a coincidence. Sonnet's prefix is cached and Haiku's is not; the
+discount and the rate difference happen to cancel. Two rows agreeing is the
+kind of result that should stop you, and for a while it did not stop anyone.
+
+> **The transferable habit:** when a cost measurement disagrees with the rate
+> card, believe neither until you can explain the gap. The explanation is
+> almost always a discount you assumed you were getting.
+
+**Q1a.** The savings you would get from switching to Haiku are roughly $63 a
+month as measured, or $117 if the cache worked. Both are noise against a $4,000
+budget. So does this discovery change the tier decision at all? Say what it
+changes and what it does not — they are not the same thing.
 
 **Q1.** Priya's budget is $4,000 a month. Every row above fits inside it with
 between thirty and sixty times the headroom. What does that do to the argument
@@ -227,6 +294,7 @@ You should be able to answer, without looking anything up:
 - [ ] What does a calibration gap near zero do to confidence-based routing?
 - [ ] Why must the judge be pinned when the model under test varies?
 - [ ] Where does `?tier=auto` read untrusted input, and what follows from that?
+- [ ] Which tier silently loses prompt caching, and how would you have caught it from the cost column alone?
 
 ---
 

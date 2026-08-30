@@ -5,7 +5,8 @@
  * tokenizer server-side and costs nothing, which makes it the right tool for:
  *   - Admission control (reject a 900K-token payload before you pay for it).
  *   - Capacity planning ("what does 100K tickets/month actually cost?").
- *   - Verifying that a cache prefix clears the ~1024-token minimum.
+ *   - Verifying that a cache prefix clears the configured model's caching
+ *     minimum — which is a per-model number, not a constant (see config.ts).
  *
  * TEACHING NOTE: do NOT estimate Claude token counts with `tiktoken`, a
  * chars/4 heuristic, or a word count. Those are calibrated to other models'
@@ -16,7 +17,7 @@ import { Hono } from "hono";
 import type Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { anthropic } from "../anthropic.js";
-import { MODEL, pricingFor } from "../config.js";
+import { MODEL, cacheMinimumFor, pricingFor } from "../config.js";
 import { buildSystem, volatileContext } from "../prompts.js";
 import { toHttpError } from "../lib/errors.js";
 import { createTools } from "../tools/index.js";
@@ -87,11 +88,22 @@ estimateRoute.post("/", async (c) => {
     const cacheablePrefix = prefixOnly.input_tokens;
     const perRequestVariable = full.input_tokens - cacheablePrefix;
 
+    // Per-model, NOT a constant: 512 on Opus 5, 4096 on Haiku 4.5. A prefix
+    // that caches on the flagship can silently stop caching the moment you
+    // change tier, which is why this is read from the catalog rather than
+    // written as a literal here.
+    const cacheMinimum = cacheMinimumFor(MODEL);
+    const meetsMinimum = cacheablePrefix >= cacheMinimum;
+
     const coldCost = full.input_tokens * inRate + expected_output_tokens * outRate;
-    const warmCost =
-      cacheablePrefix * inRate * pricing.cacheReadMultiplier +
-      perRequestVariable * inRate +
-      expected_output_tokens * outRate;
+    // If the prefix is under this model's minimum there is no warm request to
+    // project: every call pays the cold rate forever. Reporting a warm figure
+    // anyway would be the exact over-promise this endpoint exists to prevent.
+    const warmCost = meetsMinimum
+      ? cacheablePrefix * inRate * pricing.cacheReadMultiplier +
+        perRequestVariable * inRate +
+        expected_output_tokens * outRate
+      : coldCost;
 
     return c.json({
       tokens: {
@@ -99,8 +111,10 @@ estimateRoute.post("/", async (c) => {
         cacheable_prefix: cacheablePrefix,
         per_request_variable: perRequestVariable,
         assumed_output: expected_output_tokens,
-        // Below ~1024 tokens the API silently declines to cache the prefix.
-        prefix_meets_cache_minimum: cacheablePrefix >= 1024,
+        // Below the minimum the API silently declines to cache the prefix:
+        // HTTP 200, correct answer, cache_creation_input_tokens: 0.
+        cache_minimum_tokens: cacheMinimum,
+        prefix_meets_cache_minimum: meetsMinimum,
         // Only populated for role "resolve"; the other roles send no tools.
         tools_counted: tools?.length ?? 0,
       },
@@ -115,7 +129,20 @@ estimateRoute.post("/", async (c) => {
         with_caching: round2(warmCost * monthly_volume),
         savings: round2((coldCost - warmCost) * monthly_volume),
       },
-      meta: { model: MODEL, role, note: "No inference was performed; countTokens is free." },
+      meta: {
+        model: MODEL,
+        role,
+        note: "No inference was performed; countTokens is free.",
+        ...(meetsMinimum
+          ? {}
+          : {
+              warning:
+                `The cacheable prefix is ${cacheablePrefix} tokens, below the ` +
+                `${cacheMinimum}-token minimum for ${MODEL}. The cache_control ` +
+                `breakpoint will be accepted and ignored: no error, no cache. ` +
+                `Warm and cold costs above are therefore identical.`,
+            }),
+      },
     });
   } catch (err) {
     const { status, body } = toHttpError(err);

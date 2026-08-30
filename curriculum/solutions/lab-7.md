@@ -1,10 +1,37 @@
 # Lab 7 — answers
 
+**Q1a. Does the silent Haiku cache miss change the tier decision?**
+
+No, and saying why is the whole exercise.
+
+It does not change the decision, because the decision was never about cost.
+Fixing the cache would take Haiku from ~$74 to ~$20 a month; the gap between
+those two numbers is $54 against a $4,000 budget. Both round to free. An
+argument that was already dominated by the accuracy column stays dominated by
+the accuracy column.
+
+What it changes is your confidence in every other number that table produced.
+A measurement contained a fivefold error in one column and nothing flagged it —
+not a test, not a review, not the person who wrote the "Haiku costs about half"
+sentence underneath it. The correct update is not about Haiku. It is that this
+repo could print a wrong cost figure and ship it, which means the next wrong
+cost figure will also ship, and the next one may land on a decision where $54
+is not the stake.
+
+Notice also the shape of the error. It did not make the cheap tier look bad; it
+made the cheap tier look *reasonable* — $74 sits close enough to Sonnet's $69
+that the table reads as a coherent story about tiers. Errors that produce
+implausible output get caught. This one produced a plausible story, which is
+why it survived.
+
 **Q1. What does the headroom do to the tier argument?**
 
 It removes it. At 4,100 tickets a week the flagship costs about **$137 a
-month** against a **$4,000** budget. The cheap tier saves roughly $65 — under
-2% of the budget, in exchange for losing three to five cases in twelve.
+month** against a **$4,000** budget. The cheap tier saves roughly $70 as
+measured — under 2% of the budget, in exchange for losing three to five cases
+in twelve. Fix its caching and it saves ~$117, which is under 3%. The argument
+does not improve when you give it its best case, which is the sign that it was
+never a cost argument.
 
 The general form is worth keeping: **cost optimization only matters where cost
 is a binding constraint.** Northwind's binding constraint is the mis-routing
