@@ -8,7 +8,7 @@ Nothing in this lab looks consequential. One call, four numbers, a truncated
 sentence.
 
 But the four numbers in `usage` are the entire reason this project has a budget
-at all. Priya has about $4,000 a month against 45,000 peak-week tickets, and the
+at all. Priya has about $4,000 a month against 45,000 tickets in a peak month, and the
 policy handbook goes out on every single request. If you cannot read a `usage`
 block, you cannot tell the difference between a system that fits that budget and
 one that costs ten times more while returning identical answers. That difference
@@ -234,6 +234,7 @@ You should be able to answer, without looking anything up:
 
 Wrap your script in a loop that calls the API 3× and prints total cost. Then
 add `cache_control` to the system prompt and observe that nothing changes —
-your prompt is too short to cache. That failure is the setup for Lab 5.
+your prompt is under Opus 5's 512-token caching minimum, so the breakpoint is
+accepted and ignored. That failure is the setup for Lab 5.
 
 **Answers:** [../solutions/lab-1.md](../solutions/lab-1.md)

@@ -33,7 +33,8 @@ distinction is whose credential failed.)
 ## Extension notes
 
 Adding `cache_control` to a short system prompt produces no change because the
-prefix is under the ~1024-token minimum. The API does not error, warn, or log —
+prefix is under the 512-token minimum that `claude-opus-5` applies (the
+minimum is per model — Haiku 4.5 needs 4096). The API does not error, warn, or log —
 it silently declines to cache. `cache_creation_input_tokens` stays 0. This
 "success with no effect" is the defining characteristic of caching bugs and is
 the whole subject of Lab 5.

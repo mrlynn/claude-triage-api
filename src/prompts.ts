@@ -14,11 +14,17 @@
  *
  * We instead split `system` into two blocks: a frozen block carrying the
  * handbook (with the breakpoint on it), and a volatile block after it. The
- * volatile block is re-read every time; the ~1.5K-token handbook is not.
+ * volatile block is re-read every time; the ~2.4K-token handbook is not. With
+ * the role text above it the frozen block measures ~3.4K tokens.
  *
- * Minimum cacheable prefix is ~1024 tokens. Below that the API silently
- * declines to cache — no error, just a permanently cold cache. Verify with
- * `usage.cache_read_input_tokens`, never by assumption.
+ * A prefix shorter than the model's minimum is silently not cached — no error,
+ * just a permanently cold cache. That minimum is PER MODEL (512 on Opus 5,
+ * 4096 on Haiku 4.5); read it from `cacheMinimumFor()` in config.ts rather
+ * than assuming a number. At ~3.4K this prefix caches on Opus 5 and Sonnet 5
+ * and does NOT cache on Haiku 4.5 — which is a tier decision disguised as a
+ * caching one, and what Lab 7 makes you measure.
+ *
+ * Verify with `usage.cache_read_input_tokens`, never by assumption.
  */
 import type Anthropic from "@anthropic-ai/sdk";
 import { POLICY_HANDBOOK } from "./tools/data.js";

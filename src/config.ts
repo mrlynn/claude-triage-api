@@ -107,6 +107,18 @@ export interface ModelSpec extends ModelPricing {
   /** Adaptive thinking (`{type: "adaptive"}`) vs. the older budget_tokens shape. */
   supportsAdaptiveThinking: boolean;
   contextWindow: number;
+  /**
+   * Shortest prefix this model will cache, in tokens.
+   *
+   * TEACHING NOTE: this is NOT a constant across the lineup, and it is not
+   * monotonic across generations either. A 3.4K-token prefix caches on Opus 5
+   * and silently does not on Haiku 4.5. Below the minimum the API returns
+   * HTTP 200, a correct answer, and `cache_creation_input_tokens: 0` — there
+   * is no error and no warning. That is why this lives in the catalog next to
+   * the price: changing tier changes your caching behaviour, and Lab 7 makes
+   * you find that out by measurement.
+   */
+  cacheMinimumTokens: number;
 }
 
 /**
@@ -114,9 +126,13 @@ export interface ModelSpec extends ModelPricing {
  * before quoting any of these numbers to anyone — they move, and a stale table
  * produces confidently wrong cost projections, which is worse than none.
  *
- * Claude Sonnet 5 carries introductory pricing of $2/$10 per MTok through
- * 2026-08-31. We deliberately encode LIST price ($3/$15), because a cost model
- * built on a promotional rate silently over-promises the day it expires.
+ * The rule that transfers: encode the rate you will still be billed at after
+ * any promotion ends. A cost model built on a promotional rate silently
+ * over-promises the day it expires, and nobody re-runs the projection.
+ *
+ * `cacheMinimumTokens` is the shortest prefix each model will cache. It is the
+ * one column here that is not about money and the one people forget to check
+ * when they change tier — see the note on ModelSpec.
  */
 export const MODEL_CATALOG: Record<string, ModelSpec> = {
   "claude-opus-5": {
@@ -128,16 +144,18 @@ export const MODEL_CATALOG: Record<string, ModelSpec> = {
     supportsEffort: true,
     supportsAdaptiveThinking: true,
     contextWindow: 1_000_000,
+    cacheMinimumTokens: 512,
   },
   "claude-sonnet-5": {
-    inputPerMTok: 3.0,
-    outputPerMTok: 15.0,
+    inputPerMTok: 2.0,
+    outputPerMTok: 10.0,
     cacheWriteMultiplier: 1.25,
     cacheReadMultiplier: 0.1,
     batchMultiplier: 0.5,
     supportsEffort: true,
     supportsAdaptiveThinking: true,
     contextWindow: 1_000_000,
+    cacheMinimumTokens: 1024,
   },
   "claude-haiku-4-5": {
     inputPerMTok: 1.0,
@@ -148,6 +166,9 @@ export const MODEL_CATALOG: Record<string, ModelSpec> = {
     supportsEffort: false,
     supportsAdaptiveThinking: false,
     contextWindow: 200_000,
+    // 4096 — eight times the Opus 5 minimum. The handbook prefix this service
+    // sends is ~3.4K tokens, so it does NOT cache here. See Lab 7, Step 1.
+    cacheMinimumTokens: 4096,
   },
 };
 
@@ -178,6 +199,19 @@ export function specFor(model: string): ModelSpec {
 /** Pricing half of `specFor`, for call sites that only do cost math. */
 export function pricingFor(model: string): ModelPricing {
   return specFor(model);
+}
+
+/**
+ * Shortest prefix `model` will cache, in tokens.
+ *
+ * TEACHING NOTE: call this instead of hardcoding a number. The minimum moved
+ * twice in one model generation and it differs by a factor of eight across the
+ * three tiers this course compares, so a literal in your code is a claim that
+ * goes stale silently — which is the same failure mode as the cache bug it is
+ * supposed to protect you from.
+ */
+export function cacheMinimumFor(model: string): number {
+  return specFor(model).cacheMinimumTokens;
 }
 
 export const PORT = Number(process.env.PORT ?? 8787);

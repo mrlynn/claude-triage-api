@@ -81,16 +81,16 @@ const VARIANTS: Variant[] = [
     id: "short",
     label: "Prefix under the minimum",
     caches: false,
-    prefixTokens: 340,
+    prefixTokens: 110,
     code: `system: [
   {
     type: "text",
-    text: \`\${ROLE}\\n\\n\${POLICY_HANDBOOK.slice(0, 1500)}\`,
+    text: POLICY_HANDBOOK.slice(0, 400),
     cache_control: { type: "ephemeral" },
   },
 ]`,
-    why: "Roughly 340 tokens, under the ~1024-token minimum. The API silently declines to cache. No error, no warning, no header.",
-    fix: "Cache a larger prefix, or accept that this one will not cache.",
+    why: "Roughly 110 tokens, under the 512-token minimum Opus 5 applies. The API silently declines to cache. No error, no warning, no header. Note that ROLE had to go too: the role text alone is ~554 tokens and would clear the minimum on its own. Note also that the minimum is per model — Sonnet 5 needs 1024 and Haiku 4.5 needs 4096, so the same prefix can cache on one tier and not another.",
+    fix: "Cache a larger prefix, or accept that this one will not cache — and check the minimum for the model you actually ship, not the one you developed against.",
   },
 ];
 

@@ -184,7 +184,8 @@ Three consequences that drive most real optimization work:
 1. **Output is the expensive half.** A 5× rate multiplier means trimming a
    verbose response saves more than trimming a long prompt.
 2. **Caching only helps a repeated prefix.** It cannot help the first request,
-   and it cannot help a prefix under ~1024 tokens.
+   and it cannot help a prefix under the model's minimum — 512 tokens on
+   Opus 5, 1024 on Sonnet 5, 4096 on Haiku 4.5.
 3. **Cache writes cost more than fresh tokens.** Caching a prefix used once is
    strictly worse than not caching it.
 

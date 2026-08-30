@@ -27,8 +27,8 @@ export const PRICING_BY_MODEL: Record<string, ModelPricing> = {
     "batchMultiplier": 0.5
   },
   "claude-sonnet-5": {
-    "inputPerMTok": 3,
-    "outputPerMTok": 15,
+    "inputPerMTok": 2,
+    "outputPerMTok": 10,
     "cacheWriteMultiplier": 1.25,
     "cacheReadMultiplier": 0.1,
     "batchMultiplier": 0.5
