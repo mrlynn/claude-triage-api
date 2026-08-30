@@ -314,6 +314,16 @@ function transform(page) {
       ? [`audio_src: "/audio/${page.out}.mp3"`]
       : []),
     ...(LAB_VIDEOS[page.out] ? [`video_id: "${LAB_VIDEOS[page.out]}"`] : []),
+    // The video's own thumbnail, committed under static/img/video and served
+    // locally so the facade can show the real artwork without putting an
+    // i.ytimg.com request back on page load. Missing file → no frontmatter →
+    // the CSS-drawn poster, same degradation as audio_src.
+    ...(LAB_VIDEOS[page.out] &&
+    existsSync(
+      join(websiteDir, "static", "img", "video", `${page.out.split("/").pop()}.jpg`),
+    )
+      ? [`video_poster: "/img/video/${page.out.split("/").pop()}.jpg"`]
+      : []),
     "---",
     "",
     `<!-- GENERATED. Edit ${page.source} in the repo, then re-run sync-docs. -->`,

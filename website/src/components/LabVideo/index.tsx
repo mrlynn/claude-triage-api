@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import useBaseUrl from "@docusaurus/useBaseUrl";
 import styles from "./styles.module.css";
 
 /**
@@ -11,11 +12,23 @@ import styles from "./styles.module.css";
  * no account and no key. Nothing reaches YouTube until the button is pressed,
  * and then it is the nocookie host.
  *
- * The poster is drawn in CSS rather than fetched from i.ytimg.com, which would
- * put a third-party request back on load and undo the point.
+ * The poster is the video's own thumbnail, committed to static/img/video and
+ * served locally — the artwork viewers see on YouTube, without the
+ * i.ytimg.com request that fetching it from YouTube would put back on page
+ * load. A lab without one falls back to the CSS-drawn cover, where the text
+ * labels carry what the artwork otherwise would.
  */
-export default function LabVideo({ videoId, title }: { videoId: string; title?: string }): ReactNode {
+export default function LabVideo({
+  videoId,
+  title,
+  poster,
+}: {
+  videoId: string;
+  title?: string;
+  poster?: string;
+}): ReactNode {
   const [playing, setPlaying] = useState(false);
+  const posterUrl = useBaseUrl(poster ?? "");
 
   return (
     <div className={styles.frame}>
@@ -28,10 +41,22 @@ export default function LabVideo({ videoId, title }: { videoId: string; title?: 
           allowFullScreen
         />
       ) : (
-        <button type="button" className={styles.poster} onClick={() => setPlaying(true)}>
+        <button
+          type="button"
+          className={poster ? `${styles.poster} ${styles.withThumb}` : styles.poster}
+          onClick={() => setPlaying(true)}
+          aria-label={title ? `Play: ${title} — video` : "Play the lab video"}
+        >
+          {poster && (
+            <img className={styles.thumb} src={posterUrl} alt="" loading="lazy" />
+          )}
           <span className={styles.play} aria-hidden="true" />
-          <span className={styles.label}>Watch this lab</span>
-          <span className={styles.sub}>Narrated, with chapters and captions</span>
+          {!poster && (
+            <>
+              <span className={styles.label}>Watch this lab</span>
+              <span className={styles.sub}>Narrated, with chapters and captions</span>
+            </>
+          )}
         </button>
       )}
     </div>

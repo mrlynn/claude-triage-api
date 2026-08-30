@@ -21,14 +21,18 @@ type Props = WrapperProps<typeof ContentType>;
  */
 export default function ContentWrapper(props: Props): ReactNode {
   const { frontMatter } = useDoc();
-  const { audio_src: audioSrc, video_id: videoId, title } = frontMatter as {
-    audio_src?: string;
-    video_id?: string;
-    title?: string;
-  };
+  const { audio_src: audioSrc, video_id: videoId, video_poster: videoPoster, title } =
+    frontMatter as {
+      audio_src?: string;
+      video_id?: string;
+      video_poster?: string;
+      title?: string;
+    };
   return (
     <>
-      {typeof videoId === "string" && <LabVideo videoId={videoId} title={title} />}
+      {typeof videoId === "string" && (
+        <LabVideo videoId={videoId} title={title} poster={videoPoster} />
+      )}
       {typeof audioSrc === "string" && <AudioPlayer src={audioSrc} />}
       <Content {...props} />
     </>
