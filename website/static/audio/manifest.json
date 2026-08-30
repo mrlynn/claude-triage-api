@@ -1,31 +1,31 @@
 {
   "labs/lab-0-scoreboard": {
-    "hash": "bd8d6a92329fde408b6b10983250c348d01fbcb8d8a0f4bd9a062c72e063e53d",
+    "hash": "55aaecdb9cd019974952e5a88cc9ac25119f885d4b7006f1b8723dec4004e1c5",
     "voiceId": "JBFqnCBsd6RMkjVDRZzb",
     "modelId": "eleven_flash_v2_5",
-    "chars": 6023,
-    "generatedAt": "2026-08-30T08:12:19.735Z"
+    "chars": 5991,
+    "generatedAt": "2026-08-30T17:29:45.111Z"
   },
   "labs/lab-1-first-call": {
-    "hash": "8b0922ad91f40ad3b56858b1559c27616993137570492e2f21a9ea8cb6e431cc",
+    "hash": "806ae6c01a46dba7af54b27aa7913d550d54039761328993c3df569185b18db7",
     "voiceId": "JBFqnCBsd6RMkjVDRZzb",
     "modelId": "eleven_flash_v2_5",
-    "chars": 3474,
-    "generatedAt": "2026-08-30T08:20:25.353Z"
+    "chars": 3513,
+    "generatedAt": "2026-08-30T17:29:50.722Z"
   },
   "labs/lab-10-ask-northwind": {
-    "hash": "c511cfee9bc4832ce482d8d99a97a1a06c77366a3ed08a3fd62f6e2f6f5a4b4e",
+    "hash": "c934096c794744b93a73f51358f9ae6f6c471e6d4b5907b01337b1d74e6e6aa2",
     "voiceId": "JBFqnCBsd6RMkjVDRZzb",
     "modelId": "eleven_flash_v2_5",
-    "chars": 5466,
-    "generatedAt": "2026-08-30T08:20:33.632Z"
+    "chars": 5433,
+    "generatedAt": "2026-08-30T17:29:58.566Z"
   },
   "labs/lab-2-structured-outputs": {
-    "hash": "0ab711daf0ecfaac02e32ecdb8c81508b5fd618e65bf74e72624dd5744ec0176",
+    "hash": "a8b1afe74e58f457a84d77271fd02af654550cc932860f3f3e2b73a345adcc08",
     "voiceId": "JBFqnCBsd6RMkjVDRZzb",
     "modelId": "eleven_flash_v2_5",
-    "chars": 6937,
-    "generatedAt": "2026-08-30T08:20:43.695Z"
+    "chars": 6905,
+    "generatedAt": "2026-08-30T17:30:09.239Z"
   },
   "labs/lab-3-tool-use": {
     "hash": "d432ea8b704f377945ea58502070cdf7ac75dcd51f85b68391da9c9c46dd20d4",

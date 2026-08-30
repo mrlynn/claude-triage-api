@@ -105,7 +105,25 @@ async function synthesize(text, key) {
       },
     );
     if (!res.ok) {
-      throw new Error(`ElevenLabs ${res.status}: ${(await res.text()).slice(0, 300)}`);
+      const body = await res.text();
+      // Running out of credits mid-run is an ordinary outcome, not a crash. A
+      // stack trace here buries the one number that matters and makes a
+      // resumable stop look like a broken script. There is no pre-flight for
+      // it: a TTS-scoped key gets 401 from /v1/user/subscription, so the first
+      // reliable word on the balance is this response.
+      let quota = null;
+      try {
+        const parsed = JSON.parse(body);
+        if (parsed?.detail?.status === "quota_exceeded") quota = parsed.detail.message;
+      } catch {
+        /* Not JSON. Fall through to the generic error below. */
+      }
+      if (quota) {
+        const err = new Error(quota);
+        err.quotaExceeded = true;
+        throw err;
+      }
+      throw new Error(`ElevenLabs ${res.status}: ${body.slice(0, 300)}`);
     }
     parts.push(Buffer.from(await res.arrayBuffer()));
   }
@@ -158,9 +176,29 @@ if (!key) {
 }
 
 mkdirSync(audioDir, { recursive: true });
+let done = 0;
 for (const w of work) {
   process.stdout.write(`voicing ${w.id} (${w.text.length.toLocaleString()} chars)… `);
-  const audio = await synthesize(w.text, key);
+  let audio;
+  try {
+    audio = await synthesize(w.text, key);
+  } catch (err) {
+    if (!err.quotaExceeded) throw err;
+    const left = work.slice(done);
+    const chars = left.reduce((n, x) => n + x.text.length, 0);
+    console.log("out of credits\n");
+    console.error(`ElevenLabs: ${err.message}\n`);
+    console.error(
+      `${done} page(s) voiced and recorded. ${left.length} still to do, ` +
+        `${chars.toLocaleString()} chars ≈ ${Math.ceil(chars * CREDITS_PER_CHAR).toLocaleString()} credits:`,
+    );
+    for (const x of left) console.error(`  ${x.id}`);
+    console.error(
+      "\nNothing was lost — the manifest is written after every page, so " +
+        "re-running picks up exactly here once the quota resets or the plan changes.",
+    );
+    process.exit(1);
+  }
   writeFileSync(w.mp3, audio);
   manifest[w.id] = {
     hash: w.hash,
@@ -172,4 +210,5 @@ for (const w of work) {
   // Rewritten after every page so a failure mid-run loses nothing.
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   console.log(`${(audio.length / 1024 / 1024).toFixed(1)} MB`);
+  done++;
 }
