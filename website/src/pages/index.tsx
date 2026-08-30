@@ -12,10 +12,48 @@ import { STOREFRONT_URL as STOREFRONT } from "../urls";
 const DISCUSSIONS_URL = "https://github.com/mrlynn/claude-triage-api/discussions";
 const INTRO_VIDEO_ID = "fhsAmotYggs";
 /** Shown on the poster so nobody clicks blind. Update if the cut changes. */
-const INTRO_VIDEO_RUNTIME = "2:10";
+const INTRO_VIDEO_RUNTIME = "2:17";
+
+/*
+  Every event carries whether the video had been played first.
+
+  THE QUESTION THIS EXISTS TO ANSWER: the video sits below the doors on the
+  argument that the doors convert better than a video does. That is an
+  argument, not evidence. The way it gets settled is whether someone who plays
+  the video then opens a door, or whether the video ends the visit.
+
+  Vercel Analytics gives a flat list of events with no per-visitor join, so the
+  answer has to ride on the event itself rather than be reconstructed later.
+  Playing the video sets a flag for the rest of the session, and every event
+  after it reports `afterVideo: "yes"`. `Course path selected` split on that
+  property is the funnel.
+
+  sessionStorage rather than a module variable, because a door click navigates
+  away and takes the variable with it. Not localStorage, because the question
+  is about this visit, not this person forever. Both calls are wrapped —
+  private windows and blocked site data throw on access, and losing the
+  analytics detail must never cost someone the click.
+*/
+const VIDEO_SEEN_KEY = "triage:intro-video-played";
+
+function videoSeen(): boolean {
+  try {
+    return sessionStorage.getItem(VIDEO_SEEN_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markVideoSeen() {
+  try {
+    sessionStorage.setItem(VIDEO_SEEN_KEY, "1");
+  } catch {
+    /* Nothing to do. The play event itself still fired. */
+  }
+}
 
 function trackCourseEvent(name: string, properties: Record<string, string | number>) {
-  track(name, properties);
+  track(name, { ...properties, afterVideo: videoSeen() ? "yes" : "no" });
 }
 
 /**
@@ -224,6 +262,12 @@ function StartHere() {
   poster is a static image; the iframe only exists after someone asks for it,
   and it is the nocookie host when it does.
 
+  WHY NOT THE VIDEO'S OWN THUMBNAIL: its opening frame is the deck title
+  slide, which carries a "3 / 9" page counter in the corner and a headline
+  that repeats the one above this section. YouTube only serves it at 640x360,
+  so it would also be soft in a 48rem box. The catalogue still is the same
+  photograph, sharper, without the slide chrome.
+
   WHY IT SITS BELOW THE DOORS: the doors are the page's argument — the fastest
   way to make someone want the course is to let them use the finished thing on
   a sentence they wrote. A video above them would make the first offer a
@@ -259,6 +303,7 @@ function IntroVideo() {
               onClick={() => {
                 setPlaying(true);
                 trackCourseEvent("Course intro video played", { source: "landing" });
+                markVideoSeen();
               }}
             >
               <span className={styles.videoPlay} aria-hidden="true" />
@@ -271,7 +316,10 @@ function IntroVideo() {
         <p className={styles.sectionFoot}>
           <a
             href={`https://youtu.be/${INTRO_VIDEO_ID}`}
-            onClick={() => trackCourseEvent("Course intro video played", { source: "youtube" })}
+            onClick={() => {
+              trackCourseEvent("Course intro video played", { source: "youtube" });
+              markVideoSeen();
+            }}
           >
             Watch on YouTube
           </a>

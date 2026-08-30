@@ -44,6 +44,11 @@ page, and the labs are much harder to motivate without it.
 
 ### What that looks like
 
+**The introduction, in two minutes.** The queue, the ticket that sat for three
+days, and what you build to catch it — before you decide whether to spend an
+afternoon on it.
+[Watch it](https://youtu.be/fhsAmotYggs)
+
 **The shop.** A working Next.js storefront for the fictional company, so the
 tickets the service triages are about products a learner has actually looked
 at. [northwind.mlynn.dev](https://northwind.mlynn.dev)

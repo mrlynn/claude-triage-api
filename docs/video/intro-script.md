@@ -112,3 +112,45 @@ page anyway.
 - Northwind is invented, the shapes are not. Say it early — it buys credibility
   and saves the question later.
 - Personal project. Views are my own, not affiliated with or endorsed by Cursor.
+
+---
+
+## YouTube description
+
+Paste this into the video description. The first two lines are what shows above
+the fold before anyone clicks "more", so the link is in them.
+
+```
+Northwind Outfitters takes 4,100 support tickets a week and sorts them by hand.
+Build the service that fixes that: https://triage.mlynn.dev
+
+A hands-on course on the Claude API. You build a customer-support triage
+service across four routes — structured outputs, tool use, streaming, and token
+counting — against one codebase you can read end to end. Solutions for every
+lab.
+
+You can try the finished thing without installing anything. Walk into the shop,
+file a support ticket about whatever you want, and watch a live model
+categorise it, rank its urgency, and decide whether a person needs to see it:
+https://northwind.mlynn.dev
+
+The course: https://triage.mlynn.dev
+The scenario: https://triage.mlynn.dev/docs/scenario
+The code: https://github.com/mrlynn/claude-triage-api
+
+Northwind Outfitters is invented. The shapes are not.
+
+Personal educational project. Views are my own and are not affiliated with or
+endorsed by Cursor.
+```
+
+### Pinned comment
+
+Short, and it asks for the one thing worth asking for.
+
+```
+The fastest way to see what this is: go to https://northwind.mlynn.dev, file a
+support ticket about anything, and watch it get classified. Nothing to install,
+no API key. Then try to talk the classifier out of doing its job — some of it
+works, and there's a playground for that.
+```
