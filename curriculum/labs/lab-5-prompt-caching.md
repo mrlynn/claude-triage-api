@@ -23,10 +23,23 @@ roughly ten times what you planned. Nobody notices until finance does.
 
 ---
 
-> **Try it without setting anything up.** The
-> [cost explorer](https://triage.mlynn.dev/playground/cost) and
-> [spot the cache bug](https://triage.mlynn.dev/playground/cache)
-> are interactive versions of Steps 1, 2 and 5. No key, no server.
+```try
+{
+  "tool": "cache",
+  "title": "Spot the cache bug",
+  "lead": "Four variants of the same request. One caches. Three do not — and every one of those three returns HTTP 200 with a correct answer. Pick a variant and read the second-call usage block.",
+  "href": "/playground/cache"
+}
+```
+
+```try
+{
+  "tool": "cost",
+  "title": "Priya's budget, interactively",
+  "lead": "Volume × caching × model tier against a ~$4,000 monthly ceiling. This is the arithmetic behind Steps 1 and 2.",
+  "href": "/playground/cost"
+}
+```
 
 ## Objectives
 
@@ -47,6 +60,20 @@ flowchart TB
     System --> B1["Block 1: date, channel, email"]
 ```
 
+### Silent failure
+
+A broken cache does not look broken. The tell is a single usage field on the
+second identical call — not the status code, not the answer text.
+
+```mermaid
+flowchart TB
+    Req["identical-looking request"] --> API["Claude API"]
+    API --> OK["HTTP 200 · correct JSON"]
+    OK --> U{"cache_read_input_tokens > 0?"}
+    U -->|yes| Hit["planned unit cost"]
+    U -->|no| Miss["~10× handbook cost<br/>finance notices later"]
+```
+
 ---
 
 ## Step 1 — a cold call and a warm one
@@ -57,6 +84,18 @@ npm run smoke 2>&1 | grep -A12 "call 2"
 
 The second call should report `cache_hit: true` with several thousand
 `cache_read_input_tokens`.
+
+```receipt
+{
+  "title": "Warm triage call — representative",
+  "note": "After the prefix is written. A miss looks the same in the response body; only these fields change.",
+  "input": 112,
+  "output": 134,
+  "cacheWrite": 0,
+  "cacheRead": 3358,
+  "cost": "$0.0039"
+}
+```
 
 **Q1.** The first call shows `cache_creation_input_tokens` and the second shows
 `cache_read_input_tokens`, both large, while `input_tokens` stays small on

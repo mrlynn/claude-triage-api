@@ -27,12 +27,18 @@ part and it is the easier half. The harder half is that a model-judged boolean
 is a *hypothesis*, and somewhere in your system a hypothesis is being read as a
 control.
 
+![Basecamp bottle — the product in the safety report that sat unread](../../assets/talk/basecamp-bottle-32.jpg)
+
 ---
 
-> **Try to break the live one.** The
-> [injection playground](https://northwind.mlynn.dev/playground/injection)
-> runs real payloads against the deployed classifier, with the defences
-> switchable so you can watch the difference.
+```try
+{
+  "tool": "injection",
+  "title": "Break the boundary offline",
+  "lead": "Same escaping rule as src/lib/untrusted.ts, applied in the browser. Pick a payload and watch what delimiting alone cannot stop. The live storefront playground still runs real classifications with defences switchable.",
+  "href": "/playground/injection"
+}
+```
 
 ## Objectives
 
@@ -53,6 +59,23 @@ flowchart TB
     Model --> Auth["enforceAuthority()<br/>recompute from the trace"]
     Auth --> Cite["verifyCitations()"]
     Cite --> Out["corrected resolution<br/>+ meta.guardrails"]
+```
+
+### Hypothesis vs control
+
+Reading `within_agent_authority` from the model is asking the thing under
+persuasion whether it is allowed to be persuaded. Recompute from the tool
+trace instead.
+
+```mermaid
+flowchart LR
+    subgraph bad["Hypothesis as control"]
+        M["model boolean"] --> Act["refund / escalate"]
+    end
+    subgraph good["Deterministic control"]
+        Trace["tool trace + policy caps"] --> Enf["enforceAuthority()"]
+        Enf --> Act2["corrected action"]
+    end
 ```
 
 ---

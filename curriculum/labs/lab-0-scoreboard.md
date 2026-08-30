@@ -34,10 +34,14 @@ meet it in minute five rather than in Lab 6.
 
 ---
 
-> **See the queue this scores against.** The twenty tickets in
-> [`data/inbound-queue.json`](../../data/inbound-queue.json) are real inputs to
-> this service, and the [queue playground](https://triage.mlynn.dev/playground/queue)
-> shows them before and after triage.
+```try
+{
+  "tool": "queue",
+  "title": "See the queue this scores against",
+  "lead": "Twenty real tickets from data/inbound-queue.json, before and after triage. Find the safety report on As received, then switch.",
+  "href": "/playground/queue"
+}
+```
 
 ## Objectives
 

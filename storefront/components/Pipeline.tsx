@@ -113,7 +113,7 @@ function Dot({ status }: { status: Stage["status"] }) {
     );
   if (status === "failed")
     return (
-      <span className="grid h-5 w-5 place-items-center rounded-full bg-red-600 text-[11px] font-bold text-white">
+      <span className="grid h-5 w-5 place-items-center rounded-full bg-ember text-[11px] font-bold text-bone">
         !
       </span>
     );

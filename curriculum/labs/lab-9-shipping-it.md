@@ -23,6 +23,15 @@ underneath you, and publishing your tools to clients you did not write.
 
 ---
 
+```try
+{
+  "tool": "batch",
+  "title": "Compare the three ways before you run them",
+  "lead": "Serial, concurrent, and Batches API on the same twenty-ticket workload. Watch how the half-price batch discount can lose to a warm cache.",
+  "href": "/playground/batch"
+}
+```
+
 ## Objectives
 
 By the end you can:

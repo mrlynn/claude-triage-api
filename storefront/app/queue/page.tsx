@@ -35,17 +35,17 @@ export default async function QueuePage({
   return (
     <div className="space-y-6">
       <header className="space-y-3">
-        <p className="text-[11px] uppercase tracking-wide text-pine/50">
-          Internal
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-pine/50">
+          Internal · Escalations
         </p>
-        <h1 className="text-2xl font-semibold text-pine sm:text-3xl">
+        <h1 className="font-display text-2xl font-extrabold tracking-tight text-pine sm:text-3xl">
           Escalation queue
         </h1>
-        <p className="max-w-2xl text-pine/75">
+        <p className="max-w-2xl text-sm text-pine/75">
           Every ticket here was classified <code>requires_human: true</code> and
-          written to the database by the <code>persist</code> stage of the
-          triage pipeline. Tickets that did not need a human were classified and
-          discarded — storage is a consequence of escalation, not of submission.
+          written by the <code>persist</code> stage. Tickets that did not need a
+          human were classified and discarded — storage is a consequence of
+          escalation, not of submission.
         </p>
 
         {live ? (

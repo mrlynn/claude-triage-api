@@ -54,7 +54,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-tr from-pine/85 via-pine/55 to-pine/10" />
 
           <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-10">
-            <h1 className="max-w-3xl text-[2rem] font-extrabold leading-[1.05] tracking-tight text-bone sm:text-5xl">
+            <h1 className="font-display max-w-3xl text-[2rem] font-extrabold leading-[1.05] tracking-tight text-bone sm:text-5xl">
               Gear that outlasts the trip.
             </h1>
             <p className="mt-3 max-w-xl text-sm leading-relaxed text-bone/85 sm:text-base">

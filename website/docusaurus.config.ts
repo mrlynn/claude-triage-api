@@ -4,6 +4,9 @@ import { themes as prismThemes } from "prism-react-renderer";
 import { readFileSync } from "node:fs";
 import { STOREFRONT_URL, storefront } from "./src/urls";
 import remarkQuiz from "./plugins/remark-quiz.mjs";
+import remarkTry from "./plugins/remark-try.mjs";
+import remarkReceipt from "./plugins/remark-receipt.mjs";
+import remarkPath from "./plugins/remark-path.mjs";
 
 const GITHUB_ORG = process.env.DOCS_GITHUB_ORG ?? "mrlynn";
 const GITHUB_REPO = process.env.DOCS_GITHUB_REPO ?? "claude-triage-api";
@@ -108,7 +111,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: "./sidebars.ts",
-          remarkPlugins: [remarkQuiz],
+          remarkPlugins: [remarkQuiz, remarkTry, remarkReceipt, remarkPath],
           routeBasePath: "docs",
           editUrl: ({ docPath }) => {
             const source = DOC_SOURCES[docPath];

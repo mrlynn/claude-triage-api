@@ -3,6 +3,12 @@
 import { useState, type SyntheticEvent } from "react";
 import Link from "next/link";
 import { labs } from "@/lib/links";
+import {
+  CATEGORY_CHIP,
+  HUMAN_CHIP,
+  ERROR_BANNER,
+  urgencyChip,
+} from "@/lib/triage-ui";
 
 /**
  * The homepage's answer to "what is this and why should I care".
@@ -38,20 +44,13 @@ interface Outcome {
   ticket_id?: string;
 }
 
-const URGENCY_STYLE: Record<string, string> = {
-  urgent: "bg-red-600 text-white",
-  high: "bg-amber-500 text-amber-950",
-  normal: "bg-pine/15 text-pine",
-  low: "bg-pine/10 text-pine/60",
-};
-
 /*
-  The three chips are chosen to discriminate, not to be representative. One
-  routine warranty claim, one billing problem, and one that opens with
-  "probably nothing" and is in fact a child safety report — the case the whole
-  scenario is built around. A visitor who taps only one is most likely to tap
-  the last, which is the one worth seeing.
-*/
+ * The three chips are chosen to discriminate, not to be representative. One
+ * routine warranty claim, one billing problem, and one that opens with
+ * "probably nothing" and is in fact a child safety report — the case the whole
+ * scenario is built around. A visitor who taps only one is most likely to tap
+ * the last, which is the one worth seeing.
+ */
 const EXAMPLES = [
   {
     label: "A broken zipper",
@@ -194,11 +193,7 @@ export default function TryClassifier() {
             </p>
           )}
 
-          {error && (
-            <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800">
-              {error}
-            </p>
-          )}
+          {error && <p className={ERROR_BANNER}>{error}</p>}
 
           {outcome && (
             <div>
@@ -206,20 +201,12 @@ export default function TryClassifier() {
                 The verdict
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="rounded border border-pine/25 px-2 py-0.5 text-xs font-medium">
-                  {outcome.triage.category}
-                </span>
-                <span
-                  className={`rounded px-2 py-0.5 text-xs font-bold uppercase tracking-wide ${
-                    URGENCY_STYLE[outcome.triage.urgency] ?? ""
-                  }`}
-                >
+                <span className={CATEGORY_CHIP}>{outcome.triage.category}</span>
+                <span className={urgencyChip(outcome.triage.urgency)}>
                   {outcome.triage.urgency}
                 </span>
                 {outcome.triage.requires_human && (
-                  <span className="rounded bg-pine px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-bone">
-                    human required
-                  </span>
+                  <span className={HUMAN_CHIP}>human required</span>
                 )}
               </div>
 
@@ -251,7 +238,10 @@ export default function TryClassifier() {
                 </p>
                 {outcome.ticket_id && (
                   <p>
-                    <Link href="/queue" className="underline underline-offset-2">
+                    <Link
+                      href={`/queue#${outcome.ticket_id}`}
+                      className="underline underline-offset-2"
+                    >
                       Read it in the reviewer queue
                     </Link>{" "}
                     <span className="text-pine/50">&mdash; no login.</span>

@@ -1,0 +1,58 @@
+.wrap {
+  margin: 1.75rem 0 2.25rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 6px;
+  background: var(--ifm-background-surface-color);
+  overflow: hidden;
+}
+
+.header {
+  padding: 1rem 1.15rem 0.85rem;
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+  background: rgba(31, 61, 51, 0.04);
+}
+
+html[data-theme="dark"] .header {
+  background: rgba(242, 237, 228, 0.04);
+}
+
+.eyebrow {
+  margin: 0 0 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ifm-color-emphasis-600);
+}
+
+.title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ifm-heading-color);
+}
+
+.lead {
+  margin: 0.45rem 0 0;
+  max-width: 42rem;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.body {
+  padding: 1rem 1.15rem;
+  /* Tall sims stay usable without dominating the lab scroll. */
+  max-height: min(32rem, 70vh);
+  overflow: auto;
+}
+
+.footer {
+  padding: 0.65rem 1.15rem;
+  border-top: 1px solid var(--ifm-color-emphasis-200);
+  font-size: 0.88rem;
+}
+
+.footer a {
+  font-weight: 500;
+}

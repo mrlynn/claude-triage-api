@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type SyntheticEvent } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import Pipeline, {
   STAGE_ORDER,
@@ -8,7 +9,17 @@ import Pipeline, {
   type StageId,
 } from "@/components/Pipeline";
 import FlowDiagram from "@/components/FlowDiagram";
+import ProductArt from "@/components/ProductArt";
 import { labs } from "@/lib/links";
+import { getOrder } from "@/lib/orders";
+import { getProduct, usd } from "@/lib/products";
+import {
+  CATEGORY_CHIP,
+  HUMAN_CHIP,
+  ERROR_BANNER,
+  confidenceBar,
+  urgencyChip,
+} from "@/lib/triage-ui";
 
 /**
  * The closed loop.
@@ -46,23 +57,27 @@ function freshStages(): Record<StageId, Stage> {
   ) as Record<StageId, Stage>;
 }
 
-const URGENCY_STYLE: Record<string, string> = {
-  urgent: "bg-red-600 text-white",
-  high: "bg-amber-500 text-amber-950",
-  normal: "bg-pine/15 text-pine",
-  low: "bg-pine/8 text-pine/60",
-};
-
 const EXAMPLES = [
-  "The zipper on my Ridgeline shell separated the second time I wore it. I would like a replacement.",
-  "You charged me twice for the same order this morning. Two identical charges ten minutes apart.",
-  "Probably nothing, but the lining inside my kid's bottle is flaking and she has been unwell this week.",
+  {
+    label: "A broken zipper",
+    text: "The zipper on my Ridgeline shell separated the second time I wore it. I would like a replacement.",
+  },
+  {
+    label: "A double charge",
+    text: "You charged me twice for the same order this morning. Two identical charges ten minutes apart.",
+  },
+  {
+    label: '"Probably nothing"',
+    text: "Probably nothing, but the lining inside my kid's bottle is flaking and she has been unwell this week.",
+  },
 ];
 
 export default function SupportForm() {
   const params = useSearchParams();
-  const product = params.get("product") ?? undefined;
+  const productSlug = params.get("product") ?? undefined;
   const orderId = params.get("order") ?? undefined;
+  const product = productSlug ? getProduct(productSlug) : undefined;
+  const order = orderId ? getOrder(orderId) : undefined;
 
   const [message, setMessage] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
@@ -78,13 +93,14 @@ export default function SupportForm() {
     setStages(freshStages());
 
     try {
-      // The streaming endpoint emits one event per pipeline stage, so the
-      // panel on the right fills in as the request actually progresses
-      // rather than all at once when it finishes.
       const res = await fetch("/api/support/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, product, orderId }),
+        body: JSON.stringify({
+          message,
+          product: productSlug,
+          orderId,
+        }),
       });
 
       if (!res.body) {
@@ -141,10 +157,46 @@ export default function SupportForm() {
   return (
     <div className="grid min-w-0 gap-10 lg:grid-cols-2">
       <form onSubmit={submit} className="min-w-0">
-        {(product || orderId) && (
-          <div className="mb-4 rounded-md border border-pine/20 bg-white/50 px-4 py-3 text-sm">
-            <span className="text-pine/60">Regarding </span>
-            <span className="font-semibold">{product ?? orderId}</span>
+        {(product || order) && (
+          <div className="mb-4 flex gap-3 rounded-md border border-pine/20 bg-white/50 p-3">
+            {product && (
+              <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md">
+                <ProductArt
+                  product={product}
+                  className="h-full w-full !rounded-md"
+                  sizes="64px"
+                />
+              </div>
+            )}
+            {!product && order?.items[0] && getProduct(order.items[0].slug) && (
+              <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md">
+                <ProductArt
+                  product={getProduct(order.items[0].slug)!}
+                  className="h-full w-full !rounded-md"
+                  sizes="64px"
+                />
+              </div>
+            )}
+            <div className="min-w-0 text-sm">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-pine/50">
+                Regarding
+              </p>
+              {product && (
+                <p className="font-semibold">
+                  <Link href={`/products/${product.slug}`} className="hover:text-spruce">
+                    {product.name}
+                  </Link>
+                </p>
+              )}
+              {order && (
+                <>
+                  <p className="font-mono text-sm font-semibold">{order.order_id}</p>
+                  <p className="text-xs text-pine/60">
+                    {order.items.map((it) => it.name).join(" · ")} · {usd(order.total_usd)}
+                  </p>
+                </>
+              )}
+            </div>
           </div>
         )}
 
@@ -171,14 +223,14 @@ export default function SupportForm() {
         </div>
 
         <div className="mt-3 flex flex-wrap gap-2">
-          {EXAMPLES.map((ex, i) => (
+          {EXAMPLES.map((ex) => (
             <button
-              key={i}
+              key={ex.label}
               type="button"
-              onClick={() => setMessage(ex)}
+              onClick={() => setMessage(ex.text)}
               className="rounded border border-pine/20 px-2.5 py-1 text-xs text-pine/70 hover:border-spruce hover:text-spruce"
             >
-              Example {i + 1}
+              {ex.label}
             </button>
           ))}
         </div>
@@ -191,11 +243,7 @@ export default function SupportForm() {
           {state === "sending" ? "Sending..." : "Submit ticket"}
         </button>
 
-        {error && (
-          <p className="mt-3 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800">
-            {error}
-          </p>
-        )}
+        {error && <p className={`mt-3 ${ERROR_BANNER}`}>{error}</p>}
       </form>
 
       <div className="min-w-0">
@@ -231,30 +279,33 @@ export default function SupportForm() {
               The classification
             </p>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded border border-pine/25 px-2 py-0.5 text-xs font-medium">
-                {outcome.triage.category}
-              </span>
-              <span
-                className={`rounded px-2 py-0.5 text-xs font-bold uppercase tracking-wide ${
-                  URGENCY_STYLE[outcome.triage.urgency] ?? ""
-                }`}
-              >
+              <span className={CATEGORY_CHIP}>{outcome.triage.category}</span>
+              <span className={urgencyChip(outcome.triage.urgency)}>
                 {outcome.triage.urgency}
               </span>
               {outcome.triage.requires_human && (
-                <span className="rounded bg-pine px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-bone">
-                  human required
-                </span>
+                <span className={HUMAN_CHIP}>human required</span>
               )}
             </div>
 
             {outcome.ticket_id && (
-              <p className="mt-4 rounded-md border border-pine/20 bg-pine/5 px-3 py-2.5 text-sm text-pine">
-                Escalated to a person — queued as{" "}
-                <span className="font-mono font-semibold">{outcome.ticket_id}</span>.
-                A specialist picks this up from the review queue; it is not
-                waiting on an automated reply.
-              </p>
+              <div className="mt-4 rounded-md border border-ember/35 bg-ember/8 px-4 py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-ember">
+                  Escalated to a person
+                </p>
+                <p className="mt-1 text-sm text-pine">
+                  Queued as{" "}
+                  <span className="font-mono font-semibold">{outcome.ticket_id}</span>.
+                  A specialist picks this up from the review queue; it is not
+                  waiting on an automated reply.
+                </p>
+                <Link
+                  href={`/queue#${outcome.ticket_id}`}
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-pine px-3.5 py-1.5 text-sm text-bone hover:bg-spruce"
+                >
+                  Open in the escalation queue →
+                </Link>
+              </div>
             )}
 
             <p className="mt-4 text-sm font-medium">{outcome.triage.summary}</p>
@@ -276,9 +327,7 @@ export default function SupportForm() {
               </div>
               <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-pine/12">
                 <div
-                  className={
-                    outcome.triage.confidence < 0.6 ? "h-full bg-amber-500" : "h-full bg-spruce"
-                  }
+                  className={confidenceBar(outcome.triage.confidence)}
                   style={{ width: `${outcome.triage.confidence * 100}%` }}
                 />
               </div>
@@ -302,7 +351,7 @@ export default function SupportForm() {
                 href={labs("/playground/queue")}
                 className="underline underline-offset-2"
               >
-                See where a ticket like yours lands in the queue
+                See where a ticket like yours lands in the course queue
               </a>
               .
             </p>

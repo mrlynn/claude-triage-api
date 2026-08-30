@@ -213,6 +213,16 @@ as 401 tells the client to fix a key they don't have.
 draft. On this model family `effort` replaces the removed `budget_tokens` and
 controls thinking depth and total token spend.
 
+```mermaid
+flowchart LR
+    Config["config.ts effort"] --> Triage["triage: low<br/>hot path · every message"]
+    Config --> Resolve["resolve: high<br/>money moves on a wrong answer"]
+    Config --> Draft["draft: medium"]
+    Triage --> Gate{"supportsEffort(model)?"}
+    Gate -->|no · Haiku| Drop["omit effort field"]
+    Gate -->|yes| Keep["output_config.effort"]
+```
+
 Triage is a bounded classification on the hot path — it does not need deep
 reasoning and it runs on every inbound message. Resolve chains multiple lookups
 against policy and is where a wrong answer costs real money. Putting these in
@@ -234,6 +244,17 @@ for like — see [Lab 7](../curriculum/labs/lab-7-choosing-a-model.md).
 The Batches API bills at half rate, which makes it the obvious tool for
 Northwind's weekly queue. Measured on the twenty-ticket sample, it is the most
 expensive of the three ways to run that workload:
+
+```mermaid
+flowchart TB
+    Work["20-ticket queue · ~3400-token handbook"] --> Serial["serial · warm prefix"]
+    Work --> Conc["concurrent 8 · warm prefix"]
+    Work --> Batch["Batches API · fan-out"]
+    Serial --> S["$0.1645 · 20/20 cache hits"]
+    Conc --> C["$0.1751 · 20/20 cache hits"]
+    Batch --> B["$0.2018 · 11/20 cache hits"]
+    B --> Lesson["0.5× batch discount lost the<br/>0.1× cache read precondition"]
+```
 
 | mode | wall clock | cost | cache hits |
 |---|---|---|---|
@@ -271,6 +292,16 @@ extrapolating a per-unit cost.
 The storefront writes a ticket to the queue only when `requires_human` is true.
 Everything else is classified and discarded, exactly as before.
 
+```mermaid
+flowchart LR
+    Submit["customer submission"] --> Triage["/v1/triage"]
+    Triage --> Human{"requires_human?"}
+    Human -->|no| Drop["classify · discard<br/>no row"]
+    Human -->|yes| Redact["redactPII"]
+    Redact --> Store["escalations collection<br/>TTL 30 days"]
+    Store -.->|storage failure| Deg["queue degrades<br/>answer still returns"]
+```
+
 That is a deliberate inversion of the usual default. Once you have a database,
 storing every submission is the path of least resistance and it is nearly
 always wrong: a public demo that accumulates the public's support messages
@@ -304,6 +335,18 @@ shape, paid knowingly.)
 resolves a row; `summarizeUsage(usage, model)` is the one function every cost
 number in the repo flows through.
 
+```mermaid
+flowchart TB
+    Usage["usage block"] --> Sum["summarizeUsage(usage, model)"]
+    Model["response.model"] --> Sum
+    Sum --> Cat{"MODEL_CATALOG[model]?"}
+    Cat -->|miss| Throw["throw — never guess rates"]
+    Cat -->|hit| Cost["invoice-shaped figure"]
+    Metric["calibration / gap"] --> Null{"has data?"}
+    Null -->|no| NA["null → display n/a"]
+    Null -->|yes| Num["computed metric"]
+```
+
 Two choices here are worth defending.
 
 **Cost math takes the model as an argument, not from a module constant.** The
@@ -334,6 +377,13 @@ table was the one backed by no evidence. Every display site now renders `n/a`.
 
 Decision 8 argues that only escalated tickets should be stored and that they
 should expire. This is how that argument stops being a paragraph.
+
+```mermaid
+flowchart LR
+    Write["insert escalation"] --> Doc["document.created_at"]
+    Doc --> TTL["TTL index · expireAfterSeconds"]
+    TTL --> Gone["Mongo deletes · no cron"]
+```
 
 ```ts
 // storefront/lib/mongo.ts — ensureIndexes()
@@ -406,6 +456,20 @@ hardest correctness properties on the page are index definitions.
 
 `npm test` and `npm run eval:redteam` both touch the trust boundary and neither
 substitutes for the other.
+
+```mermaid
+flowchart TB
+    subgraph unit["npm test · exact · free · ~100ms"]
+        F["fixtures"] --> Pure["enforceAuthority · wrapUntrusted<br/>redactPII · verifyCitations"]
+        Pure --> Bug["failure ⇒ bug"]
+    end
+    subgraph eval["eval:redteam · statistical · ~$0.40"]
+        Live["live model"] --> Dist["can it be talked past?"]
+        Dist --> Rate["distribution · not a proof"]
+    end
+    unit -.->|does not answer| Dist
+    eval -.->|does not prove| Bug
+```
 
 The tests are pure functions: `enforceAuthority` on a fixture resolution and a
 fixture trace, `wrapUntrusted` on the `inj-02` payload, `redactPII` on a card

@@ -18,11 +18,34 @@
   --color-bone: #f2ede4;
   --color-ember: #d9642a;
   --color-slate-nw: #8a9a93;
+
+  /* Shop headlines vs receipts / ticket ids / usage. */
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua",
+    Georgia, serif;
+  --font-mono: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
 }
 
 html {
   background: var(--color-bone);
   color: var(--color-pine);
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+}
+
+.font-mono,
+code,
+pre,
+kbd,
+samp {
+  font-family: var(--font-mono);
 }
 
 /* Flow diagram (components/FlowDiagram.tsx) */

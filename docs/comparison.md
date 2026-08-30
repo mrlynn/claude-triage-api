@@ -17,6 +17,19 @@ rather than a difference between two teams' code.
 **The shape of the difference, in one line.** The Messages API is a *call*.
 Cursor's SDK is an *agent run*. Almost everything below follows from that.
 
+```mermaid
+flowchart TB
+    subgraph claude["Claude Messages API — a call"]
+        Req["one request<br/>flags on the body"] --> Resp["one Message<br/>content + usage"]
+    end
+    subgraph cursor["Cursor SDK — an agent run"]
+        Agent["Agent.create"] --> Send["agent.send"]
+        Send --> Loop["tools · workspace · MCP"]
+        Loop --> Run["Run stream / usage"]
+    end
+    claude -.->|"same Northwind routes<br/>different primitive"| cursor
+```
+
 ---
 
 ## Where the Cursor column comes from
