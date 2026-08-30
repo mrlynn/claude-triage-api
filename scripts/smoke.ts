@@ -56,15 +56,30 @@ async function main() {
   const cacheMinimum: number = est.tokens?.cache_minimum_tokens ?? 0;
   const model: string = est.meta?.model ?? "(unknown)";
 
-  if (!canCache) {
-    console.log(
-      `\n  NOTE — ${model} will not cache this prefix: ${prefixTokens} tokens ` +
-        `against a ${cacheMinimum}-token minimum. That is a property of the ` +
-        `model, not a bug in the prompt, so the cache assertions below are ` +
-        `relaxed accordingly. Every request will pay full input rate on the ` +
-        `handbook. See curriculum/labs/lab-7-choosing-a-model.md.`,
-    );
-  }
+  // FAIL LOUDLY, with the right diagnosis.
+  //
+  // The earlier version printed a NOTE and passed, on the reasoning that a
+  // model which cannot cache is behaving as designed. That reasoning is true
+  // and beside the point: "expected" is not "fine". This configuration pays
+  // full input rate on the handbook forever — roughly 3.7x per ticket what the
+  // same prompt costs on a tier that caches — and a green tick on a wasteful
+  // config is precisely how this class of bug survives long enough to get
+  // printed in a cost table. It already did exactly that; see Lab 7.
+  //
+  // What is NOT reproduced here is the old wrong diagnosis. Failing is right;
+  // blaming a varying prefix and telling you to lengthen data/policies.md was
+  // not. The prompt is fine. The pairing of prompt and model is not.
+  check(
+    canCache,
+    `${model} will not cache this prefix: ${prefixTokens} tokens against a ` +
+      `${cacheMinimum}-token minimum. The cache_control breakpoint is accepted ` +
+      `and ignored — no error, no cache, full input rate on the handbook for ` +
+      `every request, forever. This is a property of the MODEL, not a bug in ` +
+      `the prompt: do not lengthen data/policies.md to chase the minimum. ` +
+      `Either ship a tier whose minimum this prefix clears, or decide ` +
+      `deliberately that you are paying uncached rates here and write that ` +
+      `down. See curriculum/labs/lab-7-choosing-a-model.md.`,
+  );
 
   head("2. POST /v1/triage — structured outputs (call 1, cold cache)");
   const t1 = (await (await post("/v1/triage", TICKET)).json()) as any;
@@ -89,11 +104,13 @@ async function main() {
   // is the single most expensive silent failure in the repo — it does not
   // error, it just multiplies the bill by five. Printing "CACHE MISS" and
   // exiting 0 made this a demo; failing makes it a test.
-  // Only a bug if caching was possible in the first place. Asserting
-  // unconditionally made this script blame a varying prefix for a miss that
-  // was really the model's minimum — a confidently wrong diagnosis pointing at
-  // the wrong file. When the model cannot cache, the miss IS the expected
-  // result and the useful assertion is the inverse one.
+  // The miss above is already reported loudly at step 1, with the accurate
+  // reason. Repeating it here as "something in your prefix is varying" would
+  // be a second failure carrying a wrong diagnosis, which is how the previous
+  // version of this script sent someone to the wrong file. So when the model
+  // cannot cache, this assertion inverts into a stale-config guard: a cache
+  // hit BELOW the documented minimum means src/config.ts is wrong and Lab 7's
+  // cost table needs re-deriving.
   if (canCache) {
     check(
       t2.meta.usage.cache_hit,

@@ -24,31 +24,37 @@ that the table reads as a coherent story about tiers. Errors that produce
 implausible output get caught. This one produced a plausible story, which is
 why it survived.
 
-**Q1b. Is "expected" the same as "fine"?**
+**Q1b. Where would this have been caught first?**
 
-No. They are answers to different questions. "Expected" says the system is
-behaving as designed; "fine" says the design is right. Conflating them is how a
-3.7× cost multiplier gets a passing test.
+A **startup check**, and the gap is not effort — it is timing and knowledge.
 
-Where it should fail loudly, in rough order of how early it catches the
-problem:
+What it would have to know that a test does not: *its own configuration at the
+moment it boots*. The service knows its model and can measure its prefix in one
+free `countTokens` call. That pairing is the entire bug, and it is knowable
+before the first request is served. A test only ever asserts what someone
+already thought to check, and the whole failure here is that nobody thought to
+check the cheap tier — smoke would have caught this on day one if anyone had
+run it with `TRIAGE_MODEL` set, and for months nobody did.
 
-- **Startup check.** The service knows its model and its prefix length at boot.
-  A one-line warning at startup — "this prefix will not cache on this model" —
-  costs nothing and is the earliest possible signal. This is the strongest
-  option and the repo does not do it.
-- **Code review.** A diff that changes `TRIAGE_MODEL` should be read by someone
-  who knows the minimums. In practice nobody memorizes them, which is why the
-  number belongs in the catalog and the check belongs in code.
-- **Dashboard.** `cache_hit_rate` at a flat zero is unmissable *if* someone is
-  looking. Nobody looks at a dashboard for a config they believe is fine.
-- **Test.** The weakest, because a test can only assert what someone already
-  thought to check — and the whole failure here is that nobody thought to.
+Ranked by how early each instrument fires:
 
-The honest summary: a smoke test is the wrong instrument for this. It answers
-"does this configuration work", and the configuration does work. It costs more
-than it should, which is a different question, and cost questions do not have a
-green tick — they have a number that someone has to divide.
+| instrument | when it fires | why it missed |
+|---|---|---|
+| startup check | boot, every deploy | does not exist in this repo |
+| CI matrix | on the PR that changes the tier | smoke runs against the default model only |
+| code review | on the diff | nobody memorizes per-model cache minimums |
+| dashboard | after you are already paying | `cache_hit_rate` flat at zero is unmissable *if* someone looks |
+| smoke test | only when someone runs it with the right env var | nobody did |
+
+The honest ranking puts the test **fifth**. That is worth sitting with, because
+the test is the thing this lab just spent a page improving. Making it fail
+loudly was right — it now tells the truth to whoever runs it — but a correct
+assertion nobody triggers is not a control. It is documentation with a CI
+badge.
+
+The transferable rule: **a check that requires someone to have already
+suspected the problem is not a control.** Controls fire on their own schedule,
+not on your suspicion. Startup and CI qualify; a manual smoke run does not.
 
 **Q1. What does the headroom do to the tier argument?**
 

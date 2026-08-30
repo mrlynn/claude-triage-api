@@ -112,7 +112,7 @@ makes two identical-prefix calls and asserts on `cache_hit`:
 TRIAGE_MODEL=claude-haiku-4-5 npm run smoke
 ```
 
-It passes — and the interesting part is *why* it passes:
+It **fails**, and the failure is the finding:
 
 ```
 "cache_minimum_tokens": 4096,
@@ -136,20 +136,36 @@ size of your prefix is a per-model number. It happens not to matter this time
 (both are under 4,096), but a prefix sitting near a boundary could cross it on
 a tier change with no diff to the prompt at all.
 
-The smoke test does not fail here, and that is a deliberate design choice
-worth arguing with. A cache miss on two identical calls is normally the most
-expensive silent failure in this repo, and the script asserts on it. But on a
-model that *cannot* cache this prefix, the miss is the expected result, and
-failing would attach a confidently wrong diagnosis — "something in your prefix
-is varying, lengthen `data/policies.md`" — to a prompt with nothing wrong with
-it. So the assertion inverts: on a model under its minimum, smoke fails if a
-cache hit ever *does* appear, because that would mean the minimum in
-`src/config.ts` is stale and this lab's cost table is wrong again.
+Two things about how that assertion is built, because both were decided the
+hard way.
 
-**Q1b.** Argue the other side. Smoke now passes on a configuration that costs
-roughly 3.7× more per ticket than it needs to. Is "expected" the same as
-"fine", and where should that fact fail loudly instead — a test, a startup
-check, a dashboard, a code review? Say who you expect to catch it and when.
+**It fails rather than warning.** A model that cannot cache is behaving exactly
+as designed, so there is a real argument for a passing test and a printed note.
+That argument was tried and rejected: "expected" is not "fine". This
+configuration pays full input rate on the handbook forever, roughly 3.7× per
+ticket what the same prompt costs on a tier that caches, and a green tick on a
+wasteful config is precisely how this survives long enough to get printed in a
+cost table. It already did exactly that — the table you read in Step 1.
+
+**It does not reproduce the old diagnosis.** An earlier version of this script
+asserted against a hardcoded 1,024 and told you a 2,749-token prefix was "under
+1024 tokens — lengthen `data/policies.md`". False statement, wrong remedy,
+attached to a real failure. Failing is right; blaming the prompt was not. The
+prompt is fine. The *pairing* of prompt and model is not, and the message says
+so — including "do not lengthen `data/policies.md` to chase the minimum",
+because adding 1,347 tokens of policy text to win a cache discount is a real
+temptation and a terrible reason to edit a legal document.
+
+The cache-hit assertion in section 3 inverts rather than repeating the failure:
+on a model under its minimum, smoke fails if a hit ever *does* appear, since
+that would mean `src/config.ts` is stale and this lab's cost table needs
+re-deriving.
+
+**Q1b.** The failure above is loud, correct, and fires on every run — and it
+still would not have caught the original bug, because nobody ran smoke against
+Haiku until someone already suspected the cost column. Where would this have
+been caught *first*: a startup check, CI, a dashboard, or code review? Name the
+instrument, then say what it would have to know that a test does not.
 
 Check the arithmetic on the two scenarios at 17,800 tickets a month, using the
 representative shape from Lab 5 (112 input, 134 output, 3,358 prefix):
