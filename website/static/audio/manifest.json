@@ -28,18 +28,20 @@
     "generatedAt": "2026-08-30T17:30:09.239Z"
   },
   "labs/lab-3-tool-use": {
-    "hash": "d432ea8b704f377945ea58502070cdf7ac75dcd51f85b68391da9c9c46dd20d4",
+    "hash": "fbae52efae8c4493974bb474112fb028ee22d513abe22368f6bc1976dc7a5738",
     "voiceId": "JBFqnCBsd6RMkjVDRZzb",
     "modelId": "eleven_flash_v2_5",
-    "chars": 4700,
-    "generatedAt": "2026-08-30T08:20:51.072Z"
+    "chars": 4668,
+    "generatedAt": "2026-08-30T08:20:51.072Z",
+    "trimmedAt": "2026-08-31T07:18:22.727Z"
   },
   "labs/lab-4-streaming": {
-    "hash": "722a43aa9b1a286aa7c43c55338e176687b65f5f1e94be943ce1d7b7b518e7ca",
+    "hash": "a5cd13a635d3c53feef6445851677362ce004b165314560d9842126d540e6ea2",
     "voiceId": "JBFqnCBsd6RMkjVDRZzb",
     "modelId": "eleven_flash_v2_5",
-    "chars": 3938,
-    "generatedAt": "2026-08-30T08:20:57.191Z"
+    "chars": 3906,
+    "generatedAt": "2026-08-30T08:20:57.191Z",
+    "trimmedAt": "2026-08-31T07:18:23.656Z"
   },
   "labs/lab-5-prompt-caching": {
     "hash": "05c6bd298301f4eb1d5c46601746acf1850a8efc6e316f9df0f799de8c413344",
@@ -49,11 +51,12 @@
     "generatedAt": "2026-08-30T08:21:04.998Z"
   },
   "labs/lab-6-evals": {
-    "hash": "68533b6026130f394ca85fb1da07ca7ddd6c878435850d7174c6f4c9ead1cd0a",
+    "hash": "1a57255cff04729e1b1452d6040cd2711bd0983201c34a3fc0ee52ff766d8fee",
     "voiceId": "JBFqnCBsd6RMkjVDRZzb",
     "modelId": "eleven_flash_v2_5",
-    "chars": 5560,
-    "generatedAt": "2026-08-30T08:21:13.088Z"
+    "chars": 5528,
+    "generatedAt": "2026-08-30T08:21:13.088Z",
+    "trimmedAt": "2026-08-31T07:18:24.942Z"
   },
   "labs/lab-7-choosing-a-model": {
     "hash": "0f629c5cf14a9d46a27d11454bd060162171f065ffb2be06b4c1e0a05bcfb9f2",
@@ -63,11 +66,12 @@
     "generatedAt": "2026-08-30T08:21:23.972Z"
   },
   "labs/lab-8-trust-boundary": {
-    "hash": "1a39f0887f2e0e2bf4a77f30783df50cf20c1be95393e0c0c73f9eeb63fd5fd1",
+    "hash": "0250f7c75f83d0615a0393ad4e27d21b3e768459737bf5c451559f1a619a3b1a",
     "voiceId": "JBFqnCBsd6RMkjVDRZzb",
     "modelId": "eleven_flash_v2_5",
-    "chars": 10773,
-    "generatedAt": "2026-08-30T08:21:39.768Z"
+    "chars": 10741,
+    "generatedAt": "2026-08-30T08:21:39.768Z",
+    "trimmedAt": "2026-08-31T07:18:27.439Z"
   },
   "labs/lab-9-shipping-it": {
     "hash": "26902d7ca1ee5ce79fc976b2a55819c69a9d7360d366d28b749514588fd25087",
