@@ -200,6 +200,12 @@ for (const w of work) {
     process.exit(1);
   }
   writeFileSync(w.mp3, audio);
+  // The exact text the voice read, next to the audio it read it from. Without
+  // this, nothing in the repo records what was actually said, and answering
+  // "is the current prose a truncation of what was voiced, or a rewrite?"
+  // needs archaeology through git for the narration rule in force at the time.
+  // trim-audio.mjs depends on being able to answer that exactly.
+  writeFileSync(w.mp3.replace(/\.mp3$/, ".txt"), `${w.text}\n`);
   manifest[w.id] = {
     hash: w.hash,
     voiceId: VOICE_ID,

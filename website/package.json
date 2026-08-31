@@ -14,7 +14,8 @@
     "deploy": "docusaurus deploy",
     "typecheck": "tsc",
     "video": "node scripts/generate-video.mjs",
-    "upload": "node scripts/upload-youtube.mjs"
+    "upload": "node scripts/upload-youtube.mjs",
+    "audio:trim": "node scripts/trim-audio.mjs"
   },
   "dependencies": {
     "@docusaurus/core": "3.10.2",
