@@ -1,0 +1,229 @@
+.wrap {
+  border: 1px solid var(--ifm-toc-border-color);
+  border-radius: var(--ifm-global-radius);
+  background: var(--ifm-background-surface-color);
+  overflow: hidden;
+}
+
+/* Intro */
+
+.intro {
+  padding: 1.5rem;
+}
+
+.introLead {
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.intro p {
+  max-width: 42rem;
+  line-height: 1.6;
+}
+
+.start {
+  margin-top: 0.75rem;
+  padding: 0.6rem 1.6rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--ifm-global-radius);
+  background: var(--ifm-color-primary);
+  color: #fff;
+  cursor: pointer;
+}
+
+.start:hover {
+  background: var(--ifm-color-primary-dark);
+}
+
+.introFoot {
+  margin: 0.9rem 0 0;
+  font-size: 0.78rem;
+  color: var(--ifm-color-emphasis-600);
+}
+
+/* Heads-up display */
+
+.hud {
+  display: flex;
+  gap: 1.25rem;
+  align-items: baseline;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--ifm-toc-border-color);
+  position: sticky;
+  top: var(--ifm-navbar-height, 60px);
+  /* Opaque on purpose. --ifm-background-surface-color is 50% alpha in this
+     theme, which is fine for a static panel and useless for a sticky bar that
+     has to hide the rows scrolling under it. */
+  background: var(--ifm-background-color);
+  z-index: 2;
+}
+
+.clock {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 1.35rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.hudStat {
+  font-size: 0.78rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+/* The queue */
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.row {
+  display: flex;
+  gap: 0.9rem;
+  align-items: baseline;
+  width: 100%;
+  padding: 0.7rem 1rem;
+  text-align: left;
+  border: none;
+  border-bottom: 1px solid var(--ifm-toc-border-color);
+  background: transparent;
+  color: var(--ifm-font-color-base);
+  cursor: pointer;
+  font: inherit;
+}
+
+.row:hover:not(:disabled) {
+  background: var(--ifm-hover-overlay);
+}
+
+.row:disabled {
+  cursor: default;
+}
+
+.hit {
+  background: var(--ifm-color-danger-contrast-background);
+  color: var(--ifm-color-danger-contrast-foreground);
+}
+
+.miss {
+  opacity: 0.45;
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.dim {
+  opacity: 0.5;
+}
+
+.time {
+  flex: 0 0 auto;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.78rem;
+  color: var(--ifm-color-emphasis-600);
+}
+
+.main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.subject {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.snippet {
+  font-size: 0.8rem;
+  color: var(--ifm-color-emphasis-700);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mark {
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ifm-color-emphasis-600);
+}
+
+.hit .mark {
+  color: inherit;
+  font-weight: 700;
+}
+
+/* Result */
+
+.result {
+  padding: 1.5rem;
+  border-top: 1px solid var(--ifm-toc-border-color);
+}
+
+.result p {
+  max-width: 42rem;
+  line-height: 1.65;
+}
+
+.resultHead {
+  font-size: 1.15rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 1.25rem 0 0;
+}
+
+.primary {
+  padding: 0.55rem 1.2rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: var(--ifm-global-radius);
+  background: var(--ifm-color-primary);
+  color: #fff;
+}
+
+.primary:hover {
+  background: var(--ifm-color-primary-dark);
+  color: #fff;
+  text-decoration: none;
+}
+
+.secondary {
+  padding: 0.55rem 1.2rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 1px solid var(--ifm-toc-border-color);
+  border-radius: var(--ifm-global-radius);
+  background: transparent;
+  color: var(--ifm-font-color-base);
+  cursor: pointer;
+}
+
+.secondary:hover {
+  background: var(--ifm-hover-overlay);
+}
+
+.footnote {
+  margin: 1.25rem 0 0;
+  font-size: 0.78rem;
+  color: var(--ifm-color-emphasis-600);
+}
+
+@media (max-width: 640px) {
+  .snippet {
+    display: none;
+  }
+
+  .hud {
+    gap: 0.85rem;
+  }
+}

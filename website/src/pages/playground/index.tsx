@@ -49,10 +49,17 @@ const TOOLS = [
     lab: "Scenario",
   },
   {
+    to: "/playground/find",
+    title: "Find the safety report",
+    blurb:
+      "Twenty tickets from one December morning, two of them safety reports, and a clock. Most people take a minute and change to find the second one.",
+    lab: "Scenario",
+  },
+  {
     to: "/playground/queue",
     title: "The inbound queue",
     blurb:
-      "Twenty real tickets, before and after triage. Try to spot the safety report before you flip the toggle.",
+      "The same twenty tickets, before and after triage, with every field the classifier returned.",
     lab: "Scenario",
   },
   {
