@@ -1,0 +1,423 @@
+/*
+ * Set the policy.
+ *
+ * Data colours are validated, not chosen by eye: #0f7a56 / #d9642a against the
+ * bone surface and #2b9370 / #dd7236 against the dark one. Both pairs sit in
+ * the 6-8 protan band, which is legal only with secondary encoding — so a wrong
+ * answer is a hollow ring with a cross through it and reads with no colour at
+ * all. Do not "simplify" that into a filled red dot.
+ */
+
+.desk {
+  --pd-ok: #0f7a56;
+  --pd-wrong: #d9642a;
+  --pd-blade: #1f3d33;
+  --pd-auto-band: rgba(31, 61, 51, 0.05);
+  --pd-human-band: rgba(217, 100, 42, 0.07);
+
+  border: 1px solid var(--ifm-toc-border-color);
+  border-radius: var(--ifm-global-radius);
+  background: var(--ifm-background-color);
+  overflow: hidden;
+}
+
+html[data-theme="dark"] .desk {
+  --pd-ok: #2b9370;
+  --pd-wrong: #dd7236;
+  --pd-blade: #a8c5b8;
+  --pd-auto-band: rgba(255, 255, 255, 0.04);
+  --pd-human-band: rgba(221, 114, 54, 0.1);
+}
+
+/* Controls */
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+  gap: 1.25rem;
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--ifm-toc-border-color);
+}
+
+.group {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  padding: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ifm-color-emphasis-600);
+}
+
+.models {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+
+.model,
+.modelOn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid var(--ifm-toc-border-color);
+  border-radius: var(--ifm-global-radius);
+  background: transparent;
+  color: var(--ifm-font-color-base);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+
+.model:hover {
+  background: var(--ifm-hover-overlay);
+}
+
+.modelOn {
+  border-color: var(--pd-blade);
+  box-shadow: inset 0 0 0 1px var(--pd-blade);
+}
+
+.modelName {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.modelMeta {
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ifm-color-emphasis-600);
+}
+
+.rule {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  margin-top: 0.6rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.rule input {
+  margin-top: 0.25rem;
+  flex: 0 0 auto;
+}
+
+.thresholdReadout {
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.thresholdValue {
+  font-family: var(--ifm-font-family-monospace);
+  font-variant-numeric: tabular-nums;
+  font-size: 1rem;
+}
+
+/* Stage */
+
+.stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(14rem, 1fr);
+  gap: 1.25rem;
+  padding: 1.25rem;
+}
+
+.field {
+  width: 100%;
+  height: auto;
+  touch-action: none;
+  cursor: ns-resize;
+  user-select: none;
+}
+
+.bandAuto {
+  fill: var(--pd-auto-band);
+}
+
+.bandHuman {
+  fill: var(--pd-human-band);
+}
+
+.grid {
+  stroke: var(--ifm-color-emphasis-300);
+  stroke-width: 1;
+}
+
+.axisLabel {
+  fill: var(--ifm-color-emphasis-600);
+  font-size: 11px;
+  font-family: var(--ifm-font-family-monospace);
+  text-anchor: end;
+}
+
+.axisTitle,
+.bandLabel,
+.bandLabelEnd {
+  fill: var(--ifm-color-emphasis-600);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.axisTitle {
+  text-anchor: middle;
+}
+
+.bandLabelEnd {
+  text-anchor: end;
+}
+
+/* Marks */
+
+.mark {
+  transition: transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dotOk {
+  fill: var(--pd-ok);
+  stroke: var(--ifm-background-color);
+  stroke-width: 2;
+}
+
+.dotWrong {
+  fill: none;
+  stroke: var(--pd-wrong);
+  stroke-width: 2.5;
+}
+
+.dotCross {
+  stroke: var(--pd-wrong);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.alarm {
+  fill: none;
+  stroke: var(--pd-wrong);
+  stroke-width: 1.5;
+  opacity: 0.55;
+  animation: pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    r: 15px;
+    opacity: 0.5;
+  }
+  50% {
+    r: 20px;
+    opacity: 0.12;
+  }
+}
+
+.safetyRing {
+  fill: none;
+  stroke: var(--pd-blade);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 3;
+}
+
+.safetyLabel {
+  text-anchor: middle;
+  fill: var(--ifm-color-emphasis-700);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tip {
+  font-size: 0.72rem;
+  line-height: 1.4;
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--ifm-global-radius);
+  background: var(--ifm-background-color);
+  border: 1px solid var(--ifm-toc-border-color);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  color: var(--ifm-font-color-base);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+/* The blade */
+
+.blade {
+  cursor: ns-resize;
+}
+
+.blade:focus-visible {
+  outline: none;
+}
+
+.blade:focus-visible .bladeLine {
+  stroke-width: 4;
+}
+
+.blade:focus-visible .bladeChip {
+  stroke: var(--ifm-color-primary);
+  stroke-width: 2;
+}
+
+.bladeLine {
+  stroke: var(--pd-blade);
+  stroke-width: 2.5;
+  stroke-dasharray: 7 4;
+}
+
+.bladeChip {
+  fill: var(--pd-blade);
+}
+
+.bladeChipText {
+  fill: var(--ifm-background-color);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--ifm-font-family-monospace);
+  text-anchor: middle;
+}
+
+/* Readouts */
+
+.readouts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  align-self: start;
+}
+
+.stat,
+.statGood,
+.statBad {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--ifm-global-radius);
+  border: 1px solid var(--ifm-toc-border-color);
+}
+
+.statGood {
+  border-color: var(--pd-ok);
+  box-shadow: inset 3px 0 0 var(--pd-ok);
+}
+
+.statBad {
+  border-color: var(--pd-wrong);
+  box-shadow: inset 3px 0 0 var(--pd-wrong);
+}
+
+.statNum {
+  font-size: 1.7rem;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.statBad .statNum {
+  color: var(--pd-wrong);
+}
+
+.statGood .statNum {
+  color: var(--pd-ok);
+}
+
+.statLabel {
+  font-size: 0.76rem;
+  line-height: 1.35;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.run {
+  margin-top: 0.2rem;
+  padding: 0.7rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border: none;
+  border-radius: var(--ifm-global-radius);
+  background: var(--ifm-color-primary);
+  color: #fff;
+  cursor: pointer;
+}
+
+.run:hover:not(:disabled) {
+  background: var(--ifm-color-primary-dark);
+}
+
+.run:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+/* Verdict */
+
+.verdictGood,
+.verdictBad,
+.verdictIncident {
+  padding: 1.25rem;
+  border-top: 1px solid var(--ifm-toc-border-color);
+}
+
+.verdictGood {
+  background: color-mix(in srgb, var(--pd-ok) 9%, transparent);
+}
+
+.verdictBad,
+.verdictIncident {
+  background: color-mix(in srgb, var(--pd-wrong) 11%, transparent);
+}
+
+.verdictGood p,
+.verdictBad p,
+.verdictIncident p {
+  max-width: 46rem;
+  line-height: 1.6;
+  font-size: 0.9rem;
+}
+
+.verdictHead {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.assumptions {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--ifm-toc-border-color);
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--ifm-color-emphasis-700);
+}
+
+@media (max-width: 900px) {
+  .stage {
+    grid-template-columns: 1fr;
+  }
+
+  .readouts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  }
+
+  .run {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mark,
+  .alarm {
+    transition: none;
+    animation: none;
+  }
+}

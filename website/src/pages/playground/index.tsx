@@ -49,10 +49,24 @@ const TOOLS = [
     lab: "Scenario",
   },
   {
+    to: "/playground/policy",
+    title: "Set the policy",
+    blurb:
+      "Pick a model, set the confidence above which a ticket routes itself, run a week of the queue. Haiku reports 0.95 on a safety report it got wrong, so find the threshold that catches that. There isn't one.",
+    lab: "Lab 7",
+  },
+  {
+    to: "/playground/find",
+    title: "Find the safety report",
+    blurb:
+      "Twenty tickets from one December morning, two of them safety reports, and a clock. Most people take a minute and change to find the second one.",
+    lab: "Scenario",
+  },
+  {
     to: "/playground/queue",
     title: "The inbound queue",
     blurb:
-      "Twenty real tickets, before and after triage. Try to spot the safety report before you flip the toggle.",
+      "The same twenty tickets, before and after triage, with every field the classifier returned.",
     lab: "Scenario",
   },
   {
