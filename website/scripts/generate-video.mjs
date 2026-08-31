@@ -87,6 +87,11 @@ const SHOP_URL = "https://northwind.mlynn.dev";
 const REPO_URL = "https://github.com/mrlynn/claude-triage-api";
 /* YouTube's own recommendation, and what its player expects. */
 const THUMB = { w: 1280, h: 720 };
+/* Drop a cut-out PNG here and every thumbnail composites it in. Absent, the
+   thumbnails keep the text-only design — the same degradation as a lab with no
+   MP3 getting no audio player. Must have a real alpha channel: the card behind
+   it is dark, so a white background photographs as a white box. */
+const PRESENTER = join(websiteDir, "static", "img", "presenter.png");
 
 function ffprobeDuration(file) {
   return Number(
@@ -298,6 +303,73 @@ function headingCard({ eyebrow, title, footerRight, progress }) {
   );
 }
 
+/**
+ * The thumbnail. A different design from the in-video cards, because it is
+ * judged at about 210 pixels wide in a gallery next to competing videos rather
+ * than full screen with narration over it.
+ *
+ * A face is the single biggest lever on whether anyone clicks, so when a
+ * cut-out exists it gets nearly the full height and sits on the left — the
+ * photograph points to its right, so the title lands where the finger is
+ * already sending the eye. With no photograph the title takes the whole frame
+ * and grows to fill it, which is the previous design.
+ */
+function thumbnailCard(title) {
+  const photo = presenterDataUri();
+  const words = display(title);
+  return `<!doctype html><meta charset="utf-8"><style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{width:100vw;height:100vh;background:${BRAND.pine};color:${BRAND.bone};overflow:hidden;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+      display:grid;grid-template-columns:${photo ? "46% 54%" : "1fr"};align-items:end;
+      background-image:radial-gradient(ellipse at 74% 16%, rgba(92,154,134,.34), transparent 60%);}
+    .photo{height:100%;display:flex;align-items:flex-end;justify-content:center;overflow:hidden}
+    .photo img{height:104%;object-fit:contain;object-position:bottom;
+      /* Lifts the subject off a dark card the way a rim light would. */
+      filter:drop-shadow(0 0 26px rgba(0,0,0,.55))}
+    .text{align-self:center;padding:${photo ? "0 64px 0 8px" : "0 96px"}}
+    .eyebrow{font-size:${photo ? 26 : 32}px;font-weight:700;letter-spacing:.2em;
+      text-transform:uppercase;color:${BRAND.spruce};margin-bottom:22px}
+    h1{font-size:${photo ? 68 : 92}px;line-height:1.04;letter-spacing:-.02em;font-weight:800}
+    .rule{width:104px;height:9px;background:${BRAND.ember};border-radius:5px;margin-top:30px}
+  </style>
+  ${photo ? `<div class="photo"><img src="${photo}" alt=""></div>` : ""}
+  <div class="text">
+    <div class="eyebrow">Claude API course</div>
+    <h1>${esc(words)}</h1>
+    <div class="rule"></div>
+  </div>`;
+}
+
+/**
+ * The cut-out as a data URI, or null.
+ *
+ * Inlined because the card is rendered through setContent, which has no base
+ * URL for a relative src to resolve against — the image would simply not
+ * appear, and a thumbnail that silently loses its subject is the kind of thing
+ * nobody notices until it is on YouTube.
+ */
+let presenterCache;
+function presenterDataUri() {
+  if (presenterCache !== undefined) return presenterCache;
+  if (!existsSync(PRESENTER)) {
+    presenterCache = null;
+    return null;
+  }
+  const buf = readFileSync(PRESENTER);
+  // A PNG carries an alpha channel when its IHDR colour type is 4 or 6. Worth
+  // checking, because the failure is a white rectangle on a dark card rather
+  // than an error.
+  if (buf.length > 26 && buf.toString("ascii", 1, 4) === "PNG" && ![4, 6].includes(buf[25])) {
+    console.warn(
+      `\n  warning: ${PRESENTER} has no alpha channel, so its background will\n` +
+        "  show as a solid block on the card. Export it as a PNG with transparency.\n",
+    );
+  }
+  presenterCache = `data:image/png;base64,${buf.toString("base64")}`;
+  return presenterCache;
+}
+
 function codeCard({ eyebrow, code, lang, footerRight, progress }) {
   const lines = fitCode(code);
   return shell(
@@ -465,12 +537,11 @@ for (const lab of work) {
   writeFileSync(join(outDir, `${lab.slug}.txt`), `${meta.title}\n\n${meta.description}`);
   writeFileSync(join(outDir, `${lab.slug}.json`), `${JSON.stringify(meta, null, 2)}\n`);
 
-  // The thumbnail is the title card at YouTube's size, not a frame grab: a
-  // grab lands on whatever card happened to be up and is usually a code block.
+  // The thumbnail is a purpose-built card at YouTube's size, not a frame grab:
+  // a grab lands on whatever card happened to be up, which is usually a code
+  // block and unreadable at gallery size.
   await page.setViewportSize({ width: THUMB.w, height: THUMB.h });
-  await page.setContent(
-    headingCard({ eyebrow: "Claude API course", title: lab.title, footerRight: "", progress: 0 }),
-  );
+  await page.setContent(thumbnailCard(lab.title));
   await page.screenshot({ path: join(outDir, `${lab.slug}.thumb.jpg`), type: "jpeg", quality: 88 });
   await page.setViewportSize({ width: WIDTH, height: HEIGHT });
 
