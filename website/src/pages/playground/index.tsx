@@ -49,6 +49,13 @@ const TOOLS = [
     lab: "Scenario",
   },
   {
+    to: "/playground/policy",
+    title: "Set the policy",
+    blurb:
+      "Pick a model, set the confidence above which a ticket routes itself, run a week of the queue. Haiku reports 0.95 on a safety report it got wrong, so find the threshold that catches that. There isn't one.",
+    lab: "Lab 7",
+  },
+  {
     to: "/playground/find",
     title: "Find the safety report",
     blurb:
