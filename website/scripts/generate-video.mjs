@@ -26,6 +26,7 @@
  *
  *   npm run video -- --dry-run      # what would render, and how long
  *   npm run video -- --only lab-3   # one lab
+ *   npm run video -- --thumbs-only  # just the .thumb.jpg, no ffmpeg at all
  *   npm run video                   # everything with fresh audio
  *
  * Output goes to website/video-out/ and is gitignored. These are YouTube uploads,
@@ -417,6 +418,11 @@ const args = process.argv.slice(2);
 const dryRun = args.includes("--dry-run");
 const onlyAt = args.indexOf("--only");
 const only = onlyAt === -1 ? null : args[onlyAt + 1];
+/* Thumbnails are set on YouTube independently of the video, so changing one
+   never means re-uploading the other. Re-encoding an hour of footage to
+   produce a JPEG is pure waste, and worse, it produces a new .mp4 that invites
+   a re-upload nobody needed. */
+const thumbsOnly = args.includes("--thumbs-only");
 
 if (!existsSync(manifestPath)) {
   console.error("No audio manifest. Run `npm run audio` first.");
@@ -494,6 +500,16 @@ try {
 const page = await browser.newPage({ viewport: { width: WIDTH, height: HEIGHT } });
 
 for (const lab of work) {
+  if (thumbsOnly) {
+    process.stdout.write(`thumbnail ${lab.slug} … `);
+    await page.setViewportSize({ width: THUMB.w, height: THUMB.h });
+    await page.setContent(thumbnailCard(lab.title, lab.slug));
+    await page.screenshot({ path: join(outDir, `${lab.slug}.thumb.jpg`), type: "jpeg", quality: 88 });
+    await page.setViewportSize({ width: WIDTH, height: HEIGHT });
+    console.log("done");
+    continue;
+  }
+
   process.stdout.write(`rendering ${lab.slug} … `);
   const pngs = [];
   for (let i = 0; i < lab.cards.length; i++) {
@@ -586,6 +602,10 @@ for (const lab of work) {
 await browser.close();
 rmSync(tmpDir, { recursive: true, force: true });
 console.log(
-  `\nWrote ${work.length} video(s) to ${outDir}, each with .srt captions, ` +
-    "a .thumb.jpg and a .json the uploader reads.",
+  thumbsOnly
+    ? `\nWrote ${work.length} thumbnail(s) to ${outDir}. The videos and their ` +
+        "captions are untouched — on YouTube, change the thumbnail in Studio or\n" +
+        "with `npm run upload`; nothing needs re-uploading."
+    : `\nWrote ${work.length} video(s) to ${outDir}, each with .srt captions, ` +
+        "a .thumb.jpg and a .json the uploader reads.",
 );

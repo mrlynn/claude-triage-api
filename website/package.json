@@ -15,7 +15,8 @@
     "typecheck": "tsc",
     "video": "node scripts/generate-video.mjs",
     "upload": "node scripts/upload-youtube.mjs",
-    "audio:trim": "node scripts/trim-audio.mjs"
+    "audio:trim": "node scripts/trim-audio.mjs",
+    "thumbs": "node scripts/generate-video.mjs --thumbs-only"
   },
   "dependencies": {
     "@docusaurus/core": "3.10.2",
