@@ -361,14 +361,31 @@ let presenterCache;
 function presenters() {
   if (presenterCache !== undefined) return presenterCache;
   if (!existsSync(PRESENTER_DIR)) {
+    // Loudly. Falling back silently here produces thumbnails identical to the
+    // previous run, which reads as "the script did nothing" rather than "the
+    // images are not where it looked" — and those need different fixes.
+    console.warn(
+      `\n  No presenter images. Looked in:\n    ${PRESENTER_DIR}\n` +
+        "  That directory does not exist, so thumbnails are text-only.\n" +
+        "  Put keyed PNG cut-outs there (any filenames) and run again.\n",
+    );
     presenterCache = [];
     return presenterCache;
   }
   const aims = existsSync(join(PRESENTER_DIR, "poses.json"))
     ? JSON.parse(readFileSync(join(PRESENTER_DIR, "poses.json"), "utf8"))
     : {};
-  presenterCache = readdirSync(PRESENTER_DIR)
-    .filter((f) => f.toLowerCase().endsWith(".png"))
+  const pngs = readdirSync(PRESENTER_DIR).filter((f) => f.toLowerCase().endsWith(".png"));
+  if (pngs.length === 0) {
+    const others = readdirSync(PRESENTER_DIR).filter((f) => !f.startsWith("."));
+    console.warn(
+      `\n  ${PRESENTER_DIR} exists but holds no .png files.\n` +
+        (others.length ? `  It contains: ${others.join(", ")}\n` : "  It is empty.\n") +
+        "  Thumbnails will be text-only. JPEGs cannot carry transparency, so a\n" +
+        "  cut-out has to be a PNG.\n",
+    );
+  }
+  presenterCache = pngs
     .sort()
     .map((file) => {
       const buf = readFileSync(join(PRESENTER_DIR, file));
@@ -506,7 +523,8 @@ for (const lab of work) {
     await page.setContent(thumbnailCard(lab.title, lab.slug));
     await page.screenshot({ path: join(outDir, `${lab.slug}.thumb.jpg`), type: "jpeg", quality: 88 });
     await page.setViewportSize({ width: WIDTH, height: HEIGHT });
-    console.log("done");
+    const pose = presenterFor(lab.slug);
+    console.log(pose ? `${pose.file} (${pose.aim})` : "text only, no cut-out");
     continue;
   }
 
