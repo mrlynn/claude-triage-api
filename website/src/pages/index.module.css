@@ -171,26 +171,60 @@
   margin: 2.5rem auto 0;
 }
 
-/* The intro video's poster is a bright photograph, so .videoPoster darkens it
-   hard to hold white text. This poster is a pale cream diagram — at that
-   strength the cream goes grey and the diagram stops reading, which is the
-   only reason to show a poster instead of a colour block. So: the lightest
-   wash that still separates the controls from the art, and the controls
-   carry their own contrast rather than borrowing it from a scrim. */
-.heroFilmPoster {
-  box-shadow: inset 0 0 0 100rem rgba(17, 17, 17, 0.18);
+/* No scrim: the film plays unattended, so there is no label to hold legible
+   over it and nothing to gain by dimming the artwork. */
+.heroFilm .videoPlayer {
+  object-fit: cover;
+  background: var(--ifm-background-surface-color);
 }
 
-/* The play button is white-on-cream here, not white-on-photograph. */
-.heroFilmPoster .videoPlay {
-  box-shadow: 0 2px 10px rgba(17, 17, 17, 0.35);
+/* The pause control. Small and out of the way until wanted, but never hidden
+   — WCAG 2.2.2 wants a stop for motion that starts on its own, and a control
+   that only appears on hover does not exist for a touch or keyboard user. */
+.heroFilmToggle {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  background: rgba(17, 17, 17, 0.55);
+  opacity: 0.55;
+  transition: opacity 120ms ease, background 120ms ease;
 }
 
-.heroFilmPoster .videoLabel {
-  padding: 0.3rem 0.85rem;
-  border-radius: 100px;
-  background: rgba(17, 17, 17, 0.78);
-  text-shadow: none;
+.heroFilmToggle:hover,
+.heroFilmToggle:focus-visible {
+  opacity: 1;
+  background: rgba(17, 17, 17, 0.8);
+}
+
+/* Both glyphs are drawn, to keep a two-state control off the network. */
+.heroFilmPause {
+  width: 0.75rem;
+  height: 0.85rem;
+  border-left: 0.25rem solid #fff;
+  border-right: 0.25rem solid #fff;
+}
+
+.heroFilmPlay {
+  border-style: solid;
+  border-width: 0.45rem 0 0.45rem 0.75rem;
+  border-color: transparent transparent transparent #fff;
+  /* The triangle's mass sits left of centre; nudge it back. */
+  margin-left: 0.2rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heroFilmToggle {
+    transition: none;
+  }
 }
 
 .heroFoot {

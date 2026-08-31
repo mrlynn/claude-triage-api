@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import clsx from "clsx";
 import Link from "@docusaurus/Link";
 import useBaseUrl from "@docusaurus/useBaseUrl";
@@ -165,75 +165,136 @@ const PLAYGROUNDS = [
 ];
 
 /*
-  The flow animation, in the hero, behind a poster.
+  The flow animation, in the hero, playing on a loop.
 
   WHAT IT IS: 51 silent seconds of the pipeline drawing itself — a ticket
   arrives, one POST goes out, the model fills a fixed schema, the ticket lands
-  in a lane. It shows the mechanism the way no paragraph in the hero can.
+  in a lane. It shows the mechanism the way no paragraph in the hero can. It
+  ends on the title card it opens with, so the loop has no visible seam.
 
-  WHY IT DOES NOT AUTOPLAY, AND WHY IT SITS BELOW THE BUTTONS: the argument in
-  IntroVideo below still holds — the page's first offer has to be an active
-  one. The buttons and the doors keep that position; the film is the thing you
-  reach for after them, not instead of them. Autoplaying it would also spend
-  753 KB on every visitor to show most of them a fragment of a captioned
-  argument they never asked to read.
+  WHY IT SITS BELOW THE BUTTONS: the argument in IntroVideo below still holds.
+  The page's first offer has to be an active one, and the buttons and the doors
+  keep that position. Autoplay makes the film ambient, not an offer, which is
+  the one arrangement where it does not compete with them.
 
   WHY IT IS SELF-HOSTED RATHER THAN A YOUTUBE EMBED LIKE THE INTRO: this one is
   silent, has no presenter, and is short. An embed would put a third-party
   player, its chrome, and its recommendations around what is essentially a
-  diagram — and cost more bytes than the file does. `preload="none"` means the
-  40 KB poster is all anyone pays until they ask for the rest.
+  diagram — and cost more bytes than the file does.
 
   WHY TWO SOURCES: the AV1 file is 753 KB and the H.264 is 1.4 MB for the same
   picture, but Safari only decodes AV1 where the hardware does (M3 / A17 Pro
   and newer). AV1 is listed first so every browser that can take the small one
   does; the rest fall through. The browser downloads exactly one.
-*/
-const FILM_RUNTIME = "0:51";
 
+  THE COST, STATED PLAINLY: autoplay means that one file is now 753 KB every
+  visitor pays, where the poster alone used to be 40 KB. Three things keep that
+  honest. The markup ships `preload="none"` and the effect below starts the
+  load only after hydration, so the film never competes with anything on the
+  critical path. Nothing autoplays for someone who asked for reduced motion, or
+  whose browser is in Save-Data. And the poster still renders immediately, so
+  the frame is never empty while the video arrives.
+
+  WHY IT NO LONGER SETS `afterVideo`: that flag asks whether *choosing* to
+  watch a film costs the door click. A film that plays whether you asked or not
+  is not a choice, and marking every visitor as having seen one would answer
+  the question with a constant. The intro video below still owns that flag.
+*/
 function HeroFilm() {
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const poster = useBaseUrl("/video/triage-flow-poster.jpg");
   const av1 = useBaseUrl("/video/triage-flow.av1.mp4");
   const h264 = useBaseUrl("/video/triage-flow.mp4");
 
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    /*
+      The button's state follows the element, not the call that started it.
+      A video can stop without us asking — a backgrounded tab, iOS Low Power
+      Mode, the OS reclaiming a decoder — and a pause glyph over a still frame
+      is worse than useless, because the one control on offer then lies about
+      what it will do. These two events are the only honest source.
+    */
+    const sync = () => setPlaying(!video.paused);
+    video.addEventListener("play", sync);
+    video.addEventListener("pause", sync);
+
+    /*
+      An autoplaying 51-second loop is the exact thing this query exists to
+      suppress, and Save-Data is a request not to spend someone's bytes on
+      decoration. Either one leaves the poster up and downloads nothing; the
+      button below then works as an opt-in rather than a pause.
+    */
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const saveData =
+      (navigator as { connection?: { saveData?: boolean } }).connection?.saveData === true;
+
+    if (!reduced && !saveData) {
+      /* React does not reliably render `muted` as an attribute, and an unmuted
+         video is not allowed to autoplay. This film has no audio track at all,
+         but the flag still has to be set for the policy to let it start. */
+      video.muted = true;
+      video.preload = "auto";
+      video.play().catch(() => {
+        /* Policy, Low Power Mode, or a data saver refused it. The poster is
+           already up and `sync` has left the button offering Play. */
+      });
+    }
+
+    return () => {
+      video.removeEventListener("play", sync);
+      video.removeEventListener("pause", sync);
+    };
+  }, []);
+
+  /* WCAG 2.2.2: motion that starts on its own and runs past five seconds needs
+     a way to stop it. Native controls would do, but a scrubber across a hero is
+     a lot of chrome for a diagram, so this is the one control that matters. */
+  const toggle = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    /* No setPlaying here either: pausing and playing both fire the events the
+       effect is listening to, which is what moves the button. */
+    if (video.paused) {
+      video.muted = true;
+      video.preload = "auto";
+      void video.play().catch(() => {});
+      trackCourseEvent("Course flow animation resumed", { source: "hero" });
+    } else {
+      video.pause();
+      trackCourseEvent("Course flow animation paused", { source: "hero" });
+    }
+  };
+
   return (
     <div className={clsx(styles.videoFrame, styles.heroFilm)}>
-      {playing ? (
-        <video
-          className={styles.videoPlayer}
-          poster={poster}
-          controls
-          autoPlay
-          muted
-          playsInline
-        >
-          <source src={av1} type='video/mp4; codecs="av01.0.05M.08"' />
-          <source src={h264} type='video/mp4; codecs="avc1.640032"' />
-        </video>
-      ) : (
-        <button
-          type="button"
-          className={clsx(styles.videoPoster, styles.heroFilmPoster)}
-          style={{ backgroundImage: `url(${poster})` }}
-          onClick={() => {
-            setPlaying(true);
-            trackCourseEvent("Course flow animation played", { source: "hero" });
-            /*
-              This sets the same session flag the intro video sets. `afterVideo`
-              asks whether being shown a film first costs the door click, and
-              that question does not care which film it was.
-            */
-            markVideoSeen();
-          }}
-        >
-          <span className={styles.videoPlay} aria-hidden="true" />
-          <span className={styles.videoLabel}>
-            Watch the pipeline run{" "}
-            <span className={styles.videoRun}>{FILM_RUNTIME}</span>
-          </span>
-        </button>
-      )}
+      <video
+        ref={videoRef}
+        className={styles.videoPlayer}
+        poster={poster}
+        preload="none"
+        loop
+        muted
+        playsInline
+        /* Decorative: the hero copy above already makes the same argument in
+           words, so a screen reader gains nothing by being pointed at it. */
+        aria-hidden="true"
+        tabIndex={-1}
+      >
+        <source src={av1} type='video/mp4; codecs="av01.0.05M.08"' />
+        <source src={h264} type='video/mp4; codecs="avc1.640032"' />
+      </video>
+      <button
+        type="button"
+        className={styles.heroFilmToggle}
+        onClick={toggle}
+        aria-label={playing ? "Pause the animation" : "Play the animation"}
+      >
+        <span className={playing ? styles.heroFilmPause : styles.heroFilmPlay} aria-hidden="true" />
+      </button>
     </div>
   );
 }
