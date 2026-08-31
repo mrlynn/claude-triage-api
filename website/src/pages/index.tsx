@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import clsx from "clsx";
 import Link from "@docusaurus/Link";
 import useBaseUrl from "@docusaurus/useBaseUrl";
 import Layout from "@theme/Layout";
@@ -163,6 +164,80 @@ const PLAYGROUNDS = [
   },
 ];
 
+/*
+  The flow animation, in the hero, behind a poster.
+
+  WHAT IT IS: 51 silent seconds of the pipeline drawing itself — a ticket
+  arrives, one POST goes out, the model fills a fixed schema, the ticket lands
+  in a lane. It shows the mechanism the way no paragraph in the hero can.
+
+  WHY IT DOES NOT AUTOPLAY, AND WHY IT SITS BELOW THE BUTTONS: the argument in
+  IntroVideo below still holds — the page's first offer has to be an active
+  one. The buttons and the doors keep that position; the film is the thing you
+  reach for after them, not instead of them. Autoplaying it would also spend
+  753 KB on every visitor to show most of them a fragment of a captioned
+  argument they never asked to read.
+
+  WHY IT IS SELF-HOSTED RATHER THAN A YOUTUBE EMBED LIKE THE INTRO: this one is
+  silent, has no presenter, and is short. An embed would put a third-party
+  player, its chrome, and its recommendations around what is essentially a
+  diagram — and cost more bytes than the file does. `preload="none"` means the
+  40 KB poster is all anyone pays until they ask for the rest.
+
+  WHY TWO SOURCES: the AV1 file is 753 KB and the H.264 is 1.4 MB for the same
+  picture, but Safari only decodes AV1 where the hardware does (M3 / A17 Pro
+  and newer). AV1 is listed first so every browser that can take the small one
+  does; the rest fall through. The browser downloads exactly one.
+*/
+const FILM_RUNTIME = "0:51";
+
+function HeroFilm() {
+  const [playing, setPlaying] = useState(false);
+  const poster = useBaseUrl("/video/triage-flow-poster.jpg");
+  const av1 = useBaseUrl("/video/triage-flow.av1.mp4");
+  const h264 = useBaseUrl("/video/triage-flow.mp4");
+
+  return (
+    <div className={clsx(styles.videoFrame, styles.heroFilm)}>
+      {playing ? (
+        <video
+          className={styles.videoPlayer}
+          poster={poster}
+          controls
+          autoPlay
+          muted
+          playsInline
+        >
+          <source src={av1} type='video/mp4; codecs="av01.0.05M.08"' />
+          <source src={h264} type='video/mp4; codecs="avc1.640032"' />
+        </video>
+      ) : (
+        <button
+          type="button"
+          className={clsx(styles.videoPoster, styles.heroFilmPoster)}
+          style={{ backgroundImage: `url(${poster})` }}
+          onClick={() => {
+            setPlaying(true);
+            trackCourseEvent("Course flow animation played", { source: "hero" });
+            /*
+              This sets the same session flag the intro video sets. `afterVideo`
+              asks whether being shown a film first costs the door click, and
+              that question does not care which film it was.
+            */
+            markVideoSeen();
+          }}
+        >
+          <span className={styles.videoPlay} aria-hidden="true" />
+          <span className={styles.videoLabel}>
+            Watch the pipeline run{" "}
+            <span className={styles.videoRun}>{FILM_RUNTIME}</span>
+          </span>
+        </button>
+      )}
+    </div>
+  );
+}
+
 function Hero() {
   return (
     <header className={styles.hero}>
@@ -195,6 +270,7 @@ function Hero() {
             Start from zero
           </Link>
         </div>
+        <HeroFilm />
         <p className={styles.heroFoot}>
           Or <a href="#intro-video">watch the two-minute intro</a>, or read{" "}
           <Link to="/docs/scenario">the scenario</Link> &mdash; every design
