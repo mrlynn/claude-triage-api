@@ -87,11 +87,15 @@ const SHOP_URL = "https://northwind.mlynn.dev";
 const REPO_URL = "https://github.com/mrlynn/claude-triage-api";
 /* YouTube's own recommendation, and what its player expects. */
 const THUMB = { w: 1280, h: 720 };
-/* Drop a cut-out PNG here and every thumbnail composites it in. Absent, the
-   thumbnails keep the text-only design — the same degradation as a lab with no
-   MP3 getting no audio player. Must have a real alpha channel: the card behind
-   it is dark, so a white background photographs as a white box. */
-const PRESENTER = join(websiteDir, "static", "img", "presenter.png");
+/* Cut-outs live here, any number of them. Absent, the thumbnails keep the
+   text-only design — the same degradation as a lab with no MP3 getting no
+   audio player. Each must have a real alpha channel: the card behind is dark,
+   so a green screen or a white background composites as a coloured box.
+
+   poses.json is optional and maps a filename to where the subject is pointing,
+   "up" | "mid" | "down", which decides where the title sits so the finger
+   lands on it rather than above or below it. Anything unlisted is "mid". */
+const PRESENTER_DIR = join(websiteDir, "static", "img", "presenter");
 
 function ffprobeDuration(file) {
   return Number(
@@ -314,9 +318,12 @@ function headingCard({ eyebrow, title, footerRight, progress }) {
  * already sending the eye. With no photograph the title takes the whole frame
  * and grows to fill it, which is the previous design.
  */
-function thumbnailCard(title) {
-  const photo = presenterDataUri();
+function thumbnailCard(title, slug) {
+  const pose = presenterFor(slug);
+  const photo = pose?.uri ?? null;
   const words = display(title);
+  // Where the title sits vertically, so the finger points at it.
+  const align = { up: "start", mid: "center", down: "end" }[pose?.aim ?? "mid"];
   return `<!doctype html><meta charset="utf-8"><style>
     *{margin:0;padding:0;box-sizing:border-box}
     body{width:100vw;height:100vh;background:${BRAND.pine};color:${BRAND.bone};overflow:hidden;
@@ -327,7 +334,7 @@ function thumbnailCard(title) {
     .photo img{height:104%;object-fit:contain;object-position:bottom;
       /* Lifts the subject off a dark card the way a rim light would. */
       filter:drop-shadow(0 0 26px rgba(0,0,0,.55))}
-    .text{align-self:center;padding:${photo ? "0 64px 0 8px" : "0 96px"}}
+    .text{align-self:${photo ? align : "center"};padding:${photo ? "58px 64px 58px 8px" : "0 96px"}}
     .eyebrow{font-size:${photo ? 26 : 32}px;font-weight:700;letter-spacing:.2em;
       text-transform:uppercase;color:${BRAND.spruce};margin-bottom:22px}
     h1{font-size:${photo ? 68 : 92}px;line-height:1.04;letter-spacing:-.02em;font-weight:800}
@@ -342,32 +349,56 @@ function thumbnailCard(title) {
 }
 
 /**
- * The cut-out as a data URI, or null.
+ * The available cut-outs, read once.
  *
- * Inlined because the card is rendered through setContent, which has no base
- * URL for a relative src to resolve against — the image would simply not
- * appear, and a thumbnail that silently loses its subject is the kind of thing
- * nobody notices until it is on YouTube.
+ * Inlined as data URIs because the card is rendered through setContent, which
+ * has no base URL for a relative src to resolve against. The image would
+ * simply not appear, and a thumbnail that has quietly lost its subject is not
+ * something anyone notices until it is on YouTube.
  */
 let presenterCache;
-function presenterDataUri() {
+function presenters() {
   if (presenterCache !== undefined) return presenterCache;
-  if (!existsSync(PRESENTER)) {
-    presenterCache = null;
-    return null;
+  if (!existsSync(PRESENTER_DIR)) {
+    presenterCache = [];
+    return presenterCache;
   }
-  const buf = readFileSync(PRESENTER);
-  // A PNG carries an alpha channel when its IHDR colour type is 4 or 6. Worth
-  // checking, because the failure is a white rectangle on a dark card rather
-  // than an error.
-  if (buf.length > 26 && buf.toString("ascii", 1, 4) === "PNG" && ![4, 6].includes(buf[25])) {
-    console.warn(
-      `\n  warning: ${PRESENTER} has no alpha channel, so its background will\n` +
-        "  show as a solid block on the card. Export it as a PNG with transparency.\n",
-    );
-  }
-  presenterCache = `data:image/png;base64,${buf.toString("base64")}`;
+  const aims = existsSync(join(PRESENTER_DIR, "poses.json"))
+    ? JSON.parse(readFileSync(join(PRESENTER_DIR, "poses.json"), "utf8"))
+    : {};
+  presenterCache = readdirSync(PRESENTER_DIR)
+    .filter((f) => f.toLowerCase().endsWith(".png"))
+    .sort()
+    .map((file) => {
+      const buf = readFileSync(join(PRESENTER_DIR, file));
+      // A PNG carries alpha when its IHDR colour type is 4 or 6. Worth
+      // checking: without it the background composites as a solid block
+      // rather than failing, and a green screen is very obviously a mistake
+      // only once it is a thumbnail.
+      if (buf.length > 26 && buf.toString("ascii", 1, 4) === "PNG" && ![4, 6].includes(buf[25])) {
+        console.warn(
+          `  warning: presenter/${file} has no alpha channel — its background ` +
+            "will composite as a solid block. Use a keyed cut-out, not a green screen.",
+        );
+      }
+      return { file, aim: aims[file] ?? "mid", uri: `data:image/png;base64,${buf.toString("base64")}` };
+    });
   return presenterCache;
+}
+
+/**
+ * Which cut-out a given lab gets.
+ *
+ * Chosen by hashing the slug rather than by counter, so a lab keeps the same
+ * pose across re-renders and rendering one lab alone gives the same result as
+ * rendering all of them. A gallery of eleven identical thumbnails is its own
+ * kind of dull, and varying the pose is free once more than one exists.
+ */
+function presenterFor(slug) {
+  const list = presenters();
+  if (list.length === 0) return null;
+  const digest = createHash("sha256").update(slug).digest();
+  return list[digest.readUInt32BE(0) % list.length];
 }
 
 function codeCard({ eyebrow, code, lang, footerRight, progress }) {
@@ -541,7 +572,7 @@ for (const lab of work) {
   // a grab lands on whatever card happened to be up, which is usually a code
   // block and unreadable at gallery size.
   await page.setViewportSize({ width: THUMB.w, height: THUMB.h });
-  await page.setContent(thumbnailCard(lab.title));
+  await page.setContent(thumbnailCard(lab.title, lab.slug));
   await page.screenshot({ path: join(outDir, `${lab.slug}.thumb.jpg`), type: "jpeg", quality: 88 });
   await page.setViewportSize({ width: WIDTH, height: HEIGHT });
 
