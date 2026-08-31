@@ -163,6 +163,36 @@
   margin-bottom: 0.9rem;
 }
 
+/* --- The flow animation in the hero ---------------------------------------
+   Centred under the buttons, because .videoFrame is written for a section
+   that is already a column and the hero is not. */
+
+.heroFilm {
+  margin: 2.5rem auto 0;
+}
+
+/* The intro video's poster is a bright photograph, so .videoPoster darkens it
+   hard to hold white text. This poster is a pale cream diagram — at that
+   strength the cream goes grey and the diagram stops reading, which is the
+   only reason to show a poster instead of a colour block. So: the lightest
+   wash that still separates the controls from the art, and the controls
+   carry their own contrast rather than borrowing it from a scrim. */
+.heroFilmPoster {
+  box-shadow: inset 0 0 0 100rem rgba(17, 17, 17, 0.18);
+}
+
+/* The play button is white-on-cream here, not white-on-photograph. */
+.heroFilmPoster .videoPlay {
+  box-shadow: 0 2px 10px rgba(17, 17, 17, 0.35);
+}
+
+.heroFilmPoster .videoLabel {
+  padding: 0.3rem 0.85rem;
+  border-radius: 100px;
+  background: rgba(17, 17, 17, 0.78);
+  text-shadow: none;
+}
+
 .heroFoot {
   margin: 1.5rem 0 0;
   font-size: 0.9rem;
