@@ -26,6 +26,7 @@
  *
  *   npm run video -- --dry-run      # what would render, and how long
  *   npm run video -- --only lab-3   # one lab
+ *   npm run video -- --thumbs-only  # just the .thumb.jpg, no ffmpeg at all
  *   npm run video                   # everything with fresh audio
  *
  * Output goes to website/video-out/ and is gitignored. These are YouTube uploads,
@@ -87,6 +88,15 @@ const SHOP_URL = "https://northwind.mlynn.dev";
 const REPO_URL = "https://github.com/mrlynn/claude-triage-api";
 /* YouTube's own recommendation, and what its player expects. */
 const THUMB = { w: 1280, h: 720 };
+/* Cut-outs live here, any number of them. Absent, the thumbnails keep the
+   text-only design — the same degradation as a lab with no MP3 getting no
+   audio player. Each must have a real alpha channel: the card behind is dark,
+   so a green screen or a white background composites as a coloured box.
+
+   poses.json is optional and maps a filename to where the subject is pointing,
+   "up" | "mid" | "down", which decides where the title sits so the finger
+   lands on it rather than above or below it. Anything unlisted is "mid". */
+const PRESENTER_DIR = join(websiteDir, "static", "img", "presenter");
 
 function ffprobeDuration(file) {
   return Number(
@@ -298,6 +308,100 @@ function headingCard({ eyebrow, title, footerRight, progress }) {
   );
 }
 
+/**
+ * The thumbnail. A different design from the in-video cards, because it is
+ * judged at about 210 pixels wide in a gallery next to competing videos rather
+ * than full screen with narration over it.
+ *
+ * A face is the single biggest lever on whether anyone clicks, so when a
+ * cut-out exists it gets nearly the full height and sits on the left — the
+ * photograph points to its right, so the title lands where the finger is
+ * already sending the eye. With no photograph the title takes the whole frame
+ * and grows to fill it, which is the previous design.
+ */
+function thumbnailCard(title, slug) {
+  const pose = presenterFor(slug);
+  const photo = pose?.uri ?? null;
+  const words = display(title);
+  // Where the title sits vertically, so the finger points at it.
+  const align = { up: "start", mid: "center", down: "end" }[pose?.aim ?? "mid"];
+  return `<!doctype html><meta charset="utf-8"><style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{width:100vw;height:100vh;background:${BRAND.pine};color:${BRAND.bone};overflow:hidden;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+      display:grid;grid-template-columns:${photo ? "46% 54%" : "1fr"};align-items:end;
+      background-image:radial-gradient(ellipse at 74% 16%, rgba(92,154,134,.34), transparent 60%);}
+    .photo{height:100%;display:flex;align-items:flex-end;justify-content:center;overflow:hidden}
+    .photo img{height:104%;object-fit:contain;object-position:bottom;
+      /* Lifts the subject off a dark card the way a rim light would. */
+      filter:drop-shadow(0 0 26px rgba(0,0,0,.55))}
+    .text{align-self:${photo ? align : "center"};padding:${photo ? "58px 64px 58px 8px" : "0 96px"}}
+    .eyebrow{font-size:${photo ? 26 : 32}px;font-weight:700;letter-spacing:.2em;
+      text-transform:uppercase;color:${BRAND.spruce};margin-bottom:22px}
+    h1{font-size:${photo ? 68 : 92}px;line-height:1.04;letter-spacing:-.02em;font-weight:800}
+    .rule{width:104px;height:9px;background:${BRAND.ember};border-radius:5px;margin-top:30px}
+  </style>
+  ${photo ? `<div class="photo"><img src="${photo}" alt=""></div>` : ""}
+  <div class="text">
+    <div class="eyebrow">Claude API course</div>
+    <h1>${esc(words)}</h1>
+    <div class="rule"></div>
+  </div>`;
+}
+
+/**
+ * The available cut-outs, read once.
+ *
+ * Inlined as data URIs because the card is rendered through setContent, which
+ * has no base URL for a relative src to resolve against. The image would
+ * simply not appear, and a thumbnail that has quietly lost its subject is not
+ * something anyone notices until it is on YouTube.
+ */
+let presenterCache;
+function presenters() {
+  if (presenterCache !== undefined) return presenterCache;
+  if (!existsSync(PRESENTER_DIR)) {
+    presenterCache = [];
+    return presenterCache;
+  }
+  const aims = existsSync(join(PRESENTER_DIR, "poses.json"))
+    ? JSON.parse(readFileSync(join(PRESENTER_DIR, "poses.json"), "utf8"))
+    : {};
+  presenterCache = readdirSync(PRESENTER_DIR)
+    .filter((f) => f.toLowerCase().endsWith(".png"))
+    .sort()
+    .map((file) => {
+      const buf = readFileSync(join(PRESENTER_DIR, file));
+      // A PNG carries alpha when its IHDR colour type is 4 or 6. Worth
+      // checking: without it the background composites as a solid block
+      // rather than failing, and a green screen is very obviously a mistake
+      // only once it is a thumbnail.
+      if (buf.length > 26 && buf.toString("ascii", 1, 4) === "PNG" && ![4, 6].includes(buf[25])) {
+        console.warn(
+          `  warning: presenter/${file} has no alpha channel — its background ` +
+            "will composite as a solid block. Use a keyed cut-out, not a green screen.",
+        );
+      }
+      return { file, aim: aims[file] ?? "mid", uri: `data:image/png;base64,${buf.toString("base64")}` };
+    });
+  return presenterCache;
+}
+
+/**
+ * Which cut-out a given lab gets.
+ *
+ * Chosen by hashing the slug rather than by counter, so a lab keeps the same
+ * pose across re-renders and rendering one lab alone gives the same result as
+ * rendering all of them. A gallery of eleven identical thumbnails is its own
+ * kind of dull, and varying the pose is free once more than one exists.
+ */
+function presenterFor(slug) {
+  const list = presenters();
+  if (list.length === 0) return null;
+  const digest = createHash("sha256").update(slug).digest();
+  return list[digest.readUInt32BE(0) % list.length];
+}
+
 function codeCard({ eyebrow, code, lang, footerRight, progress }) {
   const lines = fitCode(code);
   return shell(
@@ -314,6 +418,11 @@ const args = process.argv.slice(2);
 const dryRun = args.includes("--dry-run");
 const onlyAt = args.indexOf("--only");
 const only = onlyAt === -1 ? null : args[onlyAt + 1];
+/* Thumbnails are set on YouTube independently of the video, so changing one
+   never means re-uploading the other. Re-encoding an hour of footage to
+   produce a JPEG is pure waste, and worse, it produces a new .mp4 that invites
+   a re-upload nobody needed. */
+const thumbsOnly = args.includes("--thumbs-only");
 
 if (!existsSync(manifestPath)) {
   console.error("No audio manifest. Run `npm run audio` first.");
@@ -391,6 +500,16 @@ try {
 const page = await browser.newPage({ viewport: { width: WIDTH, height: HEIGHT } });
 
 for (const lab of work) {
+  if (thumbsOnly) {
+    process.stdout.write(`thumbnail ${lab.slug} … `);
+    await page.setViewportSize({ width: THUMB.w, height: THUMB.h });
+    await page.setContent(thumbnailCard(lab.title, lab.slug));
+    await page.screenshot({ path: join(outDir, `${lab.slug}.thumb.jpg`), type: "jpeg", quality: 88 });
+    await page.setViewportSize({ width: WIDTH, height: HEIGHT });
+    console.log("done");
+    continue;
+  }
+
   process.stdout.write(`rendering ${lab.slug} … `);
   const pngs = [];
   for (let i = 0; i < lab.cards.length; i++) {
@@ -465,12 +584,11 @@ for (const lab of work) {
   writeFileSync(join(outDir, `${lab.slug}.txt`), `${meta.title}\n\n${meta.description}`);
   writeFileSync(join(outDir, `${lab.slug}.json`), `${JSON.stringify(meta, null, 2)}\n`);
 
-  // The thumbnail is the title card at YouTube's size, not a frame grab: a
-  // grab lands on whatever card happened to be up and is usually a code block.
+  // The thumbnail is a purpose-built card at YouTube's size, not a frame grab:
+  // a grab lands on whatever card happened to be up, which is usually a code
+  // block and unreadable at gallery size.
   await page.setViewportSize({ width: THUMB.w, height: THUMB.h });
-  await page.setContent(
-    headingCard({ eyebrow: "Claude API course", title: lab.title, footerRight: "", progress: 0 }),
-  );
+  await page.setContent(thumbnailCard(lab.title, lab.slug));
   await page.screenshot({ path: join(outDir, `${lab.slug}.thumb.jpg`), type: "jpeg", quality: 88 });
   await page.setViewportSize({ width: WIDTH, height: HEIGHT });
 
@@ -484,6 +602,10 @@ for (const lab of work) {
 await browser.close();
 rmSync(tmpDir, { recursive: true, force: true });
 console.log(
-  `\nWrote ${work.length} video(s) to ${outDir}, each with .srt captions, ` +
-    "a .thumb.jpg and a .json the uploader reads.",
+  thumbsOnly
+    ? `\nWrote ${work.length} thumbnail(s) to ${outDir}. The videos and their ` +
+        "captions are untouched — on YouTube, change the thumbnail in Studio or\n" +
+        "with `npm run upload`; nothing needs re-uploading."
+    : `\nWrote ${work.length} video(s) to ${outDir}, each with .srt captions, ` +
+        "a .thumb.jpg and a .json the uploader reads.",
 );
