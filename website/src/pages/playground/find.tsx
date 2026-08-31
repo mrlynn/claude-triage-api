@@ -19,8 +19,9 @@ export default function FindPage(): ReactNode {
           somebody has to notice.
         </p>
         <p style={{ maxWidth: "44rem" }}>
-          These are twenty real tickets from the Northwind queue, in the order
-          they arrived. Find the two that need a human today.
+          These are twenty real tickets from the Northwind queue. You get six to
+          start and the rest land while you read. Find the two that need a human
+          before the last one arrives.
         </p>
 
         <FindTheTicket />

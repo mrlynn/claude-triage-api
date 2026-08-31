@@ -67,6 +67,43 @@
   font-variant-numeric: tabular-nums;
 }
 
+.clockPenalised {
+  color: var(--ifm-color-danger);
+}
+
+.hudPenalty {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ifm-color-danger);
+}
+
+.bestLine {
+  margin: 0.75rem 0 0;
+  font-size: 0.9rem;
+}
+
+/* The lost-shift screen reverses the button roles: replaying is the CTA. */
+.primaryBtn {
+  padding: 0.55rem 1.2rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--ifm-global-radius);
+  background: var(--ifm-color-primary);
+  color: #fff;
+  cursor: pointer;
+}
+
+.primaryBtn:hover {
+  background: var(--ifm-color-primary-dark);
+}
+
+.secondaryLink {
+  align-self: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
 .hudStat {
   font-size: 0.78rem;
   color: var(--ifm-color-emphasis-700);
@@ -78,6 +115,8 @@
   list-style: none;
   margin: 0;
   padding: 0;
+  max-height: 60vh;
+  overflow-y: auto;
 }
 
 .row {
@@ -112,6 +151,45 @@
   opacity: 0.45;
   text-decoration: line-through;
   text-decoration-thickness: 1px;
+}
+
+/* The newest arrival. Motion is the only thing telling you it landed. */
+.slot {
+  animation: land 260ms ease-out;
+}
+
+.arriving {
+  box-shadow: inset 3px 0 0 var(--ifm-color-primary);
+}
+
+@keyframes land {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slot {
+    animation: none;
+  }
+}
+
+/* A safety report that was still sitting there when the shift ended. */
+.missed {
+  background: var(--ifm-color-danger-contrast-background);
+  color: var(--ifm-color-danger-contrast-foreground);
+  box-shadow: inset 3px 0 0 var(--ifm-color-danger);
+}
+
+.missed .mark,
+.hit .mark {
+  color: inherit;
+  font-weight: 700;
 }
 
 .dim {
