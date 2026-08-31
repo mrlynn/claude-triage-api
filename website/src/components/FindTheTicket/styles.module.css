@@ -1,112 +1,233 @@
+/**
+ * The shift, as a place rather than a page element.
+ *
+ * The first version styled itself entirely out of the theme tokens — surface
+ * colour, body font, emphasis ramp — so it rendered as a paragraph that
+ * happened to own a timer. Nothing about crossing into it said "you are
+ * playing now", and a game you can mistake for prose is not a game.
+ *
+ * So the panel keeps ONE ground in both colour modes: #12211c, the deep pine
+ * /brand already uses for the mark on dark. It is not theme-aware and should
+ * not become theme-aware — a console that repaints itself when you flip the
+ * site toggle is a document again. Everything inside reads off the local
+ * tokens below rather than --ifm-*, which is what makes that hold.
+ *
+ * Contrast, measured on that ground:
+ *   #eaf2ee text     15.1:1  AAA
+ *   Spruce  #5c9a86   5.10:1  AA
+ *   Ember   #d9642a   4.61:1  AA        penalties only
+ *   Wound   #f0a79c   8.51:1  AAA       a missed safety report
+ *
+ * Ember stays what the brand says it is: a warning, spent on the ten-second
+ * penalty and on the last messages landing, and nowhere else.
+ */
+
+/* The band. Full width because the game is not part of the column of prose
+   around it, and the break in rhythm is doing the same work as the ground. */
+.stage {
+  background: var(--nw-find-ground, #12211c);
+  border-block: 1px solid rgba(234, 242, 238, 0.14);
+  padding: 0;
+}
+
 .wrap {
-  border: 1px solid var(--ifm-toc-border-color);
-  border-radius: var(--ifm-global-radius);
-  background: var(--ifm-background-surface-color);
-  overflow: hidden;
+  --nw-find-ground: #12211c;
+  --nw-find-panel: #182b24;
+  --nw-find-line: rgba(234, 242, 238, 0.14);
+  --nw-find-text: #eaf2ee;
+  --nw-find-muted: rgba(234, 242, 238, 0.62);
+  --nw-find-faint: rgba(234, 242, 238, 0.38);
+  --nw-find-spruce: #5c9a86;
+  --nw-find-ember: #d9642a;
+  --nw-find-wound: #f0a79c;
+
+  max-width: 62rem;
+  margin-inline: auto;
+  color: var(--nw-find-text);
+  font-family: var(--ifm-font-family-monospace);
+}
+
+/* Chrome. A title bar is the cheapest signal that this is an application
+   window and not an aside. */
+.chrome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 1.1rem;
+  border-bottom: 1px solid var(--nw-find-line);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--nw-find-faint);
+}
+
+.chromeLive {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--nw-find-spruce);
+}
+
+.chromeDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: breathe 2s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
 }
 
 /* Intro */
 
 .intro {
-  padding: 1.5rem;
+  padding: 2.5rem 1.5rem 3rem;
+  text-align: center;
 }
 
 .introLead {
-  font-size: 1.05rem;
+  max-width: 34rem;
+  margin-inline: auto;
+  font-size: 1.15rem;
   line-height: 1.6;
+  color: var(--nw-find-text);
 }
 
 .intro p {
-  max-width: 42rem;
+  max-width: 34rem;
+  margin-inline: auto;
   line-height: 1.6;
+  color: var(--nw-find-muted);
+}
+
+.intro strong {
+  color: var(--nw-find-text);
 }
 
 .start {
-  margin-top: 0.75rem;
-  padding: 0.6rem 1.6rem;
-  font-size: 1rem;
-  font-weight: 600;
-  border: none;
-  border-radius: var(--ifm-global-radius);
-  background: var(--ifm-color-primary);
-  color: #fff;
+  margin-top: 1.5rem;
+  padding: 0.85rem 2.4rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  border: 1px solid var(--nw-find-spruce);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--nw-find-spruce);
   cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
 }
 
 .start:hover {
-  background: var(--ifm-color-primary-dark);
+  background: var(--nw-find-spruce);
+  color: var(--nw-find-ground);
 }
 
 .introFoot {
-  margin: 0.9rem 0 0;
-  font-size: 0.78rem;
-  color: var(--ifm-color-emphasis-600);
+  margin: 1.5rem auto 0;
+  font-size: 0.72rem;
+  color: var(--nw-find-faint);
 }
 
 /* Heads-up display */
 
 .hud {
   display: flex;
-  gap: 1.25rem;
-  align-items: baseline;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--ifm-toc-border-color);
+  gap: 1.5rem;
+  align-items: center;
+  padding: 0.7rem 1.1rem;
+  border-bottom: 1px solid var(--nw-find-line);
   position: sticky;
   top: var(--ifm-navbar-height, 60px);
-  /* Opaque on purpose. --ifm-background-surface-color is 50% alpha in this
-     theme, which is fine for a static panel and useless for a sticky bar that
-     has to hide the rows scrolling under it. */
-  background: var(--ifm-background-color);
+  background: var(--nw-find-ground);
   z-index: 2;
 }
 
 .clock {
-  font-family: var(--ifm-font-family-monospace);
-  font-size: 1.35rem;
+  font-size: 1.7rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
 
-.clockPenalised {
-  color: var(--ifm-color-danger);
+/* Remounted on every penalty (keyed by the count), so the flash replays
+   instead of firing once and never again. */
+.clockHit {
+  animation: clockFlash 500ms ease-out;
 }
 
-.hudPenalty {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--ifm-color-danger);
+@keyframes clockFlash {
+  0% { color: var(--nw-find-ember); transform: scale(1.12); }
+  100% { color: var(--nw-find-text); transform: none; }
 }
 
-.bestLine {
-  margin: 0.75rem 0 0;
-  font-size: 0.9rem;
+/* The two you are looking for. Filled when found — the only counter in the
+   game, and it counts to two. */
+.pips {
+  display: flex;
+  gap: 0.4rem;
 }
 
-/* The lost-shift screen reverses the button roles: replaying is the CTA. */
-.primaryBtn {
-  padding: 0.55rem 1.2rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  border: none;
-  border-radius: var(--ifm-global-radius);
-  background: var(--ifm-color-primary);
-  color: #fff;
-  cursor: pointer;
+.pip {
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--nw-find-faint);
+  transform: rotate(45deg);
 }
 
-.primaryBtn:hover {
-  background: var(--ifm-color-primary-dark);
+.pipOn {
+  border-color: var(--nw-find-spruce);
+  background: var(--nw-find-spruce);
+  animation: pipLand 320ms ease-out;
 }
 
-.secondaryLink {
-  align-self: center;
-  font-size: 0.9rem;
-  font-weight: 600;
+@keyframes pipLand {
+  from { transform: rotate(45deg) scale(2.2); opacity: 0; }
+  to { transform: rotate(45deg) scale(1); opacity: 1; }
 }
 
 .hudStat {
-  font-size: 0.78rem;
-  color: var(--ifm-color-emphasis-700);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--nw-find-faint);
+}
+
+.hudPenalty {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--nw-find-ember);
+}
+
+.hudRight {
+  margin-left: auto;
+  text-align: right;
+}
+
+/* The shift clock that actually matters: what is left to arrive. The round
+   ends when this empties, so it is the threat, and the elapsed timer is only
+   the score. It was a grey stat in the corner before. */
+.doom {
+  height: 4px;
+  background: rgba(234, 242, 238, 0.08);
+}
+
+.doomFill {
+  height: 100%;
+  background: var(--nw-find-spruce);
+  transition: width 320ms linear, background-color 500ms ease;
+}
+
+.doomCritical {
+  background: var(--nw-find-ember);
 }
 
 /* The queue */
@@ -115,27 +236,71 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  max-height: 60vh;
+  max-height: 62vh;
   overflow-y: auto;
 }
 
+.slot {
+  animation: land 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes land {
+  from { opacity: 0; transform: translateY(-14px); }
+  to { opacity: 1; transform: none; }
+}
+
 .row {
+  position: relative;
   display: flex;
   gap: 0.9rem;
   align-items: baseline;
   width: 100%;
-  padding: 0.7rem 1rem;
+  padding: 0.7rem 1.1rem;
   text-align: left;
   border: none;
-  border-bottom: 1px solid var(--ifm-toc-border-color);
+  border-bottom: 1px solid rgba(234, 242, 238, 0.07);
   background: transparent;
-  color: var(--ifm-font-color-base);
+  color: var(--nw-find-text);
   cursor: pointer;
   font: inherit;
 }
 
+/* Unread decays into read. A message is loudest as it lands and recedes as it
+   ages, which is the grain that makes the list scannable — every row carried
+   identical weight before, so there was nothing to scan. The rail and the
+   weight are one animation because they are one idea. */
+.row::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 3px;
+  background: var(--nw-find-spruce);
+  animation: cool 9s linear forwards;
+}
+
+@keyframes cool {
+  0% { opacity: 1; }
+  55% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.row .subject {
+  animation: soften 9s linear forwards;
+}
+
+@keyframes soften {
+  0% { font-weight: 700; color: var(--nw-find-text); }
+  55% { font-weight: 700; color: var(--nw-find-text); }
+  100% { font-weight: 400; color: var(--nw-find-muted); }
+}
+
 .row:hover:not(:disabled) {
-  background: var(--ifm-hover-overlay);
+  background: rgba(234, 242, 238, 0.05);
+}
+
+.row:hover:not(:disabled) .subject {
+  color: var(--nw-find-text);
 }
 
 .row:disabled {
@@ -143,64 +308,108 @@
 }
 
 .hit {
-  background: var(--ifm-color-danger-contrast-background);
-  color: var(--ifm-color-danger-contrast-foreground);
+  background: rgba(92, 154, 134, 0.16);
 }
 
+.hit::before {
+  background: var(--nw-find-spruce);
+  animation: none;
+  opacity: 1;
+  width: 3px;
+}
+
+/* A wrong flag has to cost something you can see. Strikethrough at 45% opacity
+   was a state change; this is a mistake. */
+/* Dimmed per child rather than on the row, because opacity on the row also
+   dims the +10s floating out of it — muting the number at the one moment it
+   is supposed to shout. */
 .miss {
-  opacity: 0.45;
+  animation: recoil 380ms cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+.miss .time,
+.miss .main,
+.miss .mark {
+  opacity: 0.4;
+}
+
+.miss::before {
+  animation: none;
+  opacity: 0;
+}
+
+.miss .subject {
+  animation: none;
+  font-weight: 400;
   text-decoration: line-through;
   text-decoration-thickness: 1px;
 }
 
-/* The newest arrival. Motion is the only thing telling you it landed. */
-.slot {
-  animation: land 260ms ease-out;
+@keyframes recoil {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-7px); }
+  35% { transform: translateX(6px); }
+  60% { transform: translateX(-3px); }
+  85% { transform: translateX(2px); }
 }
 
-.arriving {
-  box-shadow: inset 3px 0 0 var(--ifm-color-primary);
+/* The ten seconds, leaving. */
+.penaltyFloat {
+  position: absolute;
+  right: 1.1rem;
+  /* Starts above the row's own status label and rises away from it. Sharing
+     that line put "+10s" straight through "not this one". */
+  top: -0.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--nw-find-ember);
+  pointer-events: none;
+  animation: rise 900ms ease-out forwards;
 }
 
-@keyframes land {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
+@keyframes rise {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-26px); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .slot {
-    animation: none;
-  }
-}
-
-/* A safety report that was still sitting there when the shift ended. */
+/* A safety report still sitting there when the shift ended. */
 .missed {
-  background: var(--ifm-color-danger-contrast-background);
-  color: var(--ifm-color-danger-contrast-foreground);
-  box-shadow: inset 3px 0 0 var(--ifm-color-danger);
+  background: rgba(240, 167, 156, 0.12);
 }
 
-.missed .mark,
+.missed::before {
+  background: var(--nw-find-wound);
+  animation: none;
+  opacity: 1;
+  width: 3px;
+}
+
+.missed .subject,
+.hit .subject {
+  animation: none;
+  font-weight: 700;
+  color: var(--nw-find-text);
+}
+
+.missed .mark {
+  color: var(--nw-find-wound);
+  font-weight: 700;
+}
+
 .hit .mark {
-  color: inherit;
+  color: var(--nw-find-spruce);
   font-weight: 700;
 }
 
 .dim {
-  opacity: 0.5;
+  opacity: 0.35;
 }
 
 .time {
   flex: 0 0 auto;
-  font-family: var(--ifm-font-family-monospace);
-  font-size: 0.78rem;
-  color: var(--ifm-color-emphasis-600);
+  font-size: 0.72rem;
+  color: var(--nw-find-faint);
+  font-variant-numeric: tabular-nums;
 }
 
 .main {
@@ -208,17 +417,16 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.2rem;
 }
 
 .subject {
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 0.88rem;
 }
 
 .snippet {
-  font-size: 0.8rem;
-  color: var(--ifm-color-emphasis-700);
+  font-size: 0.78rem;
+  color: var(--nw-find-faint);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -226,74 +434,137 @@
 
 .mark {
   flex: 0 0 auto;
-  font-size: 0.72rem;
+  font-size: 0.66rem;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--ifm-color-emphasis-600);
-}
-
-.hit .mark {
-  color: inherit;
-  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--nw-find-faint);
 }
 
 /* Result */
 
 .result {
-  padding: 1.5rem;
-  border-top: 1px solid var(--ifm-toc-border-color);
+  padding: 1.75rem 1.5rem 2rem;
+  border-top: 1px solid var(--nw-find-line);
+  font-family: var(--ifm-font-family-base);
 }
 
 .result p {
-  max-width: 42rem;
+  max-width: 40rem;
   line-height: 1.65;
+  color: var(--nw-find-muted);
 }
 
-.resultHead {
-  font-size: 1.15rem;
+.result strong,
+.result em {
+  color: var(--nw-find-text);
+}
+
+.result code {
+  background: rgba(234, 242, 238, 0.1);
+  border-color: rgba(234, 242, 238, 0.14);
+  color: var(--nw-find-text);
+}
+
+/* Scoped through .result on purpose: both of these are <p>, so the bare class
+   at (0,1,0) loses to `.result p` at (0,1,1) whatever the source order, and
+   the headline comes out muted — the one line that has to land. */
+.result .resultHead {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 1.25rem;
+  color: var(--nw-find-text);
+}
+
+.bestLine,
+.result .bestLine {
+  margin: 0.75rem 0 0;
+  font-size: 0.9rem;
+  color: var(--nw-find-spruce);
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
-  margin: 1.25rem 0 0;
+  margin: 1.5rem 0 0;
 }
 
-.primary {
-  padding: 0.55rem 1.2rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  border-radius: var(--ifm-global-radius);
-  background: var(--ifm-color-primary);
-  color: #fff;
-}
-
-.primary:hover {
-  background: var(--ifm-color-primary-dark);
-  color: #fff;
-  text-decoration: none;
-}
-
-.secondary {
-  padding: 0.55rem 1.2rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  border: 1px solid var(--ifm-toc-border-color);
-  border-radius: var(--ifm-global-radius);
-  background: transparent;
-  color: var(--ifm-font-color-base);
+.primary,
+.primaryBtn {
+  padding: 0.6rem 1.4rem;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid var(--nw-find-spruce);
+  border-radius: 2px;
+  background: var(--nw-find-spruce);
+  color: var(--nw-find-ground);
   cursor: pointer;
 }
 
-.secondary:hover {
-  background: var(--ifm-hover-overlay);
+.primary:hover,
+.primaryBtn:hover {
+  background: #6aa692;
+  border-color: #6aa692;
+  color: var(--nw-find-ground);
+  text-decoration: none;
+}
+
+.secondary,
+.secondaryLink {
+  align-self: center;
+  padding: 0.6rem 1.4rem;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: 1px solid var(--nw-find-line);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--nw-find-text);
+  cursor: pointer;
+}
+
+.secondary:hover,
+.secondaryLink:hover {
+  background: rgba(234, 242, 238, 0.06);
+  color: var(--nw-find-text);
+  text-decoration: none;
 }
 
 .footnote {
-  margin: 1.25rem 0 0;
-  font-size: 0.78rem;
-  color: var(--ifm-color-emphasis-600);
+  margin: 1.5rem 0 0;
+  font-size: 0.76rem;
+  color: var(--nw-find-faint);
+}
+
+.footnote a {
+  color: var(--nw-find-spruce);
+}
+
+/* Motion is the feedback here, so reduced motion keeps the state changes and
+   drops only the movement. The rail and the weight stop decaying rather than
+   snapping to cold, because a decay you cannot see should read as unread. */
+@media (prefers-reduced-motion: reduce) {
+  .slot,
+  .miss,
+  .penaltyFloat,
+  .clockHit,
+  .pipOn,
+  .chromeDot {
+    animation: none;
+  }
+
+  .row::before,
+  .row .subject {
+    animation: none;
+  }
+
+  .penaltyFloat {
+    opacity: 1;
+  }
 }
 
 @media (max-width: 640px) {
@@ -302,6 +573,10 @@
   }
 
   .hud {
-    gap: 0.85rem;
+    gap: 1rem;
+  }
+
+  .clock {
+    font-size: 1.4rem;
   }
 }

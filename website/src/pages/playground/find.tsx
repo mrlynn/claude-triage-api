@@ -24,9 +24,14 @@ export default function FindPage(): ReactNode {
           before the last one arrives.
         </p>
 
-        <FindTheTicket />
+      </main>
 
-        <p style={{ marginTop: "2rem", maxWidth: "44rem" }}>
+      {/* Out of the prose column on purpose: the break in rhythm is part of
+          the signal that you have stopped reading and started working. */}
+      <FindTheTicket />
+
+      <main className="container margin-vert--lg">
+        <p style={{ maxWidth: "44rem" }}>
           When you are done, <Link to="/playground/queue">the inbound queue</Link>{" "}
           shows the same twenty before and after triage, with every field the
           classifier returned. The company and the incident behind this exercise

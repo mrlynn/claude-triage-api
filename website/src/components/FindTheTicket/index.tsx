@@ -24,6 +24,10 @@ import styles from "./styles.module.css";
  *
  * Ground truth is triaged-queue.json, the same real run the rest of the site
  * uses. Nothing here is hand-authored.
+ *
+ * The panel keeps its own ground in both colour modes rather than reading the
+ * theme, because a console that repaints when you flip the site toggle is a
+ * document again. See the head of styles.module.css for the contrast working.
  */
 
 type Ticket = (typeof queue.tickets)[number];
@@ -214,6 +218,13 @@ export default function FindTheTicket(): ReactNode {
     (t) => !(t.id in found) && !wrong.includes(t.id),
   ).length;
   const remaining = TARGETS.length - Object.keys(found).length;
+  const toArrive = order.length - arrived;
+  /*
+   * The bar empties as the queue fills, because the round ends when the last
+   * message lands — that is the threat, and the elapsed clock is only the
+   * score. Ember from four out, which is roughly ten seconds of warning.
+   */
+  const shiftLeft = order.length ? toArrive / (order.length - OPENING_BACKLOG) : 0;
 
   const result = useMemo(() => {
     if (phase !== "won") return null;
@@ -230,221 +241,258 @@ export default function FindTheTicket(): ReactNode {
   }, [phase, found, all.length]);
 
   return (
-    <div className={styles.wrap}>
-      {phase === "intro" && (
-        <div className={styles.intro}>
-          <p className={styles.introLead}>
-            You are covering the Northwind support queue on a December morning.
-            Six messages are already waiting and more land while you read.
-          </p>
-          <p>
-            <strong>Two of them are safety reports.</strong> Flag both before
-            the last message arrives. A wrong flag costs you ten seconds, so
-            read before you click.
-          </p>
-          <button type="button" className={styles.start} onClick={start}>
-            Start the shift
-          </button>
-          {best !== null && (
-            <p className={styles.bestLine}>
-              Your best so far: <strong>{clock(best)}</strong>
+    <div className={styles.stage}>
+      <div className={styles.wrap}>
+        <div className={styles.chrome}>
+          <span>Northwind support &mdash; 14 December, morning shift</span>
+          {phase === "playing" ? (
+            <span className={styles.chromeLive}>
+              <span className={styles.chromeDot} />
+              receiving
+            </span>
+          ) : (
+            <span>{phase === "intro" ? "not started" : "shift closed"}</span>
+          )}
+        </div>
+
+        {phase === "intro" && (
+          <div className={styles.intro}>
+            <p className={styles.introLead}>
+              You are covering the Northwind support queue on a December morning.
+              Six messages are already waiting and more land while you read.
             </p>
-          )}
-          <p className={styles.introFoot}>
-            Nothing is sent anywhere. The clock and your best time stay in this
-            browser.
-          </p>
-        </div>
-      )}
-
-      {phase !== "intro" && (
-        <div className={styles.hud} role="status" aria-live="polite">
-          <span
-            className={`${styles.clock} ${penalty > 0 ? styles.clockPenalised : ""}`}
-          >
-            {clock(elapsed)}
-          </span>
-          <span className={styles.hudStat}>
-            {phase === "playing"
-              ? `${remaining} to find`
-              : phase === "won"
-                ? "both flagged"
-                : "shift over"}
-          </span>
-          <span className={styles.hudStat}>{unread} unread</span>
-          {penalty > 0 && (
-            <span className={styles.hudPenalty}>
-              +{Math.round(penalty / 1000)}s penalties
-            </span>
-          )}
-          {phase === "playing" && arrived < order.length && (
-            <span className={styles.hudStat}>
-              {order.length - arrived} still to arrive
-            </span>
-          )}
-        </div>
-      )}
-
-      {phase !== "intro" && (
-        <ol className={styles.list}>
-          {shown.map((t, i) => {
-            const isFound = t.id in found;
-            const isWrong = wrong.includes(t.id);
-            const isTarget = TARGETS.includes(t.id);
-            const missed = phase === "lost" && isTarget && !isFound;
-
-            return (
-              <li key={t.id} className={styles.slot}>
-                <button
-                  type="button"
-                  className={[
-                    styles.row,
-                    /* Only the newest arrival animates, and only in play. */
-                    phase === "playing" && i === arrived - 1 && i >= OPENING_BACKLOG
-                      ? styles.arriving
-                      : "",
-                    isFound ? styles.hit : "",
-                    isWrong ? styles.miss : "",
-                    missed ? styles.missed : "",
-                    phase !== "playing" && !isFound && !missed ? styles.dim : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  onClick={() => guess(t.id)}
-                  disabled={phase !== "playing" || isFound || isWrong}
-                  aria-label={`Flag ${t.subject} as a safety report`}
-                >
-                  <span className={styles.time}>{timeOf(t.received_at)}</span>
-
-                  <span className={styles.main}>
-                    <span className={styles.subject}>{t.subject}</span>
-                    <span className={styles.snippet}>{t.message}</span>
-                  </span>
-
-                  <span className={styles.mark}>
-                    {isFound
-                      ? "flagged"
-                      : missed
-                        ? "missed"
-                        : isWrong
-                          ? "not this one"
-                          : t.channel.replace(/_/g, " ")}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-      )}
-
-      {phase === "lost" && (
-        <div className={styles.result}>
-          <p className={styles.resultHead}>
-            The shift ended with a safety report still in the queue.
-          </p>
-          <p>
-            That is not a trick. It is the October 2025 incident, which is why
-            this course has the scenario it has. A parent wrote in to say their
-            child got sick, the message opened with{" "}
-            <em>&ldquo;probably nothing&rdquo;</em>, and it sat unrouted for
-            three days while everyone did their jobs properly.
-          </p>
-          <p>
-            The classifier read all {all.length} in{" "}
-            <strong>{queue.wall_clock_sec} seconds</strong> for{" "}
-            <strong>${queue.total_cost_usd.toFixed(2)}</strong> and flagged both,
-            which is the entire argument for the <code>requires_human</code>{" "}
-            field.
-          </p>
-          <div className={styles.actions}>
-            <button type="button" className={styles.primaryBtn} onClick={start}>
-              Take another shift
+            <p>
+              <strong>Two of them are safety reports.</strong> Flag both before
+              the last message arrives. A wrong flag costs you ten seconds, so
+              read before you click.
+            </p>
+            <button type="button" className={styles.start} onClick={start}>
+              Start the shift
             </button>
-            <Link className={styles.secondaryLink} to="/playground/queue">
-              See what triage does to this queue
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {result && (
-        <div className={styles.result}>
-          <p className={styles.resultHead}>
-            Both flagged in <strong>{clock(result.total)}</strong>
-            {penalty > 0 && (
-              <>
-                , including {Math.round(penalty / 1000)} seconds of penalties
-              </>
+            {best !== null && (
+              <p className={styles.bestLine}>
+                Your best so far: <strong>{clock(best)}</strong>
+              </p>
             )}
-            .
-          </p>
-
-          {beatBest && <p className={styles.bestLine}>A new best.</p>}
-
-          <p>
-            The legal notice took you{" "}
-            <strong>{clock(Math.min(result.obvious, result.camo))}</strong>. It
-            says <em>legal notice</em> in the subject line, so it was never going
-            to hide.{" "}
-            {result.camoLast ? (
-              <>
-                &ldquo;Hi, probably nothing, but&hellip;&rdquo; took{" "}
-                <strong>{clock(result.camo)}</strong>, and it is the one where a
-                child ended up in urgent care.
-              </>
-            ) : (
-              <>
-                You found &ldquo;Hi, probably nothing, but&hellip;&rdquo; first,
-                which is unusual. That is the one where a child ended up in
-                urgent care, and it is the one people normally read past.
-              </>
-            )}
-          </p>
-
-          <p>
-            You were looking for it, you knew there were exactly two, and you had{" "}
-            {all.length} messages. A real December morning has more, the person
-            reading them is answering the rest as they go, and nobody tells them
-            how many are in there. At the pace you just set, sorting{" "}
-            {TICKETS_PER_WEEK.toLocaleString()} messages a week would take{" "}
-            <strong>{humanDuration(result.atThisPace)}</strong> before anyone
-            answers a single one.
-          </p>
-
-          <p>
-            The classifier read all {all.length} in{" "}
-            <strong>{queue.wall_clock_sec} seconds</strong> for{" "}
-            <strong>${queue.total_cost_usd.toFixed(2)}</strong> and flagged both.
-            That is not the interesting part. The interesting part is that it
-            returned <strong>0.95</strong> confidence on the legal notice and{" "}
-            <strong>0.88</strong> on the child
-            {result.camoLast
-              ? ", ranking them the way you did, and for the reason you did"
-              : ", which is the ranking you just went against"}
-            . The camouflage that slowed one of them down for you shows up in the
-            model as a lower number. A score you can route on has to know which
-            of its answers are the shaky ones.
-          </p>
-
-          <div className={styles.actions}>
-            <Link className={styles.primary} to="/playground/queue">
-              See what triage does to this queue
-            </Link>
-            <button type="button" className={styles.secondary} onClick={start}>
-              Another shift
-            </button>
+            <p className={styles.introFoot}>
+              Nothing is sent anywhere. The clock and your best time stay in this
+              browser.
+            </p>
           </div>
+        )}
 
-          <p className={styles.footnote}>
-            Real output. All {all.length} classifications came from{" "}
-            <code>{queue.model}</code> through the actual <code>/v1/triage</code>{" "}
-            route. The confidence score is built in{" "}
-            <Link to="/docs/labs/lab-2-structured-outputs">Lab 2</Link> and
-            calibrated in{" "}
-            <Link to="/docs/labs/lab-7-choosing-a-model">Lab 7</Link>.
-          </p>
-        </div>
-      )}
+        {phase !== "intro" && (
+          <>
+            <div className={styles.hud} role="status" aria-live="polite">
+              {/*
+                Keyed by the penalty count so the flash remounts and replays.
+                Without the key the animation fires on the first wrong flag and
+                never again, which is the one time you do not need telling.
+              */}
+              <span key={wrong.length} className={`${styles.clock} ${wrong.length > 0 ? styles.clockHit : ""}`}>
+                {clock(elapsed)}
+              </span>
+
+              <span className={styles.pips} aria-label={`${remaining} still to find`}>
+                {TARGETS.map((id) => (
+                  <span
+                    key={id}
+                    className={`${styles.pip} ${id in found ? styles.pipOn : ""}`}
+                  />
+                ))}
+              </span>
+
+              <span className={styles.hudStat}>{unread} unread</span>
+              {penalty > 0 && (
+                <span className={styles.hudPenalty}>
+                  +{Math.round(penalty / 1000)}s
+                </span>
+              )}
+
+              <span className={`${styles.hudStat} ${styles.hudRight}`}>
+                {phase === "playing"
+                  ? toArrive > 0
+                    ? `${toArrive} still to arrive`
+                    : "last message in"
+                  : phase === "won"
+                    ? "both flagged"
+                    : "shift over"}
+              </span>
+            </div>
+
+            <div className={styles.doom}>
+              <div
+                className={`${styles.doomFill} ${toArrive <= 4 ? styles.doomCritical : ""}`}
+                style={{ width: `${Math.max(0, Math.min(1, shiftLeft)) * 100}%` }}
+              />
+            </div>
+          </>
+        )}
+
+        {phase !== "intro" && (
+          <ol className={styles.list}>
+            {shown.map((t) => {
+              const isFound = t.id in found;
+              const isWrong = wrong.includes(t.id);
+              const isTarget = TARGETS.includes(t.id);
+              const missed = phase === "lost" && isTarget && !isFound;
+
+              return (
+                <li key={t.id} className={styles.slot}>
+                  <button
+                    type="button"
+                    className={[
+                      styles.row,
+                      isFound ? styles.hit : "",
+                      isWrong ? styles.miss : "",
+                      missed ? styles.missed : "",
+                      phase !== "playing" && !isFound && !missed ? styles.dim : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                    onClick={() => guess(t.id)}
+                    disabled={phase !== "playing" || isFound || isWrong}
+                    aria-label={`Flag ${t.subject} as a safety report`}
+                  >
+                    <span className={styles.time}>{timeOf(t.received_at)}</span>
+
+                    <span className={styles.main}>
+                      <span className={styles.subject}>{t.subject}</span>
+                      <span className={styles.snippet}>{t.message}</span>
+                    </span>
+
+                    <span className={styles.mark}>
+                      {isFound
+                        ? "flagged"
+                        : missed
+                          ? "missed"
+                          : isWrong
+                            ? "not this one"
+                            : t.channel.replace(/_/g, " ")}
+                    </span>
+
+                    {/* The ten seconds, leaving. */}
+                    {isWrong && (
+                      <span className={styles.penaltyFloat}>
+                        +{PENALTY_MS / 1000}s
+                      </span>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+        )}
+
+        {phase === "lost" && (
+          <div className={styles.result}>
+            <p className={styles.resultHead}>
+              The shift ended with a safety report still in the queue.
+            </p>
+            <p>
+              That is not a trick. It is the October 2025 incident, which is why
+              this course has the scenario it has. A parent wrote in to say their
+              child got sick, the message opened with{" "}
+              <em>&ldquo;probably nothing&rdquo;</em>, and it sat unrouted for
+              three days while everyone did their jobs properly.
+            </p>
+            <p>
+              The classifier read all {all.length} in{" "}
+              <strong>{queue.wall_clock_sec} seconds</strong> for{" "}
+              <strong>${queue.total_cost_usd.toFixed(2)}</strong> and flagged both,
+              which is the entire argument for the <code>requires_human</code>{" "}
+              field.
+            </p>
+            <div className={styles.actions}>
+              <button type="button" className={styles.primaryBtn} onClick={start}>
+                Take another shift
+              </button>
+              <Link className={styles.secondaryLink} to="/playground/queue">
+                See what triage does to this queue
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {result && (
+          <div className={styles.result}>
+            <p className={styles.resultHead}>
+              Both flagged in <strong>{clock(result.total)}</strong>
+              {penalty > 0 && (
+                <>
+                  , including {Math.round(penalty / 1000)} seconds of penalties
+                </>
+              )}
+              .
+            </p>
+
+            {beatBest && <p className={styles.bestLine}>A new best.</p>}
+
+            <p>
+              The legal notice took you{" "}
+              <strong>{clock(Math.min(result.obvious, result.camo))}</strong>. It
+              says <em>legal notice</em> in the subject line, so it was never going
+              to hide.{" "}
+              {result.camoLast ? (
+                <>
+                  &ldquo;Hi, probably nothing, but&hellip;&rdquo; took{" "}
+                  <strong>{clock(result.camo)}</strong>, and it is the one where a
+                  child ended up in urgent care.
+                </>
+              ) : (
+                <>
+                  You found &ldquo;Hi, probably nothing, but&hellip;&rdquo; first,
+                  which is unusual. That is the one where a child ended up in
+                  urgent care, and it is the one people normally read past.
+                </>
+              )}
+            </p>
+
+            <p>
+              You were looking for it, you knew there were exactly two, and you had{" "}
+              {all.length} messages. A real December morning has more, the person
+              reading them is answering the rest as they go, and nobody tells them
+              how many are in there. At the pace you just set, sorting{" "}
+              {TICKETS_PER_WEEK.toLocaleString()} messages a week would take{" "}
+              <strong>{humanDuration(result.atThisPace)}</strong> before anyone
+              answers a single one.
+            </p>
+
+            <p>
+              The classifier read all {all.length} in{" "}
+              <strong>{queue.wall_clock_sec} seconds</strong> for{" "}
+              <strong>${queue.total_cost_usd.toFixed(2)}</strong> and flagged both.
+              That is not the interesting part. The interesting part is that it
+              returned <strong>0.95</strong> confidence on the legal notice and{" "}
+              <strong>0.88</strong> on the child
+              {result.camoLast
+                ? ", ranking them the way you did, and for the reason you did"
+                : ", which is the ranking you just went against"}
+              . The camouflage that slowed one of them down for you shows up in the
+              model as a lower number. A score you can route on has to know which
+              of its answers are the shaky ones.
+            </p>
+
+            <div className={styles.actions}>
+              <Link className={styles.primary} to="/playground/queue">
+                See what triage does to this queue
+              </Link>
+              <button type="button" className={styles.secondary} onClick={start}>
+                Another shift
+              </button>
+            </div>
+
+            <p className={styles.footnote}>
+              Real output. All {all.length} classifications came from{" "}
+              <code>{queue.model}</code> through the actual <code>/v1/triage</code>{" "}
+              route. The confidence score is built in{" "}
+              <Link to="/docs/labs/lab-2-structured-outputs">Lab 2</Link> and
+              calibrated in{" "}
+              <Link to="/docs/labs/lab-7-choosing-a-model">Lab 7</Link>.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
