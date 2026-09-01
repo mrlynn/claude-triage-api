@@ -47,7 +47,13 @@ const sidebars: SidebarsConfig = {
       label: "Labs",
       collapsed: false,
       customProps: { icon: "flask" },
-      link: { type: "generated-index", title: "Labs", slug: "/labs" },
+      link: {
+        type: "generated-index",
+        title: "Labs",
+        description:
+          "Eleven labs in sequence. Each one introduces exactly one new idea and depends on the one before it, so the order is the pedagogy rather than a suggestion.",
+        slug: "/labs",
+      },
       items: [
         "labs/lab-0-scoreboard",
         "labs/lab-1-first-call",

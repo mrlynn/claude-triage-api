@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Claude Triage API course launch card</title>
+  <desc id="desc">A Northwind-branded social card promoting a course about building reliable AI applications.</desc>
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#315449" stroke-width="1" opacity=".45"/>
+    </pattern>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#07130f" flood-opacity=".22"/></filter>
+  </defs>
+  <rect width="1200" height="630" fill="#F2EDE4"/>
+  <path d="M0 0H1200V204C969 145 769 152 594 251C394 364 205 260 0 345Z" fill="#1F3D33"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <path d="M0 503C196 421 373 439 541 503C756 585 973 499 1200 424V630H0Z" fill="#DDE7E1"/>
+  <path d="M0 535C198 463 369 480 548 540C763 612 991 517 1200 455V630H0Z" fill="#5C9A86" opacity=".85"/>
+  <g transform="translate(82 68)">
+    <rect width="64" height="64" rx="15" fill="#F2EDE4"/>
+    <path d="M42 26L58 47H30Z" fill="#5C9A86"/><path d="M26 16L44 47H8Z" fill="#1F3D33"/><path d="M26 16L32 26L28.5 25L26 28L23 24.5L20 26Z" fill="#F2EDE4"/>
+    <text x="82" y="25" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#F2EDE4" letter-spacing="2.8">NORTHWIND OUTFITTERS</text>
+    <text x="82" y="51" font-family="Arial, Helvetica, sans-serif" font-size="16" fill="#B7CAC1">A hands-on AI engineering course</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="735" y="127" width="350" height="332" rx="25" fill="#F2EDE4"/>
+    <rect x="761" y="154" width="298" height="54" rx="12" fill="#1F3D33"/>
+    <circle cx="790" cy="181" r="11" fill="#D9642A"/><text x="813" y="187" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700" fill="#F2EDE4">INBOUND QUEUE</text>
+    <g font-family="Arial, Helvetica, sans-serif">
+      <rect x="761" y="225" width="298" height="57" rx="10" fill="#E4ECE7"/><circle cx="787" cy="253" r="8" fill="#D9642A"/><text x="807" y="249" font-size="14" font-weight="700" fill="#1F3D33">Safety report</text><text x="807" y="269" font-size="12" fill="#597169">Escalate within one hour</text>
+      <rect x="761" y="294" width="298" height="57" rx="10" fill="#FFFDF9"/><circle cx="787" cy="322" r="8" fill="#5C9A86"/><text x="807" y="318" font-size="14" font-weight="700" fill="#1F3D33">Refund request</text><text x="807" y="338" font-size="12" fill="#597169">Policy-aware resolution</text>
+      <rect x="761" y="363" width="298" height="57" rx="10" fill="#FFFDF9"/><circle cx="787" cy="391" r="8" fill="#8A9A93"/><text x="807" y="387" font-size="14" font-weight="700" fill="#1F3D33">Order question</text><text x="807" y="407" font-size="12" fill="#597169">Structured, reviewable output</text>
+    </g>
+  </g>
+  <text x="82" y="272" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" fill="#D9642A" letter-spacing="3">BUILD AI THAT HOLDS UP</text>
+  <text x="82" y="348" font-family="Arial, Helvetica, sans-serif" font-size="65" font-weight="800" fill="#1F3D33">Claude Triage API</text>
+  <text x="82" y="401" font-family="Arial, Helvetica, sans-serif" font-size="28" fill="#345349">Learn the practical controls behind reliable AI features.</text>
+  <text x="82" y="444" font-family="Arial, Helvetica, sans-serif" font-size="22" fill="#597169">A complete service. Ten labs. Real production tradeoffs.</text>
+  <rect x="82" y="490" width="243" height="52" rx="26" fill="#D9642A"/>
+  <text x="108" y="524" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="700" fill="#FFFDF9">triage.mlynn.dev</text>
+</svg>
