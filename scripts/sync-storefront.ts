@@ -140,7 +140,92 @@ writeIfChanged(
   "storefront/data/demo-queue.json",
 );
 
-// --- 4. the pricing table ---------------------------------------------------
+// --- 4. the tutor corpus ----------------------------------------------------
+//
+// The Tutor builds cram plans and grades exercises, and it may only teach from
+// the course. So the course crosses this line as data: the Messages API labs
+// and the practical guides, each with its objectives, its prose, and the
+// ```quiz items an author already wrote and the website build already checks.
+//
+// Lab 0 (baseline scoreboard) and Lab 10 (the capstone) stay out. Neither is
+// an aspect of the API a learner can drill; both are projects.
+//
+// Diagrams, images and the site-only ```try/```receipt/```path widgets are
+// stripped — they render on the site and are noise in a prompt. TypeScript
+// fences stay, because the request bodies ARE the material.
+
+interface QuizItem {
+  question: string;
+  options: string[];
+  answer: number;
+  explain: string;
+  note?: string;
+}
+
+const TUTOR_SOURCES = [
+  ["lab-1", "curriculum/labs/lab-1-first-call.md", "/docs/labs/lab-1-first-call"],
+  ["lab-2", "curriculum/labs/lab-2-structured-outputs.md", "/docs/labs/lab-2-structured-outputs"],
+  ["lab-3", "curriculum/labs/lab-3-tool-use.md", "/docs/labs/lab-3-tool-use"],
+  ["lab-4", "curriculum/labs/lab-4-streaming.md", "/docs/labs/lab-4-streaming"],
+  ["lab-5", "curriculum/labs/lab-5-prompt-caching.md", "/docs/labs/lab-5-prompt-caching"],
+  ["lab-6", "curriculum/labs/lab-6-evals.md", "/docs/labs/lab-6-evals"],
+  ["lab-7", "curriculum/labs/lab-7-choosing-a-model.md", "/docs/labs/lab-7-choosing-a-model"],
+  ["lab-8", "curriculum/labs/lab-8-trust-boundary.md", "/docs/labs/lab-8-trust-boundary"],
+  ["lab-9", "curriculum/labs/lab-9-shipping-it.md", "/docs/labs/lab-9-shipping-it"],
+  ["guide-api", "curriculum/guides/claude-api-tutorial.md", "/docs/guides/claude-api-tutorial"],
+  ["guide-structured", "curriculum/guides/structured-outputs-typescript-zod.md", "/docs/guides/structured-outputs-typescript-zod"],
+  ["guide-tools", "curriculum/guides/claude-tool-use.md", "/docs/guides/claude-tool-use"],
+  ["guide-caching", "curriculum/guides/prompt-caching-and-evals.md", "/docs/guides/prompt-caching-and-evals"],
+] as const;
+
+/** Per-document ceiling. The whole corpus is one cached prefix; this keeps the
+ *  longest labs from crowding out the rest of it. */
+const TUTOR_DOC_CHARS = 14_000;
+
+const tutorCorpus = TUTOR_SOURCES.map(([id, source, path]) => {
+  const raw = readFileSync(join(root, source), "utf8");
+  const title = (raw.match(/^# (.+)$/m)?.[1] ?? id).replace(/`/g, "").trim();
+  const time = raw.match(/^\*\*Time:\*\*\s*([^·\n]+)/m)?.[1]?.trim() ?? null;
+  const objectives = (raw.match(/^## Objectives\n([\s\S]*?)(?=\n## |\n---|\n```)/m)?.[1] ?? "")
+    .split("\n")
+    .filter((l) => l.startsWith("- "))
+    .map((l) => l.slice(2).trim());
+
+  const quizzes: QuizItem[] = [];
+  const body = raw
+    .replace(/^# .+\n/m, "")
+    .replace(/```(\w*)\n([\s\S]*?)```/g, (block, lang: string, value: string) => {
+      if (lang === "quiz") {
+        const parsed = JSON.parse(value) as QuizItem | QuizItem[];
+        quizzes.push(...(Array.isArray(parsed) ? parsed : [parsed]));
+        return "";
+      }
+      return ["mermaid", "try", "receipt", "path"].includes(lang) ? "" : block;
+    })
+    .replace(/!\[[^\]]*\]\([^)]*\)\n?/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+    .slice(0, TUTOR_DOC_CHARS);
+
+  // Same rules remark-quiz.mjs enforces at site build time. A broken item
+  // fails the sync here rather than reaching a learner as a drill with no
+  // right answer.
+  for (const q of quizzes) {
+    if (!q.question || !Array.isArray(q.options) || q.answer < 0 || q.answer >= q.options.length) {
+      throw new Error(`${source}: invalid quiz item "${q.question}"`);
+    }
+  }
+
+  return { id, title, path, time, objectives, quizzes, body };
+});
+
+writeIfChanged(
+  join(root, "storefront", "data", "tutor-corpus.json"),
+  `${JSON.stringify(tutorCorpus, null, 2)}\n`,
+  "storefront/data/tutor-corpus.json",
+);
+
+// --- 5. the pricing table ---------------------------------------------------
 
 const generated = `/**
  * GENERATED FILE — do not edit.

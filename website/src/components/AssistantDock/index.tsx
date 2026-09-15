@@ -2,13 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import AssistantMarkdown from "@site/src/components/AssistantMarkdown";
 import { useSpeechInput } from "./useSpeechInput";
 import { NorthwindAssistantMark } from "@site/src/components/NorthwindLogo";
-
-function assistantApi(): string {
-  // The course and storefront run on separate local ports in `npm run dev:all`.
-  // Production uses the shared Northwind origin; never attempt a production
-  // cross-origin call while a learner is running the workshop locally.
-  return window.location.hostname === "localhost" ? "http://localhost:3002" : "https://northwind.mlynn.dev";
-}
+import { storefrontApi as assistantApi } from "@site/src/urls";
 
 /**
  * Line art rather than the 🎙 emoji, which renders as a full-colour studio

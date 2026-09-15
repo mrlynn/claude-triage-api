@@ -18,3 +18,14 @@ export const STOREFRONT_URL = "https://northwind.mlynn.dev";
 export function storefront(path = ""): string {
   return `${STOREFRONT_URL}${path}`;
 }
+
+/**
+ * Where the browser sends API calls that need the storefront's key — Ask
+ * Northwind and the Tutor. A function, not a constant, because it reads
+ * `window`: the course and storefront run on separate local ports in
+ * `npm run dev:all`, and a learner running the workshop locally must never
+ * make a production cross-origin call. Call it only from the browser.
+ */
+export function storefrontApi(): string {
+  return window.location.hostname === "localhost" ? "http://localhost:3002" : STOREFRONT_URL;
+}
