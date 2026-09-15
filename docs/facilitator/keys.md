@@ -152,6 +152,39 @@ If you are running a large room on a shared budget, the two levers are:
 
 ---
 
+## Hosted demos in a workshop
+
+The Tutor, Ask Northwind and the storefront demos run on the site owner's key,
+not on the keys you issue. When the storefront runs with `BYOK_MODE=enforce`
+(see `docs/byok/` in the repository), every learner signs in with GitHub and gets
+**$2** of free credit. When it is gone they are asked for their own Anthropic
+key. What that means for a room:
+
+- **Tell people to sign in before the session.** It takes one click, but a
+  GitHub account created this week gets no free credit. That is the anti-farming
+  rule, and it will catch someone who made an account for the workshop.
+- **Learners who have a workshop key can paste it into the meter** in the corner
+  of any page. It is encrypted, used only for their requests, and forgotten after
+  a day unused, so the key you disable at 6pm stops working there too.
+- **To give a cohort more credit instead**, have everyone sign in once, collect
+  their GitHub usernames, and run:
+
+  ```bash
+  cd storefront
+  MONGODB_URI=... npx tsx scripts/grant.mts --usd 5 octocat hubot
+  ```
+
+  It raises each grant to that amount and never lowers or stacks it, so running
+  it twice is harmless.
+- **Thirty people behind one conference IP are fine.** Signed-in learners get
+  `SIGNED_IN_IP_MULTIPLIER` (default 3×) the per-IP windows, and credit is per
+  person, not per address.
+- **The site-wide ceiling is `HOUSE_DAILY_BUDGET_USD`** (default $50 a day of
+  free credit, across everyone). A big room on a public deployment can reach it.
+  Raise it for the day, or ask the room to bring keys.
+
+---
+
 ## Budget control when you cannot cap a workspace
 
 Since per-workspace spend limits do not exist, use these instead, in order of

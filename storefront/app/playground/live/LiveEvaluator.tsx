@@ -7,6 +7,7 @@ import {
   URGENCY_CHIP,
   ERROR_BANNER,
 } from "@/lib/triage-ui";
+import { publishMeter, reportAi } from "@/lib/accountClient";
 
 /**
  * The as-you-type evaluator.
@@ -168,7 +169,11 @@ export default function LiveEvaluator() {
     if (!res.ok || !res.body) {
       const detail = await res
         .json()
-        .then((b) => b.detail as string)
+        .then((b) => {
+          // Quietly: a debounced preview must not open a panel on every pause.
+          reportAi(b, { open: false });
+          return b.detail as string;
+        })
         .catch(() => null);
       if (mine === seq.current) {
         setPhase("paused");
@@ -210,7 +215,10 @@ export default function LiveEvaluator() {
             setRuns((n) => n + 1);
             setSpent((s) => s + (data.cost_usd as number));
             setNotice(null);
+          } else if (event === "meter") {
+            publishMeter(data);
           } else if (event === "failure") {
+            reportAi(data, { open: false });
             setPhase("paused");
             setNotice(data.detail as string);
           }
@@ -263,6 +271,7 @@ export default function LiveEvaluator() {
         body: JSON.stringify({ message: message.trim() }),
       });
       const body = await res.json();
+      reportAi(body);
       if (!res.ok) {
         setCommitError(body.detail ?? "That did not go through.");
         return;

@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
-import { checkLimits, clientIp } from "@/lib/ratelimit";
+import { AiGateError, gateBody, guardAi, keyError, settle } from "@/lib/funding";
+import { redactSecrets } from "@/lib/secrets";
 import { buildSystem, callClaude, MAX_MESSAGE_CHARS } from "@/lib/triage";
 import { wrapUntrusted, redactPII } from "@/lib/untrusted";
+import { costMicros } from "@/lib/cost";
+import { recordSpend } from "@/lib/telemetry";
 
 /**
  * The injection playground's endpoint.
@@ -41,23 +44,15 @@ export async function POST(request: Request) {
     );
   }
 
-  const verdict = await checkLimits(clientIp(request.headers), "injection");
-  if (!verdict.ok) {
-    return NextResponse.json(
-      {
-        error: verdict.reason,
-        detail:
-          verdict.reason === "per_ip"
-            ? "You have run a few of these already. Give it a few minutes."
-            : verdict.reason === "daily_cap"
-              ? "This demo has hit its daily cap. It resets at midnight UTC."
-              : "Live runs are paused right now.",
-      },
-      {
-        status: 429,
-        headers: { "Retry-After": String(verdict.retryAfterSec) },
-      },
-    );
+  let funding;
+  try {
+    funding = await guardAi(request, "injection", "classify");
+  } catch (error) {
+    if (!(error instanceof AiGateError)) throw error;
+    return NextResponse.json(gateBody(error), {
+      status: error.status,
+      headers: error.retryAfterSec ? { "Retry-After": String(error.retryAfterSec) } : undefined,
+    });
   }
 
   // Redaction runs on the way IN. A visitor pasting a real card number into a
@@ -66,18 +61,22 @@ export async function POST(request: Request) {
   const { text: safeMessage, redactions } = redactPII(message);
 
   try {
-    const response = await callClaude(buildSystem({}), safeMessage, { defended });
+    const response = await callClaude(buildSystem({}), safeMessage, { defended, client: funding.client });
+    // Before any early return: a refusal or an unparseable reply was still billed.
+    const micros = costMicros(response.usage, response.model);
+    recordSpend("injection", micros);
+    const meter = await settle(funding, micros);
     const triage = response.parsed_output;
 
     if (!triage) {
       if (response.stop_reason === "refusal") {
         return NextResponse.json(
-          { error: "refused", detail: "The model declined this request." },
+          { error: "refused", detail: "The model declined this request.", ...(meter ? { meter } : {}) },
           { status: 422 },
         );
       }
       return NextResponse.json(
-        { error: "unparseable_output", detail: "The model output did not validate." },
+        { error: "unparseable_output", detail: "The model output did not validate.", ...(meter ? { meter } : {}) },
         { status: 502 },
       );
     }
@@ -92,9 +91,13 @@ export async function POST(request: Request) {
       redactions: redactions.length,
       triage,
       model: response.model,
+      ...(meter ? { meter } : {}),
     });
   } catch (err) {
-    console.error("injection playground call failed", err);
+    await settle(funding, 0);
+    const refused = await keyError(funding, err);
+    if (refused) return NextResponse.json(gateBody(refused), { status: refused.status });
+    console.error("injection playground call failed", redactSecrets(err));
     return NextResponse.json(
       { error: "upstream_error", detail: "The classifier call failed." },
       { status: 502 },

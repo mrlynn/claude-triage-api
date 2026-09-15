@@ -21,5 +21,8 @@ const Body = z.object({
 export const OPTIONS = tutorOptions;
 
 export async function POST(request: Request) {
-  return tutorPost(request, Body, async (intake) => ({ ...(await buildPlan(intake)), docs: CORPUS_INDEX }));
+  return tutorPost(request, Body, "tutor_plan", async (intake, options) => ({
+    ...(await buildPlan(intake, options)),
+    docs: CORPUS_INDEX,
+  }));
 }

@@ -4,7 +4,7 @@ import Link from "@docusaurus/Link";
 
 import styles from "./legal.module.css";
 
-const UPDATED = "30 August 2026";
+const UPDATED = "15 September 2026";
 
 export default function Cookies(): ReactNode {
   return (
@@ -22,8 +22,9 @@ export default function Cookies(): ReactNode {
         <section>
           <h2>Cookies</h2>
           <p>
-            Reading the course sets no cookie at all. One cookie appears if you use the
-            assistant, and one more if you open the instructor queue.
+            Reading the course sets no cookie at all. Cookies appear only when you use a
+            feature that needs one: the assistant, signing in with GitHub, or the instructor
+            queue.
           </p>
           <div className={styles.table}>
             <table>
@@ -46,6 +47,24 @@ export default function Cookies(): ReactNode {
                   <td>7 days</td>
                 </tr>
                 <tr>
+                  <td><code>nw_session</code></td>
+                  <td>
+                    Keeps you signed in with GitHub, so the site knows whose free credit or
+                    whose API key pays for an AI request. A random token; the server stores
+                    only a hash of it. HTTP-only, and set on <code>.mlynn.dev</code> so the
+                    course and the storefront share it. Only set if you sign in.
+                  </td>
+                  <td>7 days</td>
+                </tr>
+                <tr>
+                  <td><code>nw_oauth</code></td>
+                  <td>
+                    Holds an encrypted, one-time value that protects the GitHub sign-in redirect
+                    from being forged. Deleted as soon as sign-in finishes.
+                  </td>
+                  <td>10 minutes</td>
+                </tr>
+                <tr>
                   <td><code>nw_queue</code></td>
                   <td>
                     Remembers the access token for the instructor queue, so it need not be
@@ -58,8 +77,8 @@ export default function Cookies(): ReactNode {
             </table>
           </div>
           <p>
-            Both are strictly necessary for the feature that sets them. Neither follows you
-            to other sites.
+            Each is strictly necessary for the feature that sets it. None follows you to
+            other sites.
           </p>
         </section>
 
@@ -90,6 +109,10 @@ export default function Cookies(): ReactNode {
                   <td>Light or dark theme</td>
                   <td>So your choice sticks between visits</td>
                 </tr>
+                <tr>
+                  <td>Which free-credit warnings you have already seen</td>
+                  <td>So the &ldquo;you have used 80%&rdquo; notice appears once, not on every page</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -109,8 +132,9 @@ export default function Cookies(): ReactNode {
           <h2>Turning them off</h2>
           <p>
             Blocking cookies in your browser leaves the entire course readable — only the
-            assistant stops working, because it cannot tell one conversation from another
-            without its session cookie.
+            assistant and the other AI features stop working, because without a session
+            cookie the site can tell neither one conversation from another nor whose credit
+            a request should use.
           </p>
         </section>
 

@@ -416,9 +416,12 @@ mode of a written retention policy is not that it is wrong, it is that the job
 implementing it was disabled in an incident eighteen months ago and nobody
 noticed.
 
-Five collections carry one: `rate_limits`, `escalations`, `usage_daily`,
-`assistant_sessions`, `assistant_proposals`. Everything the storefront stores
-that derives from a person deletes itself.
+Eight collections carry one: `rate_limits`, `escalations`, `usage_daily`,
+`assistant_sessions`, `assistant_proposals`, and — since the storefront started
+asking who pays for a call (Decision 12) — `users`, `auth_sessions` and
+`byok_keys`. Everything the storefront stores that derives from a person
+deletes itself, including a learner's encrypted API key, a day after its last
+use.
 
 **The same reasoning shows up in the rate limiter, for a different property.**
 
@@ -524,6 +527,78 @@ what is true.
 
 ---
 
+## Decision 12 — who pays for a call is decided per request, in dollars
+
+The hosted course calls Claude on the owner's key, from a URL that is in slides
+and a public repo. For most of its life the only control was a request count: a
+per-IP window and 600 requests a day. A request is the wrong unit. An Opus agent
+turn can cost thirty times a Sonnet preview, so a request cap is either too
+tight for a busy workshop or too loose for a bill anyone chose. It was also not
+per person, so one learner and a script looked the same.
+
+Every storefront route that calls Claude now asks one function, `guardAi`, who
+pays, before it calls:
+
+```mermaid
+flowchart LR
+    Req["AI request"] --> IP{"per-IP window"}
+    IP --> S{"signed in?"}
+    S -->|no| Sign["401 sign in"]
+    S -->|yes| K{"own key stored?"}
+    K -->|yes| BYOK["learner's key<br/>metered, never limited"]
+    K -->|no| R{"reserve worst case<br/>from credit + house budget"}
+    R -->|fits| Trial["owner's key<br/>refund the difference after"]
+    R -->|no| Out["402 add your key"]
+```
+
+**The cost of a call is not known until it has been spent**, so the ledger
+reserves the most a call could cost and refunds the difference afterwards. The
+worst case comes from the same constants that bound the call (`max_tokens`,
+input limits, the agent loop's iteration cap) in `storefront/lib/cost.ts`, and
+a test fails if the prompts grow past the numbers it assumes. The reservation
+is one conditional update whose condition is in the filter:
+
+```ts
+// storefront/lib/ledger.ts
+return db.collection<UserDoc>("users").findOneAndUpdate(
+  { _id: userId, $expr: { $lte: [{ $add: ["$spentMicros", est] }, "$grantMicros"] } },
+  { $inc: { spentMicros: est }, $set: touch() },
+  { returnDocument: "after" },
+);
+```
+
+This is Decision 10's rate limiter with a harder question. Two requests racing
+for the last dollar both ask to add $0.20 "where spent + $0.20 ≤ grant"; the
+second no longer matches. A process that dies between reserving and refunding
+over-charges the learner by one estimate. That is the direction to fail in.
+
+The house-wide daily budget uses the same idea, with one catch. MongoDB refuses
+`$expr` in an upsert's filter. The budget is a constant, so the arithmetic moves
+to the other side of a plain range, and the duplicate-key error from a failed
+upsert is the "over budget" answer. The integration test found this; a mock
+would have agreed with the code.
+
+Three rules hold the rest of it together:
+
+- **A learner's own key is served by that key or not at all.** If Anthropic
+  rejects it, the key is deleted and the learner is told. Retrying on the
+  owner's key would make "my key is broken" mean "the site is free" for anyone
+  who pastes garbage.
+- **A key lives as long as a session, not an account.** It is sealed with
+  AES-256-GCM using the session hash as additional authenticated data, so a row
+  copied into another session fails to decrypt. A TTL index deletes it after a
+  day unused. The page never gets it back: it sees the last four characters.
+- **Identity is the minimum that stops credit being farmed.** GitHub sign-in with
+  no scopes, a numeric id, a username, and the account's creation date. Accounts
+  under a month old get no credit, and new grants per day are capped. No email,
+  and no GitHub token kept past the one request that reads the profile.
+
+It ships behind `BYOK_MODE=off|shadow|enforce`, and it is `off` whenever GitHub
+sign-in is not configured, so running the storefront locally is unchanged. The
+product and technical write-ups are in `docs/byok/`.
+
+---
+
 ## What this reference deliberately omits
 
 Being explicit about scope is part of being teachable. Not here:
@@ -539,6 +614,10 @@ Being explicit about scope is part of being teachable. Not here:
   the page, which matters more than the mechanism: the failure mode for demo
   security is not that it is weak, it is that someone downstream mistakes it
   for the real thing.
+  The one identity the storefront does have is narrow on purpose: GitHub sign-in
+  decides who pays for an AI call (Decision 12), and nothing else. It is not
+  reviewer identity, it grants no access to the queue, and there is still no
+  per-org isolation or audit log.
   The four routes in `src/` are single-turn by design, so the labs stay about
   the API rather than about session storage. Lab 10's assistant is the
   exception and is worth being precise about: it holds a multi-turn

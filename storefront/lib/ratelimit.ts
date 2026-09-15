@@ -35,7 +35,8 @@ const IP_WINDOW_MS = 10 * 60 * 1000;
  * support ticket, which is the one thing on this site that has to work.
  *
  * They DO share the global daily cap, and that is deliberate — the daily cap
- * protects the bill, and the bill does not care which page spent it.
+ * protects the bill, and the bill does not care which page spent it. The one
+ * exception is `queue`, which spends nothing and so does not count against it.
  */
 const SCOPES = {
   support: Number(process.env.SUPPORT_IP_LIMIT ?? 5),
@@ -61,9 +62,16 @@ const SCOPES = {
   // because a facilitator refreshing the board during a session is normal
   // traffic — the point is a floor under brute force, not a tight budget.
   queue: Number(process.env.QUEUE_IP_LIMIT ?? 60),
+  // Adding an Anthropic key. Tight, because each attempt is a round trip to
+  // Anthropic that says whether a key is valid — a route with no ceiling here
+  // is a free key-checking oracle.
+  key: Number(process.env.KEY_IP_LIMIT ?? 10),
 } as const;
 
 export type LimitScope = keyof typeof SCOPES;
+
+/** The scopes that call a model, and so share the global daily cap. */
+const PAID_SCOPES: ReadonlySet<LimitScope> = new Set(["support", "injection", "assistant", "live", "tutor"]);
 
 const DAILY_CAP = Number(process.env.SUPPORT_DAILY_CAP ?? 600);
 
@@ -82,7 +90,7 @@ interface Bucket {
 }
 
 /** One atomic increment. Returns the post-increment count. */
-async function bump(id: string, ttlMs: number): Promise<number> {
+export async function bump(id: string, ttlMs: number): Promise<number> {
   const db = await getDb();
   const result = await db.collection<Bucket>("rate_limits").findOneAndUpdate(
     { _id: id },
@@ -98,8 +106,21 @@ async function bump(id: string, ttlMs: number): Promise<number> {
 export async function checkLimits(
   ip: string,
   scope: LimitScope = "support",
+  {
+    ipMultiplier = 1,
+    daily = PAID_SCOPES.has(scope),
+  }: {
+    /** Signed-in visitors share conference NAT IPs; they get a wider window. */
+    ipMultiplier?: number;
+    /**
+     * Whether this call counts against the global request cap. Once trial
+     * spend is metered in dollars (BYOK_MODE=enforce), the dollar budget in
+     * `ledger.ts` replaces it and the caller passes false.
+     */
+    daily?: boolean;
+  } = {},
 ): Promise<LimitVerdict> {
-  const ipLimit = SCOPES[scope];
+  const ipLimit = Math.floor(SCOPES[scope] * ipMultiplier);
 
   if (!HAS_MONGO) {
     // Local development without a cluster stays usable; production does not.
@@ -124,6 +145,11 @@ export async function checkLimits(
         retryAfterSec: Math.max(1, Math.ceil((windowEnds - Date.now()) / 1000)),
       };
     }
+
+    // Only surfaces that spend count against the daily cap. The queue calls no
+    // model, and a facilitator refreshing the board all afternoon must not be
+    // the reason the support form says "busy" at 4pm.
+    if (!daily) return { ok: true, remaining: Math.max(0, ipLimit - ipCount) };
 
     const day = new Date().toISOString().slice(0, 10);
     const dayCount = await bump(`day:${day}`, 26 * 60 * 60 * 1000);

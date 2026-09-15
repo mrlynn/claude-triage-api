@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AssistantMarkdown from "@/components/AssistantMarkdown";
 import NorthwindAssistantMark from "@/components/NorthwindAssistantMark";
 import { useSpeechInput } from "./useSpeechInput";
+import { publishMeter, reportAi } from "@/lib/accountClient";
 
 /**
  * Line art rather than the 🎙 emoji, which renders as a full-colour studio
@@ -174,6 +175,7 @@ export default function AssistantChat({ fullPage = false, initialProduct, initia
         // missing route are different problems, and none of them is
         // diagnosable from a bubble that just sits there.
         const detail = await response.json().catch(() => null);
+        reportAi(detail);
         settle(detail?.detail ?? detail?.error ?? `The assistant is unavailable (HTTP ${response.status}).`);
         return;
       }
@@ -196,7 +198,9 @@ export default function AssistantChat({ fullPage = false, initialProduct, initia
             settle(answer);
           }
           if (event.type === "tool") setStatus(event.label);
+          if (event.type === "meter") publishMeter(event.meter);
           if (event.type === "error") {
+            if (event.code) reportAi({ error: event.code, detail: event.detail });
             answer ||= event.detail ?? "The assistant could not complete that request.";
             settle(answer);
           }

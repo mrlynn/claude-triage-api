@@ -1,6 +1,8 @@
-import { checkLimits, clientIp } from "@/lib/ratelimit";
+import { AiGateError, gateBody, guardAi, keyError, settle, type Meter } from "@/lib/funding";
+import { redactSecrets } from "@/lib/secrets";
 import { redactPII } from "@/lib/untrusted";
-import { pricingFor } from "@/lib/pricing.generated";
+import { costMicros, microsToUsd, type UsageLike } from "@/lib/cost";
+import { recordSpend } from "@/lib/telemetry";
 import {
   LIVE_MODEL,
   MAX_MESSAGE_CHARS,
@@ -30,7 +32,8 @@ import {
  *     and the model keeps generating on our bill, which is the failure mode
  *     that makes naive as-you-type demos expensive.
  *   - The rate limiter still counts the attempt. A cancelled request has
- *     already been paid for up to the point of cancellation.
+ *     already been paid for up to the point of cancellation, so its spend is
+ *     recorded from the usage the stream reported before it was torn down.
  *
  * `X-Accel-Buffering: no` for the same reason `/api/support/stream` needs it:
  * a buffering proxy delivers the whole stream in one chunk and the live part
@@ -57,20 +60,22 @@ export async function POST(request: Request) {
     );
   }
 
-  const verdict = await checkLimits(clientIp(request.headers), "live");
-  if (!verdict.ok) {
+  // Before the stream opens, so a refusal is a real HTTP status rather than an
+  // event inside a 200 the page has already started rendering.
+  let funding;
+  try {
+    funding = await guardAi(request, "live", "live");
+  } catch (error) {
+    if (!(error instanceof AiGateError)) throw error;
     return Response.json(
       {
-        error: verdict.reason,
+        ...gateBody(error),
         detail:
-          verdict.reason === "per_ip"
+          error.code === "rate_limited"
             ? "That is a lot of previews. The live pass pauses for a few minutes; the classifier below still works."
-            : verdict.reason === "daily_cap"
-              ? "This demo has hit its daily cap. It resets at midnight UTC."
-              : "Live previews are paused right now.",
-        retryAfterSec: verdict.retryAfterSec,
+            : error.detail,
       },
-      { status: 429, headers: { "Retry-After": String(verdict.retryAfterSec) } },
+      { status: error.status, headers: error.retryAfterSec ? { "Retry-After": String(error.retryAfterSec) } : undefined },
     );
   }
 
@@ -92,8 +97,22 @@ export async function POST(request: Request) {
 
       emit("start", { model: LIVE_MODEL, redactions: redactions.length });
 
+      // What the stream has billed so far. `message_start` carries the input
+      // side and each `message_delta` the running output count, so a preview
+      // cancelled mid-flight can still be accounted for.
+      let billed: UsageLike | null = null;
+      let billedModel = LIVE_MODEL;
+      let recorded = false;
+      const record = async (usage: UsageLike, model: string): Promise<{ micros: number; meter: Meter | null }> => {
+        if (recorded) return { micros: 0, meter: null };
+        recorded = true;
+        const micros = costMicros(usage, model);
+        recordSpend("live", micros);
+        return { micros, meter: await settle(funding, micros) };
+      };
+
       try {
-        const run = streamLive(safeMessage, request.signal);
+        const run = streamLive(safeMessage, request.signal, funding.client);
 
         // `sent` is what makes this an append-only stream: a field is emitted
         // once, when it first completes, and never re-emitted. The client can
@@ -104,6 +123,12 @@ export async function POST(request: Request) {
         let firstFieldMs: number | null = null;
 
         for await (const event of run) {
+          if (event.type === "message_start") {
+            billed = { ...event.message.usage };
+            billedModel = event.message.model;
+          } else if (event.type === "message_delta" && billed) {
+            billed.output_tokens = event.usage.output_tokens;
+          }
           if (
             event.type === "content_block_delta" &&
             event.delta.type === "text_delta"
@@ -120,17 +145,11 @@ export async function POST(request: Request) {
         }
 
         const final = await run.finalMessage();
-        const price = pricingFor(LIVE_MODEL);
         const u = final.usage;
         const cached = u.cache_read_input_tokens ?? 0;
-        const written = u.cache_creation_input_tokens ?? 0;
-
-        const costUsd =
-          (u.input_tokens * price.inputPerMTok +
-            written * price.inputPerMTok * price.cacheWriteMultiplier +
-            cached * price.inputPerMTok * price.cacheReadMultiplier +
-            u.output_tokens * price.outputPerMTok) /
-          1_000_000;
+        const { micros, meter } = await record(u, final.model);
+        const costUsd = microsToUsd(micros);
+        if (meter) emit("meter", meter);
 
         emit("done", {
           // The full object, so a client that missed a delta still converges.
@@ -151,10 +170,23 @@ export async function POST(request: Request) {
         if (request.signal.aborted || (err as Error)?.name === "AbortError") {
           emit("cancelled", { total_ms: Date.now() - t0 });
         } else {
-          console.error("live preview failed", err);
-          emit("failure", { detail: "The preview pass failed. Keep typing." });
+          const refused = await keyError(funding, err);
+          if (refused) emit("failure", gateBody(refused));
+          else {
+            console.error("live preview failed", redactSecrets(err));
+            emit("failure", { detail: "The preview pass failed. Keep typing." });
+          }
         }
       } finally {
+        // Cancelled or failed after the model started: it still cost something.
+        // Telemetry must not be what leaves the stream unclosed.
+        try {
+          if (billed) await record(billed, billedModel);
+          // Never reached the model at all: give the whole reservation back.
+          else await settle(funding, 0);
+        } catch (err) {
+          console.error("live preview accounting failed (ignored)", redactSecrets(err));
+        }
         controller.close();
       }
     },

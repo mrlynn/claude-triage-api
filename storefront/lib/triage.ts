@@ -1,7 +1,9 @@
 import "server-only";
 import { wrapUntrusted } from "./untrusted";
 import { pricingFor } from "./pricing.generated";
-import Anthropic from "@anthropic-ai/sdk";
+import type Anthropic from "@anthropic-ai/sdk";
+import { houseClient } from "./anthropicClient";
+import { MAX_MESSAGE_CHARS, MAX_TOKENS, MODEL } from "./callLimits";
 import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { readFileSync } from "node:fs";
@@ -20,15 +22,8 @@ import { join } from "node:path";
  * The Anthropic key is server-only and never reaches the browser.
  */
 
-export const MODEL = process.env.TRIAGE_MODEL ?? "claude-opus-5";
-
-/** Hard ceiling. A classification is ~150 tokens; this caps a runaway. */
-export const MAX_TOKENS = 900;
-
-/** Longer than any genuine support message, short enough to bound cost. */
-export const MAX_MESSAGE_CHARS = 2000;
-
-const anthropic = new Anthropic({ maxRetries: 2 });
+/** The ceilings live in callLimits.ts, where cost.ts can price them; re-exported for the routes. */
+export { MAX_MESSAGE_CHARS, MAX_TOKENS, MODEL };
 
 export const TriageSchema = z.object({
   category: z
@@ -140,13 +135,14 @@ export function buildSystem(context: {
  *   RAW — which is exactly what this app did before Lab 8. It exists so the
  *   injection playground can show the difference side by side rather than
  *   asserting it. It is never false on the real support form.
+ * @param client Who pays. The house key unless the caller says otherwise.
  */
 export function callClaude(
   system: SystemBlocks,
   message: string,
-  { defended = true }: { defended?: boolean } = {},
+  { defended = true, client = houseClient() }: { defended?: boolean; client?: Anthropic } = {},
 ) {
-  return anthropic.messages.parse({
+  return client.messages.parse({
     model: MODEL,
     max_tokens: MAX_TOKENS,
     system,

@@ -1,9 +1,12 @@
 import "server-only";
-import Anthropic from "@anthropic-ai/sdk";
+import type Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 import corpus from "@/data/tutor-corpus.json";
-import { pricingFor } from "./pricing.generated";
+import { houseClient } from "./anthropicClient";
+import { TUTOR_MAX_TOKENS, TUTOR_MODEL } from "./callLimits";
+import { costMicros, microsToUsd } from "./cost";
+import { recordSpend } from "./telemetry";
 import { wrapUntrusted } from "./untrusted";
 import {
   assembleDrill,
@@ -48,9 +51,15 @@ import {
  * Every output goes through `tutorPolicy.ts` before it leaves this file.
  */
 
-export const TUTOR_MODEL = process.env.TUTOR_MODEL ?? "claude-sonnet-5";
+/** The model and per-call ceilings live in callLimits.ts, where cost.ts can price them. */
+export { TUTOR_MODEL };
 
-const anthropic = new Anthropic({ maxRetries: 2 });
+/** Who pays for a Tutor call. The house key unless the route says otherwise. */
+export interface CallOptions {
+  client?: Anthropic;
+  /** Told what the call cost as soon as it returns, before validation can throw. The route settles credit with it. */
+  onSpend?: (micros: number) => void;
+}
 
 export const CORPUS = corpus;
 export const KNOWN_IDS: ReadonlySet<string> = new Set(corpus.map((d) => d.id));
@@ -126,23 +135,22 @@ export interface CallMeta {
   dropped: string[];
 }
 
-function costOf(usage: Anthropic.Usage): number {
-  const p = pricingFor(TUTOR_MODEL);
-  const inRate = p.inputPerMTok / 1_000_000;
-  const cost =
-    usage.input_tokens * inRate +
-    (usage.cache_creation_input_tokens ?? 0) * inRate * p.cacheWriteMultiplier +
-    (usage.cache_read_input_tokens ?? 0) * inRate * p.cacheReadMultiplier +
-    usage.output_tokens * (p.outputPerMTok / 1_000_000);
-  return Math.round(cost * 1e6) / 1e6;
-}
-
-function meta(usage: Anthropic.Usage, dropped: string[]): CallMeta {
+/**
+ * Called on every response the moment it arrives, before the output is
+ * validated: a reply that fails validation was still billed, and the spend
+ * counter should say so.
+ */
+function spend(
+  response: { usage: Anthropic.Usage; model: string },
+  onSpend?: (micros: number) => void,
+): Omit<CallMeta, "dropped"> {
+  const micros = costMicros(response.usage, response.model);
+  recordSpend("tutor", micros);
+  onSpend?.(micros);
   return {
-    model: TUTOR_MODEL,
-    costUsd: costOf(usage),
-    cacheReadTokens: usage.cache_read_input_tokens ?? 0,
-    dropped,
+    model: response.model,
+    costUsd: microsToUsd(micros),
+    cacheReadTokens: response.usage.cache_read_input_tokens ?? 0,
   };
 }
 
@@ -182,13 +190,16 @@ const PlanOutput = z.object({
     .describe("The sessions, in the order they should be done."),
 });
 
-export async function buildPlan(intake: Intake): Promise<{ plan: Plan; meta: CallMeta }> {
+export async function buildPlan(
+  intake: Intake,
+  { client = houseClient(), onSpend }: CallOptions = {},
+): Promise<{ plan: Plan; meta: CallMeta }> {
   const count = sessionCount(intake);
   const focus = intake.focus.filter((id) => KNOWN_IDS.has(id));
 
-  const response = await anthropic.messages.parse({
+  const response = await client.messages.parse({
     model: TUTOR_MODEL,
-    max_tokens: 6_000,
+    max_tokens: TUTOR_MAX_TOKENS.plan,
     system: planSystem(),
     output_config: { effort: "low", format: zodOutputFormat(PlanOutput) },
     messages: [
@@ -210,6 +221,7 @@ export async function buildPlan(intake: Intake): Promise<{ plan: Plan; meta: Cal
       },
     ],
   });
+  const spent = spend(response, onSpend);
 
   const draft = requireParsed(response);
   const { plan, dropped } = validatePlan(
@@ -221,7 +233,7 @@ export async function buildPlan(intake: Intake): Promise<{ plan: Plan; meta: Cal
     intake,
   );
   if (plan.sessions.length === 0) throw new TutorError("The tutor could not build a plan from the course material.");
-  return { plan, meta: meta(response.usage, dropped) };
+  return { plan, meta: { ...spent, dropped } };
 }
 
 // ---- 2. one lesson ----------------------------------------------------------
@@ -283,18 +295,21 @@ function starterInstructions(labIds: readonly string[], level: Intake["level"]):
   ].join("\n\n");
 }
 
-export async function prepareLesson(input: {
-  session: PlanSession;
-  level: Intake["level"];
-  weakSpots: string[];
-}): Promise<{ lesson: Lesson; meta: CallMeta }> {
+export async function prepareLesson(
+  input: {
+    session: PlanSession;
+    level: Intake["level"];
+    weakSpots: string[];
+  },
+  { client = houseClient(), onSpend }: CallOptions = {},
+): Promise<{ lesson: Lesson; meta: CallMeta }> {
   const { session } = input;
   const labIds = session.labIds.filter((id) => KNOWN_IDS.has(id));
   const weak = input.weakSpots.filter((id) => KNOWN_IDS.has(id));
 
-  const response = await anthropic.messages.parse({
+  const response = await client.messages.parse({
     model: TUTOR_MODEL,
-    max_tokens: 8_000,
+    max_tokens: TUTOR_MAX_TOKENS.lesson,
     system: system(),
     output_config: { effort: "medium", format: zodOutputFormat(LessonOutput) },
     messages: [
@@ -315,6 +330,7 @@ export async function prepareLesson(input: {
       },
     ],
   });
+  const spent = spend(response, onSpend);
 
   const draft = requireParsed(response);
   const { lesson, dropped } = validateLesson(
@@ -333,7 +349,7 @@ export async function prepareLesson(input: {
   );
   return {
     lesson: { ...lesson, drill: drill.drill },
-    meta: meta(response.usage, drill.dropped ? [...dropped, `${drill.dropped} drill item(s)`] : dropped),
+    meta: { ...spent, dropped: drill.dropped ? [...dropped, `${drill.dropped} drill item(s)`] : dropped },
   };
 }
 
@@ -356,17 +372,20 @@ const ReviewOutput = z.object({
   beforeNextLesson: z.string().describe("One sentence: the single thing to do before moving on."),
 });
 
-export async function reviewAttempt(input: {
-  lesson: Pick<Lesson, "title" | "exercise">;
-  attempt: string;
-  defects: StarterDefect[];
-}): Promise<{ review: Review; meta: CallMeta }> {
+export async function reviewAttempt(
+  input: {
+    lesson: Pick<Lesson, "title" | "exercise">;
+    attempt: string;
+    defects: StarterDefect[];
+  },
+  { client = houseClient(), onSpend }: CallOptions = {},
+): Promise<{ review: Review; meta: CallMeta }> {
   const { exercise } = input.lesson;
   const planted = resolveDefects(input.defects, MISTAKES, exercise.rubric.length);
 
-  const response = await anthropic.messages.parse({
+  const response = await client.messages.parse({
     model: TUTOR_MODEL,
-    max_tokens: 4_000,
+    max_tokens: TUTOR_MAX_TOKENS.review,
     system: system(),
     output_config: { effort: "medium", format: zodOutputFormat(ReviewOutput) },
     messages: [
@@ -394,9 +413,10 @@ export async function reviewAttempt(input: {
       },
     ],
   });
+  const spent = spend(response, onSpend);
 
   const review = validateReview(requireParsed(response), KNOWN_IDS, unfixed(planted, input.attempt));
-  return { review, meta: meta(response.usage, []) };
+  return { review, meta: { ...spent, dropped: [] } };
 }
 
 // ---- 4. a hint ----------------------------------------------------------------
@@ -423,21 +443,24 @@ const HINT_LEVEL_TEXT: Record<HintLevel, string> = {
   3: "Level 3, a partial step: show the shape of ONE piece of the answer — the piece they are most clearly missing — as a short code block with the rest elided. Say what remains for them to do.",
 };
 
-export async function hintForAttempt(input: {
-  lesson: Pick<Lesson, "title" | "exercise">;
-  attempt: string;
-  question: string;
-  previous: string[];
-  level: HintLevel;
-  defects: StarterDefect[];
-}): Promise<{ hint: Hint; meta: CallMeta }> {
+export async function hintForAttempt(
+  input: {
+    lesson: Pick<Lesson, "title" | "exercise">;
+    attempt: string;
+    question: string;
+    previous: string[];
+    level: HintLevel;
+    defects: StarterDefect[];
+  },
+  { client = houseClient(), onSpend }: CallOptions = {},
+): Promise<{ hint: Hint; meta: CallMeta }> {
   const { exercise } = input.lesson;
   // What is still broken is known without asking the model: the planted line is there or it is not.
   const broken = unfixed(resolveDefects(input.defects, MISTAKES, exercise.rubric.length), input.attempt);
 
-  const response = await anthropic.messages.parse({
+  const response = await client.messages.parse({
     model: TUTOR_MODEL,
-    max_tokens: 1_500,
+    max_tokens: TUTOR_MAX_TOKENS.hint,
     system: system(),
     output_config: { effort: "low", format: zodOutputFormat(HintOutput) },
     messages: [
@@ -470,10 +493,11 @@ export async function hintForAttempt(input: {
       },
     ],
   });
+  const spent = spend(response, onSpend);
 
   const hint = validateHint(requireParsed(response), KNOWN_IDS, input.level);
   if (!hint.text) throw new TutorError("The tutor did not produce a hint. Try again.");
-  return { hint, meta: meta(response.usage, []) };
+  return { hint, meta: { ...spent, dropped: [] } };
 }
 
 /** Titles and site paths, so the page can link each cited id without the body. */
