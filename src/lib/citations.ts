@@ -36,12 +36,15 @@
  * a genuinely stronger guarantee than anything in this file. It is the right
  * tool when the source document travels WITH the request.
  *
- * It does not fit here, and the reason is Decision 2. This handbook lives in
- * the cached system prefix, which is why a triage call costs $0.006 warm
- * instead of $0.033. Citations needs it as a document block in `messages`
- * instead, and the moment it moves there the cache arrangement this whole
- * repo is built around changes shape. We chose the cheaper prefix and a
- * cheaper check.
+ * It does not fit here, for two reasons. The hard one: Citations and
+ * structured outputs are incompatible — a document block with citations
+ * enabled plus `output_config.format` is a 400 — and /v1/resolve's whole
+ * contract is a schema-validated Resolution. The soft one is Decision 2: the
+ * handbook lives in the cached system prefix ($0.006 warm vs $0.033 cold).
+ * Citations needs it as a document block in `messages`; that block can be
+ * cached too, but the per-request context would have to move behind it and
+ * the cache layout this repo is built around changes shape. We kept
+ * structured output and the prefix, and chose a cheaper check.
  *
  * That trade is worth re-running for your own domain rather than inheriting.
  * If your source documents are per-request (a contract, a receipt, a

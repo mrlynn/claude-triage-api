@@ -65,6 +65,14 @@ npm run eval:models -- --no-judge
 
 Three models, twelve cases, four in flight. About ninety seconds and $0.19.
 
+> **A date on the `fast` row.** `claude-haiku-4-5` is an alias for
+> `claude-haiku-4-5-20251001`, and Anthropic commits to serving Haiku 4.5
+> only until **no sooner than October 15, 2026**. `claude-opus-5` and
+> `claude-sonnet-5` are pinned snapshots with retirement dates in 2027. A tier
+> choice includes how long you get to keep it. Check the
+> [model deprecations](https://platform.claude.com/docs/en/about-claude/model-deprecations)
+> page before you write the decision in Step 6.
+
 Read the table top to bottom before you read any single column. The measured
 result on this repo, across four runs:
 

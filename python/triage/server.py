@@ -82,6 +82,28 @@ def triage(ticket: TicketInput) -> JSONResponse:
     # nullable, still the field people assert past in production.
     parsed = response.parsed_output
     if parsed is None:
+        # Same three-way split as src/lib/missing-output.ts: a refusal and a
+        # truncation are not schema misses.
+        if response.stop_reason == "refusal":
+            details = getattr(response, "stop_details", None)
+            return JSONResponse(
+                {
+                    "error": "refused",
+                    "detail": "The model declined this request. See stop_details for the category.",
+                    "stop_reason": response.stop_reason,
+                    "stop_details": details.model_dump() if details is not None else None,
+                },
+                status_code=422,
+            )
+        if response.stop_reason == "max_tokens":
+            return JSONResponse(
+                {
+                    "error": "truncated_output",
+                    "detail": "Generation hit max_tokens before the JSON was complete.",
+                    "stop_reason": response.stop_reason,
+                },
+                status_code=502,
+            )
         return JSONResponse(
             {
                 "error": "unparseable_output",

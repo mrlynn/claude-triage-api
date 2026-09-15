@@ -70,6 +70,12 @@ export async function POST(request: Request) {
     const triage = response.parsed_output;
 
     if (!triage) {
+      if (response.stop_reason === "refusal") {
+        return NextResponse.json(
+          { error: "refused", detail: "The model declined this request." },
+          { status: 422 },
+        );
+      }
       return NextResponse.json(
         { error: "unparseable_output", detail: "The model output did not validate." },
         { status: 502 },

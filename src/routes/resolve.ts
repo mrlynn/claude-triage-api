@@ -9,8 +9,9 @@
  * Three things this route does that toy examples usually skip:
  *   1. Caps `max_iterations` — an uncapped agent loop is an uncapped bill.
  *   2. Accumulates usage across EVERY turn, not just the last one. The final
- *      message's usage covers only the final request; a 5-turn loop that
- *      reports the last turn's usage under-reports cost by roughly 5x.
+ *      message's usage covers only the final request. History accumulates, so
+ *      the last turn is the largest, and a 5-turn loop that reports only it
+ *      under-reports cost by roughly 3x (Lab 3) — less than 1/N, still badly.
  *   3. Returns the tool trace, so a reviewer can see what the model actually
  *      looked at before deciding. "Show your work" is an auditability
  *      requirement in support tooling, not a nicety.
@@ -28,6 +29,7 @@ import { enforceAuthority } from "../lib/authority.js";
 import { verifyCitations } from "../lib/citations.js";
 import { wrapUntrusted } from "../lib/untrusted.js";
 import { safeJson } from "../lib/json.js";
+import { explainMissingOutput } from "../lib/missing-output.js";
 import { createTools, type ToolCallRecord } from "../tools/index.js";
 
 export const resolveRoute = new Hono();
@@ -106,15 +108,16 @@ resolveRoute.post("/", async (c) => {
 
     const validated = ResolutionSchema.safeParse(safeJson(text));
     if (!validated.success) {
+      // Same three-way split as /v1/triage: a refusal or a truncation is not
+      // a schema miss, and the body should say which one happened.
+      const missing = explainMissingOutput(final);
       return c.json(
         {
-          error: "unparseable_output",
-          detail: "The agent's final message did not validate against the resolution schema.",
-          stop_reason: final.stop_reason,
+          ...missing.body,
           iterations: usagePerTurn.length,
           raw: text.slice(0, 2000),
         },
-        502,
+        missing.status,
       );
     }
 

@@ -725,11 +725,13 @@ uses MongoDB the same way for the same reasons.
 - **Effort varies per route** (`low` for triage, `high` for resolve, `medium`
   for draft) and lives in [`src/config.ts`](src/config.ts) so the cost/quality
   tradeoff is a one-line experiment, not a scavenger hunt.
-- **Model ids are aliases.** `claude-opus-5` improves without you doing
-  anything and changes without telling you. `MODEL_PINS` in `src/config.ts` is
-  where you pin a dated snapshot when you need to attribute a change; the
-  weekly `model-upgrade` job in CI runs the tier matrix so drift shows up in a
-  job summary rather than in an incident.
+- **Model ids are snapshots, except where they are not.** From the 4.6
+  generation on, dateless ids like `claude-opus-5` are pinned snapshots and do
+  not move. `claude-haiku-4-5` is still an alias (for
+  `claude-haiku-4-5-20251001`) and retires no sooner than 2026-10-15.
+  `MODEL_PINS` in `src/config.ts` is where you set an explicit id for a role;
+  the weekly `model-upgrade` job in CI runs the tier matrix so a regression
+  shows up in a job summary rather than in an incident.
 - **Pricing** lives in `MODEL_CATALOG` in `src/config.ts`, keyed by model, with
   capability flags alongside the rates (Haiku 4.5 rejects `output_config.effort`,
   so tiering is not a name swap). `pricingFor()` **throws** on an unknown id

@@ -16,6 +16,8 @@ export interface ModelPricing {
   cacheWriteMultiplier: number;
   cacheReadMultiplier: number;
   batchMultiplier: number;
+  /** Haiku 4.5 rejects `output_config.effort` with a 400. */
+  supportsEffort: boolean;
 }
 
 export const PRICING_BY_MODEL: Record<string, ModelPricing> = {
@@ -24,21 +26,24 @@ export const PRICING_BY_MODEL: Record<string, ModelPricing> = {
     "outputPerMTok": 25,
     "cacheWriteMultiplier": 1.25,
     "cacheReadMultiplier": 0.1,
-    "batchMultiplier": 0.5
+    "batchMultiplier": 0.5,
+    "supportsEffort": true
   },
   "claude-sonnet-5": {
     "inputPerMTok": 2,
     "outputPerMTok": 10,
     "cacheWriteMultiplier": 1.25,
     "cacheReadMultiplier": 0.1,
-    "batchMultiplier": 0.5
+    "batchMultiplier": 0.5,
+    "supportsEffort": true
   },
   "claude-haiku-4-5": {
     "inputPerMTok": 1,
     "outputPerMTok": 5,
     "cacheWriteMultiplier": 1.25,
     "cacheReadMultiplier": 0.1,
-    "batchMultiplier": 0.5
+    "batchMultiplier": 0.5,
+    "supportsEffort": false
   }
 };
 

@@ -17,14 +17,18 @@ const TriageSchema = z.object({
 });
 
 const response = await anthropic.messages.parse({
-  model: "claude-sonnet-4-5",
-  max_tokens: 300,
+  model: "claude-opus-5",
+  max_tokens: 16000, // adaptive thinking counts against this; a low ceiling truncates the JSON
   messages: [{ role: "user", content: ticket }],
   output_config: { format: zodOutputFormat(TriageSchema) },
 });
 
 const triage = response.parsed_output; // TriageResult | null
 ```
+
+When `parsed_output` is `null`, check `response.stop_reason` before calling it a parse failure: `"max_tokens"` means the JSON was truncated, and `"refusal"` means the model declined (read `response.stop_details`).
+
+Two limits worth knowing. The API constrains generation to the schema's *structure*, but it does not support numeric bounds like `.min(0).max(1)`; the SDK helper moves those into the description and checks them on your side after the response arrives. And discriminated unions via `anyOf`, recursive schemas, and string length constraints are not supported by the API's schema compiler.
 
 The schema gives application code a dependable output shape. It does **not** make the classification correct. The right next step is to evaluate it on examples that represent the failures your system cannot afford.
 

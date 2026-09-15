@@ -192,14 +192,18 @@ this.throttleEvents++;
 this.width = Math.max(1, Math.floor(this.width / 2));
 ```
 
-**Q6.** The SDK already retries 429s three times, honouring `retry-after`.
+**Q6.** The client in `src/anthropic.ts` already retries 429s three times (`maxRetries: 3`; the SDK default is 2), honouring `retry-after`.
 Explain why adding a second retry layer here would be a mistake, and what this
 class does instead.
 
-## Step 5 — pinned versus floating
+## Step 5 — which model ids can move
 
-`claude-opus-5` is an alias. It improves without you doing anything, and it
-changes without telling you.
+`claude-opus-5` is not an alias. From the 4.6 generation on, every Claude model
+id is a pinned snapshot, dateless ids included, so the model behind
+`claude-opus-5` today is the one behind it next year. Older ids are different:
+`claude-haiku-4-5` is an alias for `claude-haiku-4-5-20251001`, and Haiku 4.5
+has a retirement date (not sooner than October 15, 2026). This repo's `fast`
+tier can therefore move, or be retired, without a commit here.
 
 Read `MODEL_PINS` in [`src/config.ts`](../../src/config.ts), then look at the
 `model-upgrade` job in
@@ -207,8 +211,8 @@ Read `MODEL_PINS` in [`src/config.ts`](../../src/config.ts), then look at the
 matrix weekly and posts the table to the job summary.
 
 **Q7.** Your eval drops two points on a Tuesday. Nothing was deployed. Walk
-through how you would establish whether the model changed, and what you would
-have needed to have in place beforehand.
+through how you would establish whether anything actually changed, including
+the model, and what you would have needed to have in place beforehand.
 
 ## Step 6 — publish the tools over MCP
 

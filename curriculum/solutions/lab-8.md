@@ -251,9 +251,14 @@ stronger property.
 
 **Q10. When does the Citations trade flip?**
 
-It flips whenever the source document is **per-request rather than shared**,
-because that is precisely when it was never a candidate for a cached prefix and
-so costs nothing to move into `messages`.
+First, the constraint that does not flip: Citations and `output_config.format`
+return a 400 together. Any design that adopts Citations either drops the
+structured response for that call or splits it into two calls, a cited answer
+and a structured classification. Price that in before the rest of this answer.
+
+With that settled, the trade flips whenever the source document is
+**per-request rather than shared**, because that is precisely when it was never
+a candidate for a shared cached prefix.
 
 Concrete cases: an insurance claim adjudicated against that customer's own
 policy document; a B2B support desk where each account has negotiated terms; a
@@ -265,16 +270,19 @@ matching — the span comes from the API rather than from the model's memory, it
 survives a renumbered document, and it points at the *text*, which is the
 thing a reviewer actually wants to read.
 
-The caching arithmetic is the whole argument. Northwind's handbook is
+The caching arithmetic is the rest of the argument. Northwind's handbook is
 identical on all 4,100 tickets a week, so it belongs in the prefix, where a
 warm call costs $0.006 instead of $0.033 — an 81% saving on every request in
-perpetuity. Move it into `messages` as a document block and that saving is
-gone. A per-customer document has no such saving to lose: it is fresh input on
-every request whichever block it sits in.
+perpetuity. A `document` block in `messages` can carry `cache_control` as well,
+so moving the handbook there does not have to forfeit that saving, but only if
+nothing that varies per request (the date, the channel, the customer email)
+renders ahead of it. A per-customer document has no shared saving to protect:
+it is fresh input on every request whichever block it sits in.
 
 So the rule is not "prefer Citations" or "prefer caching". It is: **a document
-that is the same for everyone belongs in the prefix; a document that differs
-per request should carry its own citations.** A system with both — a shared
+that is the same for everyone belongs in the cached prefix; a document that
+differs per request should carry its own citations, on a call that does not
+also need a structured output.** A system with both — a shared
 handbook and a per-customer contract — should do both, and this repo happens
 to have only the first kind.
 

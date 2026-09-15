@@ -350,8 +350,9 @@ export async function* runAssistant(input: RunInput): AsyncGenerator<AssistantEv
 
       const message = await stream.finalMessage();
       // Usage accumulates across EVERY turn. The final message's usage covers
-      // only the final request, so reporting that alone under-reports a
-      // six-turn conversation by roughly six times.
+      // only the final request. History accumulates, so the last turn is the
+      // largest, and reporting it alone under-reports a multi-turn run by less
+      // than 1/N (roughly 3x over five turns, per Lab 3) — but still badly.
       inputTokens += message.usage.input_tokens ?? 0;
       outputTokens += message.usage.output_tokens ?? 0;
       cacheRead += message.usage.cache_read_input_tokens ?? 0;

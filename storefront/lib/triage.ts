@@ -1,5 +1,6 @@
 import "server-only";
 import { wrapUntrusted } from "./untrusted";
+import { pricingFor } from "./pricing.generated";
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
@@ -150,7 +151,9 @@ export function callClaude(
     max_tokens: MAX_TOKENS,
     system,
     output_config: {
-      effort: "low",
+      // Gated like src/lib/requests.ts: Haiku 4.5 returns a 400 on `effort`,
+      // so TRIAGE_MODEL=claude-haiku-4-5 must not send it.
+      ...(pricingFor(MODEL).supportsEffort ? { effort: "low" as const } : {}),
       format: zodOutputFormat(TriageSchema),
     },
     messages: [

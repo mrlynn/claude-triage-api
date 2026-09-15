@@ -122,8 +122,8 @@ that get confused constantly.
 | | Input $/MTok | Output $/MTok | Notes |
 |---|---|---|---|
 | `claude-opus-5` | $5.00 | $25.00 | 1M context |
-| `claude-sonnet-5` | $3.00 | $15.00 | 1M context |
-| `claude-haiku-4-5` | $1.00 | $5.00 | 200K context; **rejects `output_config.effort`** |
+| `claude-sonnet-5` | $2.00 | $10.00 | 1M context |
+| `claude-haiku-4-5` | $1.00 | $5.00 | 200K context; **rejects `output_config.effort`**; an alias for `claude-haiku-4-5-20251001`, retiring no sooner than 2026-10-15 |
 
 Two things the price column does not tell you, both measured in
 [Lab 7](labs/lab-7-choosing-a-model.md):

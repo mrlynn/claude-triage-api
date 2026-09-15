@@ -37,6 +37,7 @@ import { MODEL } from "../src/config.js";
 import { buildTriageRequest } from "../src/lib/requests.js";
 import { summarizeUsage } from "../src/lib/usage.js";
 import { safeJson } from "../src/lib/json.js";
+import { explainMissingOutput } from "../src/lib/missing-output.js";
 import { TriageSchema, type TriageResult } from "../src/schemas.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -163,7 +164,8 @@ async function main(): Promise<void> {
         cost_usd: usage.estimated_cost_usd,
         cache_hit: usage.cache_hit,
         cache_read_tokens: usage.cache_read_input_tokens,
-        error: "unparseable_output",
+        // A refusal or a truncation is not a schema miss; record which.
+        error: explainMissingOutput(message).body.error,
       });
       continue;
     }

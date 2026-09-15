@@ -23,29 +23,33 @@ export type Tier = keyof typeof MODEL_TIERS;
 export const MODEL = process.env.TRIAGE_MODEL ?? MODEL_TIERS.flagship;
 
 /**
- * Dated snapshots to pin against when you need reproducibility.
+ * Explicit model ids per role, for the models that still have a moving alias.
  *
- * TEACHING NOTE: `claude-opus-5` is an ALIAS. It is the right default for a
- * course and for most applications — you get improvements without doing
- * anything — but an alias moves under you, and it does not send an email
- * first. The failure mode is not a broken build; it is a Tuesday where your
- * eval drops two points and nothing in your git history explains it.
+ * TEACHING NOTE: `claude-opus-5` and `claude-sonnet-5` are NOT aliases. From
+ * the 4.6 generation on, every Claude model id is a pinned snapshot, dateless
+ * ids included — there is no `claude-opus-5-2026xxxx` to pin to, because
+ * `claude-opus-5` already is one. Older models are different: `claude-haiku-4-5`
+ * is an alias that resolves to `claude-haiku-4-5-20251001`.
  *
- * The rule that transfers: **pin when you need to attribute a change, float
- * when you want improvements.** A regression suite pins, because its whole job
- * is to answer "did MY change do this?" and a moving model makes that
- * unanswerable. Production usually floats, with a scheduled job that runs the
- * eval against the pin and shows you the delta BEFORE you move it — which is
- * what .github/workflows/ci.yml does on a weekly cron.
+ * So what actually moves a model under you?
+ *  - an alias on a pre-4.6 model, like the `fast` tier here;
+ *  - a retirement date, which forces a change to a new id on someone else's
+ *    schedule (Haiku 4.5: not sooner than 2026-10-15);
+ *  - you, changing the id — which is a migration, and should be run against
+ *    the eval before it ships, not after.
  *
- * Empty by default rather than pre-filled with ids that will be stale by the
- * time you read this. Fill it from `client.models.list()` when you need it.
+ * The rule that transfers: **know which of your ids can move, and make every
+ * model change a diff you can attribute.** The weekly job in
+ * .github/workflows/ci.yml runs the tier matrix so a regression — from an
+ * alias, a prompt edit, or a handbook change — shows up in a job summary.
+ *
+ * Empty by default. Check `client.models.list()` for the exact ids.
  */
 export const MODEL_PINS: Record<string, string> = {
-  // triage: "claude-opus-5-20260401",
+  // fast: "claude-haiku-4-5-20251001",
 };
 
-/** The pinned id for a role, or the floating alias when nothing is pinned. */
+/** The explicit id for a role, or the configured default when nothing is set. */
 export function modelFor(role: string): string {
   return MODEL_PINS[role] ?? MODEL;
 }

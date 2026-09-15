@@ -142,7 +142,7 @@ field is usable?
       "Both \u2014 that is the point of a schema"
     ],
     "answer": 1,
-    "explain": "The API enforces the shape. Nothing enforces the content. A schema will happily give you a well-formed classification that is completely wrong, which is exactly why the eval set in Lab 6 exists.",
+    "explain": "The API enforces the shape (the structure, types, and enums; numeric bounds like .min(0).max(1) are checked by the SDK helper after the response, not by the API). Nothing enforces the content. A schema will happily give you a well-formed classification that is completely wrong, which is exactly why the eval set in Lab 6 exists.",
     "note": "Northwind's cancelled 2024 classifier produced perfectly-shaped output too."
   },
   {
@@ -235,9 +235,11 @@ where that shows up as a number rather than a vibe.
 
 Make `escalation_reason` a discriminated union: `null` when `requires_human` is
 false, and a required non-empty string otherwise. Zod can express this; the
-JSON Schema the API accepts may not represent it fully. Determine empirically
-whether the constraint is enforced by the API or only by your local validation,
-and write down which layer is actually protecting you.
+API's structured-outputs docs list discriminated unions via `anyOf` and string
+length constraints (`minLength`) as unsupported. Confirm empirically what the
+request actually sends and whether the constraint is enforced by the API or
+only by your local validation, and write down which layer is actually
+protecting you.
 
 ## Extension — the customer attaches a photo
 

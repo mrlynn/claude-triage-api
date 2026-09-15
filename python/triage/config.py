@@ -37,7 +37,7 @@ class ModelSpec:
 
 MODEL_CATALOG: dict[str, ModelSpec] = {
     "claude-opus-5": ModelSpec(5.0, 25.0, 1.25, 0.1, 0.5, True, 1_000_000),
-    "claude-sonnet-5": ModelSpec(3.0, 15.0, 1.25, 0.1, 0.5, True, 1_000_000),
+    "claude-sonnet-5": ModelSpec(2.0, 10.0, 1.25, 0.1, 0.5, True, 1_000_000),
     "claude-haiku-4-5": ModelSpec(1.0, 5.0, 1.25, 0.1, 0.5, False, 200_000),
 }
 
