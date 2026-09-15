@@ -1,6 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import {
   CATEGORY_CHIP,
   HUMAN_CHIP,
@@ -96,6 +101,37 @@ function urgencyBar(urgency?: string): string {
   return "bg-pine/25";
 }
 
+type QueueResult =
+  | { ok: true; items: Escalation[]; stats: Stats; mode: Mode }
+  | { ok: false; error: string };
+
+async function fetchQueue(): Promise<QueueResult> {
+  try {
+    const res = await fetch("/api/queue");
+    const body = await res.json();
+    if (!res.ok) {
+      return { ok: false, error: body.detail ?? "Could not load the queue." };
+    }
+    return {
+      ok: true,
+      items: body.items as Escalation[],
+      stats: body.stats as Stats,
+      mode: (body.mode as Mode) ?? "demo",
+    };
+  } catch {
+    return { ok: false, error: "Could not reach the queue." };
+  }
+}
+
+function subscribeHash(onChange: () => void): () => void {
+  window.addEventListener("hashchange", onChange);
+  return () => window.removeEventListener("hashchange", onChange);
+}
+
+function readHash(): string | null {
+  return window.location.hash.replace(/^#/, "") || null;
+}
+
 export default function QueueBoard() {
   const [items, setItems] = useState<Escalation[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -103,44 +139,41 @@ export default function QueueBoard() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>("demo");
-  const [highlight, setHighlight] = useState<string | null>(null);
+  // The card named in the URL hash, e.g. a link from the assistant's handoff.
+  const highlight = useSyncExternalStore(subscribeHash, readHash, () => null);
 
-  const load = useCallback(async () => {
-    try {
-      const res = await fetch("/api/queue");
-      const body = await res.json();
-      if (!res.ok) {
-        setError(body.detail ?? "Could not load the queue.");
-        return;
-      }
-      setItems(body.items as Escalation[]);
-      setStats(body.stats as Stats);
-      setMode((body.mode as Mode) ?? "demo");
+  const apply = useCallback((result: QueueResult) => {
+    if (result.ok) {
+      setItems(result.items);
+      setStats(result.stats);
+      setMode(result.mode);
       setError(null);
-    } catch {
-      setError("Could not reach the queue.");
-    } finally {
-      setLoading(false);
+    } else {
+      setError(result.error);
     }
+    setLoading(false);
   }, []);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const load = useCallback(
+    async () => apply(await fetchQueue()),
+    [apply],
+  );
 
   useEffect(() => {
-    const id = window.location.hash.replace(/^#/, "");
-    if (!id) return;
-    setHighlight(id);
+    void fetchQueue().then(apply);
+  }, [apply]);
+
+  useEffect(() => {
+    if (!highlight) return;
     // Wait a tick for cards to paint, then scroll the target into view.
     const t = window.setTimeout(() => {
-      document.getElementById(id)?.scrollIntoView({
+      document.getElementById(highlight)?.scrollIntoView({
         behavior: "smooth",
         block: "center",
       });
     }, 80);
     return () => window.clearTimeout(t);
-  }, [items, loading]);
+  }, [highlight, items, loading]);
 
   async function clearAll() {
     if (
