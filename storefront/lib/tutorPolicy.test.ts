@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  TUTOR_FIELDS,
   TUTOR_LIMITS,
   assembleDrill,
   sessionCount,
@@ -127,4 +128,53 @@ test("a revise verdict with every criterion met stays revise", () => {
     known,
   );
   assert.equal(review.verdict, "revise");
+});
+
+test("a plan the model over-wrote still fits the lesson route it will be echoed to", () => {
+  const long = "x".repeat(1_000);
+  const plan: Plan = {
+    goal: "g",
+    doneMeans: [],
+    gaps: [],
+    sessions: [
+      {
+        ...session(1, ["lab-1", "lab-2", "lab-4", "lab-1", "lab-2"]),
+        title: `  ${long}`,
+        objectives: ["", "  ", ...Array.from({ length: 9 }, () => long)],
+        whyNow: long,
+      },
+    ],
+  };
+  const s = validatePlan(plan, known, intake).plan.sessions[0]!;
+  assert.ok(s.title.length <= TUTOR_FIELDS.title);
+  assert.ok(s.labIds.length <= TUTOR_FIELDS.labIds);
+  assert.equal(s.objectives.length, TUTOR_FIELDS.objectives);
+  assert.ok(s.objectives.every((o) => o.length > 0 && o.length <= TUTOR_FIELDS.objective));
+  assert.ok(s.whyNow.length <= TUTOR_FIELDS.whyNow);
+});
+
+test("an exercise the model over-wrote still fits the review route", () => {
+  const long = "y".repeat(10_000);
+  const { lesson } = validateLesson(
+    {
+      sessionN: 3,
+      title: " ",
+      brief: [],
+      exercise: { prompt: long, deliverable: long, rubric: ["", ...Array.from({ length: 12 }, () => long)] },
+    },
+    known,
+  );
+  assert.equal(lesson.title, "Session 3");
+  assert.ok(lesson.exercise.prompt.length <= TUTOR_FIELDS.prompt);
+  assert.ok(lesson.exercise.deliverable.length <= TUTOR_FIELDS.deliverable);
+  assert.equal(lesson.exercise.rubric.length, TUTOR_FIELDS.rubric);
+  assert.ok(lesson.exercise.rubric.every((r) => r.length > 0 && r.length <= TUTOR_FIELDS.rubricItem));
+});
+
+test("an exercise with no usable rubric still has one criterion to grade against", () => {
+  const { lesson } = validateLesson(
+    { sessionN: 1, title: "t", brief: [], exercise: { prompt: "p", deliverable: "d", rubric: ["  "] } },
+    known,
+  );
+  assert.equal(lesson.exercise.rubric.length, 1);
 });

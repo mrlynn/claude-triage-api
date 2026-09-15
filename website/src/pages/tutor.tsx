@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import Layout from "@theme/Layout";
 import Link from "@docusaurus/Link";
 import { tutorApi } from "@site/src/components/Tutor/api";
@@ -27,12 +27,26 @@ export default function TutorPage(): ReactNode {
   const [preparing, setPreparing] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // One request per session, however many places ask for it. The first lesson
+  // is prepared right after the plan and the next one when a session finishes,
+  // so a learner can click Start while either is still in flight; without this
+  // the second response would replace the lesson under answers already given.
+  const inFlight = useRef(new Map<number, ReturnType<typeof tutorApi.lesson>>());
   const prepare = useCallback(
     async (session: PlanSession, s: TutorState) => {
       if (!s.intake || s.lessons[session.n]) return s.lessons[session.n];
-      const result = await tutorApi.lesson(session, s.intake.level, weakSpots(s.deck));
-      update((cur) => ({ ...cur, lessons: { ...cur.lessons, [session.n]: result } }));
-      return result;
+      const pending = inFlight.current.get(session.n);
+      if (pending) return pending;
+      const request = tutorApi.lesson(session, s.intake.level, weakSpots(s.deck));
+      inFlight.current.set(session.n, request);
+      try {
+        const result = await request;
+        // First write wins: a lesson already on screen is never swapped.
+        update((cur) => (cur.lessons[session.n] ? cur : { ...cur, lessons: { ...cur.lessons, [session.n]: result } }));
+        return result;
+      } finally {
+        inFlight.current.delete(session.n);
+      }
     },
     [update],
   );
@@ -46,7 +60,12 @@ export default function TutorPage(): ReactNode {
       update(() => next);
       // "Done means" includes the first lesson, prepared — not just the outline.
       const first = plan.sessions[0];
-      if (first) await prepare(first, next).catch((e) => setError(`Plan ready; first lesson failed: ${message(e)}`));
+      if (first) {
+        setPreparing(first.n);
+        await prepare(first, next)
+          .catch((e) => setError(`Plan ready; first lesson failed: ${message(e)}`))
+          .finally(() => setPreparing(null));
+      }
     } catch (e) {
       setError(message(e));
     } finally {

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { reviewAttempt } from "@/lib/tutor";
 import { tutorOptions, tutorPost } from "@/lib/tutorRoute";
-import { TUTOR_LIMITS } from "@/lib/tutorPolicy";
+import { TUTOR_FIELDS, TUTOR_LIMITS } from "@/lib/tutorPolicy";
 
 /**
  * "Review my attempt." The exercise comes back from the page with the attempt,
@@ -15,11 +15,11 @@ const text = (max: number) => z.string().trim().min(1).max(max);
 
 const Body = z.object({
   lesson: z.object({
-    title: text(160),
+    title: text(TUTOR_FIELDS.title),
     exercise: z.object({
-      prompt: text(4_000),
-      deliverable: text(400),
-      rubric: z.array(text(300)).min(1).max(8),
+      prompt: text(TUTOR_FIELDS.prompt),
+      deliverable: text(TUTOR_FIELDS.deliverable),
+      rubric: z.array(text(TUTOR_FIELDS.rubricItem)).min(1).max(TUTOR_FIELDS.rubric),
     }),
   }),
   attempt: text(TUTOR_LIMITS.maxAttemptChars),

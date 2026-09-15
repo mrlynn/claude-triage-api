@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { prepareLesson } from "@/lib/tutor";
 import { tutorOptions, tutorPost } from "@/lib/tutorRoute";
-import { TUTOR_LIMITS } from "@/lib/tutorPolicy";
+import { TUTOR_FIELDS, TUTOR_LIMITS } from "@/lib/tutorPolicy";
 
 /**
  * Prepares one session. The page sends back the session from its own copy of
@@ -16,12 +16,12 @@ const text = (max: number) => z.string().trim().min(1).max(max);
 const Body = z.object({
   session: z.object({
     n: z.number().int().min(1).max(TUTOR_LIMITS.maxSessions),
-    title: text(160),
+    title: text(TUTOR_FIELDS.title),
     minutes: z.number().int().min(TUTOR_LIMITS.minMinutes).max(TUTOR_LIMITS.maxMinutes),
     day: z.number().int().min(1).max(TUTOR_LIMITS.maxDays),
-    labIds: z.array(text(40)).min(1).max(4),
-    objectives: z.array(text(240)).max(6),
-    whyNow: z.string().max(400),
+    labIds: z.array(text(40)).min(1).max(TUTOR_FIELDS.labIds),
+    objectives: z.array(text(TUTOR_FIELDS.objective)).max(TUTOR_FIELDS.objectives),
+    whyNow: z.string().max(TUTOR_FIELDS.whyNow),
   }),
   level: z.enum(["new", "some", "shipped"]),
   weakSpots: z.array(z.string().max(40)).max(10).default([]),

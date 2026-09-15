@@ -271,6 +271,9 @@ export async function prepareLesson(input: {
     { sessionN: session.n, title: session.title, brief: draft.brief, exercise: draft.exercise },
     KNOWN_IDS,
   );
+  // An exercise with no prompt has nothing to review, and the review route
+  // would reject it after the learner had already written an attempt.
+  if (!lesson.exercise.prompt) throw new TutorError("The tutor did not produce an exercise for that session. Try again.");
   const drill = assembleDrill(
     corpus,
     labIds,

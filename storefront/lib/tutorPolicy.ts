@@ -32,6 +32,32 @@ export const TUTOR_LIMITS = {
   maxAttemptChars: 6_000,
 } as const;
 
+/**
+ * Field ceilings for model output the browser later sends BACK. The lesson and
+ * review routes re-validate what the page echoes, because nothing is stored
+ * here; if these rules let through a title the lesson route then rejects, the
+ * learner's saved plan cannot start a session. So the routes and the
+ * validators below read the same numbers.
+ */
+export const TUTOR_FIELDS = {
+  title: 160,
+  labIds: 4,
+  objective: 240,
+  objectives: 6,
+  whyNow: 400,
+  prompt: 4_000,
+  deliverable: 400,
+  rubricItem: 300,
+  rubric: 8,
+} as const;
+
+/** Trimmed and cut to fit, so a route's `.trim().max(n)` accepts it. */
+const fit = (text: string, max: number) => text.trim().slice(0, max).trim();
+
+/** Non-empty items only, each cut to fit, list cut to its ceiling. */
+const fitList = (items: readonly string[], maxItem: number, maxItems: number) =>
+  items.map((i) => fit(i, maxItem)).filter(Boolean).slice(0, maxItems);
+
 export type Level = "new" | "some" | "shipped";
 
 export interface Intake {
@@ -128,13 +154,19 @@ export function validatePlan(
         dropped.push(id);
         return false;
       });
-      return { ...s, labIds };
+      return {
+        ...s,
+        labIds: labIds.slice(0, TUTOR_FIELDS.labIds),
+        objectives: fitList(s.objectives, TUTOR_FIELDS.objective, TUTOR_FIELDS.objectives),
+        whyNow: fit(s.whyNow, TUTOR_FIELDS.whyNow),
+      };
     })
     // A session that cites nothing real has nothing real to teach.
     .filter((s) => s.labIds.length > 0)
     .slice(0, target)
     .map((s, i) => ({
       ...s,
+      title: fit(s.title, TUTOR_FIELDS.title) || `Session ${i + 1}`,
       n: i + 1,
       minutes,
       day: clamp(Math.floor(i / intake.sessionsPerDay) + 1, 1, intake.days),
@@ -183,7 +215,17 @@ export function validateLesson(
     dropped.push(b.labId);
     return false;
   });
-  return { lesson: { ...lesson, brief }, dropped };
+  const rubric = fitList(lesson.exercise.rubric, TUTOR_FIELDS.rubricItem, TUTOR_FIELDS.rubric);
+  const exercise = {
+    prompt: fit(lesson.exercise.prompt, TUTOR_FIELDS.prompt),
+    deliverable: fit(lesson.exercise.deliverable, TUTOR_FIELDS.deliverable) || "Your answer to the exercise above.",
+    // The review route needs at least one criterion to grade against.
+    rubric: rubric.length ? rubric : ["Answers the exercise correctly, using only what the course teaches."],
+  };
+  return {
+    lesson: { ...lesson, title: fit(lesson.title, TUTOR_FIELDS.title) || `Session ${lesson.sessionN}`, brief, exercise },
+    dropped,
+  };
 }
 
 export function validateReview(review: Review, known: ReadonlySet<string>): Review {
