@@ -97,7 +97,10 @@ export default function TutorPage(): ReactNode {
           ? existing
           : { ...existing, deadline: Date.now() + (existing.remaining ?? 0), remaining: undefined }
         : {
-            ...newProgress(due(s.deck, n, lesson.drill).map((c) => c.item)),
+            ...newProgress(
+              due(s.deck, n, lesson.drill).map((c) => c.item),
+              lesson.starter?.code,
+            ),
             deadline: Date.now() + session.minutes * 60_000,
           };
       return { ...s, active: n, progress: { ...s.progress, [n]: progress } };

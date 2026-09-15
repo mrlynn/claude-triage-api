@@ -23,6 +23,17 @@ const Body = z.object({
       rubric: z.array(text(TUTOR_FIELDS.rubricItem)).min(1).max(TUTOR_FIELDS.rubric),
     }),
   }),
+  // Ids only: the server looks up what each one means, so the page cannot
+  // supply a mistake, only name one. Lessons saved before starters send none.
+  defects: z
+    .array(
+      z.object({
+        mistakeId: text(TUTOR_FIELDS.mistakeId),
+        criterion: z.number().int().min(0).max(TUTOR_FIELDS.rubric - 1),
+      }),
+    )
+    .max(TUTOR_LIMITS.maxDefects)
+    .default([]),
   attempt: z.string().trim().max(TUTOR_LIMITS.maxAttemptChars),
   question: z.string().trim().max(TUTOR_LIMITS.maxQuestionChars),
   previous: z.array(text(TUTOR_FIELDS.hint)).max(TUTOR_LIMITS.maxHints - 1),

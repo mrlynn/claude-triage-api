@@ -41,6 +41,7 @@ export const tutorApi = {
     post<{ review: Review; meta: CallMeta }>("review", {
       lesson: { title: lesson.title, exercise: lesson.exercise },
       attempt,
+      defects: lesson.starter?.defects ?? [],
     }),
   hint: (lesson: Lesson, attempt: string, question: string, previous: Hint[]) =>
     post<{ hint: Hint; meta: CallMeta }>("hint", {
@@ -48,5 +49,6 @@ export const tutorApi = {
       attempt,
       question,
       previous: previous.map((h) => h.text),
+      defects: lesson.starter?.defects ?? [],
     }),
 };

@@ -44,12 +44,26 @@ export interface Plan {
   sessions: PlanSession[];
 }
 
+/** A planted mistake, by id. The storefront knows what each id means; this page does not need to. */
+export interface StarterDefect {
+  mistakeId: string;
+  criterion: number;
+}
+
+/** Code the exercise editor opens with: it runs, and it is wrong in the ways `defects` name. */
+export interface Starter {
+  code: string;
+  defects: StarterDefect[];
+}
+
 export interface Lesson {
   sessionN: number;
   title: string;
   brief: { point: string; labId: string }[];
   drill: DrillItem[];
   exercise: { prompt: string; deliverable: string; rubric: string[] };
+  /** Null when the exercise starts blank. Absent on lessons saved before starters existed. */
+  starter?: Starter | null;
 }
 
 export interface Review {

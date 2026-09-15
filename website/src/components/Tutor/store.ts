@@ -53,13 +53,14 @@ export const EMPTY: TutorState = {
   active: null,
 };
 
-export function newProgress(warmup: DrillItem[]): SessionProgress {
+/** A session with a starter opens its editor on the starter, not on a blank page. */
+export function newProgress(warmup: DrillItem[], starterCode = ""): SessionProgress {
   return {
     phase: warmup.length ? "warmup" : "brief",
     warmup: { items: warmup, answers: {} },
     drill: {},
     attempts: [],
-    draft: "",
+    draft: starterCode,
   };
 }
 

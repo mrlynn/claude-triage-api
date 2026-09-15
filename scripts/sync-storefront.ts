@@ -24,6 +24,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { MODEL_CATALOG } from "../src/config.js";
+import { mistakeProblem, type MistakeItem } from "../storefront/lib/tutorPolicy.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -147,6 +148,10 @@ writeIfChanged(
 // and the practical guides, each with its objectives, its prose, and the
 // ```quiz items an author already wrote and the website build already checks.
 //
+// ```mistake blocks cross too, as data only. They are the defects a starter
+// may plant, and they stay out of `body` so the cached prefix does not change
+// until something actually reads them.
+//
 // Lab 0 (baseline scoreboard) and Lab 10 (the capstone) stay out. Neither is
 // an aspect of the API a learner can drill; both are projects.
 //
@@ -192,12 +197,15 @@ const tutorCorpus = TUTOR_SOURCES.map(([id, source, path]) => {
     .map((l) => l.slice(2).trim());
 
   const quizzes: QuizItem[] = [];
+  const mistakes: MistakeItem[] = [];
   const body = raw
     .replace(/^# .+\n/m, "")
     .replace(/```(\w*)\n([\s\S]*?)```/g, (block, lang: string, value: string) => {
-      if (lang === "quiz") {
-        const parsed = JSON.parse(value) as QuizItem | QuizItem[];
-        quizzes.push(...(Array.isArray(parsed) ? parsed : [parsed]));
+      if (lang === "quiz" || lang === "mistake") {
+        const parsed = JSON.parse(value) as QuizItem | QuizItem[] | MistakeItem | MistakeItem[];
+        const items = Array.isArray(parsed) ? parsed : [parsed];
+        if (lang === "quiz") quizzes.push(...(items as QuizItem[]));
+        else mistakes.push(...(items as MistakeItem[]));
         return "";
       }
       return ["mermaid", "try", "receipt", "path"].includes(lang) ? "" : block;
@@ -215,9 +223,23 @@ const tutorCorpus = TUTOR_SOURCES.map(([id, source, path]) => {
       throw new Error(`${source}: invalid quiz item "${q.question}"`);
     }
   }
+  for (const m of mistakes) {
+    const problem = mistakeProblem(m);
+    if (problem) throw new Error(`${source}: mistake "${m.id}" ${problem}`);
+  }
 
-  return { id, title, path, time, objectives, quizzes, body };
+  return { id, title, path, time, objectives, quizzes, mistakes, body };
 });
+
+// Mistake ids name a planted defect in a lesson the learner's browser holds, so
+// one id must mean one mistake wherever it was written.
+const mistakeIds = new Set<string>();
+for (const doc of tutorCorpus) {
+  for (const m of doc.mistakes) {
+    if (mistakeIds.has(m.id)) throw new Error(`${doc.id}: mistake id "${m.id}" is already used`);
+    mistakeIds.add(m.id);
+  }
+}
 
 writeIfChanged(
   join(root, "storefront", "data", "tutor-corpus.json"),

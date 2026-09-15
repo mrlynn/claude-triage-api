@@ -114,6 +114,9 @@ export default function SessionRunner({
   const drill = score(lesson.drill, progress.drill);
   const lastReview = progress.attempts.at(-1)?.review;
   const hints = progress.hints ?? [];
+  const starter = lesson.starter?.code;
+  // Reviewing the starter as given grades the Tutor's own planted bugs; that call teaches nothing.
+  const untouched = starter !== undefined && progress.draft.trim() === starter.trim();
 
   const submit = async () => {
     setReviewing(true);
@@ -253,10 +256,34 @@ export default function SessionRunner({
 
           {lastReview?.verdict !== "pass" && (
             <>
+              {starter !== undefined && (
+                <div className={styles.starterBar}>
+                  <p className={styles.muted}>
+                    The editor starts with code that runs but has problems. Fix it in place.
+                  </p>
+                  <button
+                    type="button"
+                    className="button button--sm button--link"
+                    disabled={untouched}
+                    onClick={() => {
+                      if (window.confirm("Replace your draft with the original starter code?")) {
+                        update((p) => ({ ...p, draft: starter }));
+                      }
+                    }}
+                  >
+                    Reset to starter
+                  </button>
+                </div>
+              )}
               <textarea
                 className={styles.attempt}
                 value={progress.draft}
                 maxLength={LIMITS.maxAttemptChars}
+                spellCheck={false}
+                // Code reads by line: scroll sideways inside the box rather than re-wrap it.
+                wrap={starter !== undefined ? "off" : undefined}
+                // Tall enough to read the whole starter without scrolling inside the box.
+                rows={starter !== undefined ? Math.min(40, starter.split("\n").length + 2) : undefined}
                 placeholder="Your attempt. Code, JSON, or a few sentences — whatever the exercise asks for."
                 onChange={(e) => {
                   const draft = e.target.value;
@@ -282,7 +309,8 @@ export default function SessionRunner({
                 <button
                   type="button"
                   className="button button--primary"
-                  disabled={reviewing || progress.draft.trim().length === 0}
+                  disabled={reviewing || progress.draft.trim().length === 0 || untouched}
+                  title={untouched ? "Change the starter code first" : undefined}
                   onClick={submit}
                 >
                   {reviewing ? "Reviewing…" : lastReview ? "Resubmit for review" : "Review my attempt"}

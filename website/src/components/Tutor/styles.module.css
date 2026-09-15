@@ -455,6 +455,19 @@
   color: var(--ifm-font-color-base);
 }
 
+.starterBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  margin-top: 0.75rem;
+}
+
+.starterBar p {
+  margin: 0;
+}
+
 .attempt {
   width: 100%;
   min-height: 12rem;
