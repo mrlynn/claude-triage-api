@@ -396,16 +396,28 @@ function ReviewCard({
   attempt: number;
   docs: DocRef[];
 }) {
+  const met = review.rubric.filter((r) => r.met).length;
   return (
     <div className={review.verdict === "pass" ? styles.reviewPass : styles.reviewRevise}>
       <p className={styles.verdict}>
         Attempt {attempt}: {review.verdict === "pass" ? "Pass" : "Revise"}
+        {review.verdict !== "pass" && (
+          <span className={styles.verdictCount}>
+            {" "}
+            · {met} of {review.rubric.length} met
+          </span>
+        )}
       </p>
+      {review.rightSoFar && review.verdict !== "pass" && <p className={styles.rightSoFar}>{review.rightSoFar}</p>}
       <ul className={styles.rubricResult}>
         {review.rubric.map((r) => (
-          <li key={r.criterion} className={r.met ? styles.met : styles.missed}>
-            <span aria-hidden="true">{r.met ? "✓" : "✗"}</span>
+          <li
+            key={r.criterion}
+            className={r.met ? styles.met : r.gap === "incorrect" ? styles.missed : `${styles.missed} ${styles.notAddressed}`}
+          >
+            <span aria-hidden="true">{r.met ? "✓" : r.gap === "incorrect" ? "✗" : "○"}</span>
             <span>
+              {!r.met && <span className={styles.gap}>{r.gap === "incorrect" ? "Incorrect" : "Missing"}</span>}
               <b>{r.criterion}</b> {r.note}
             </span>
           </li>

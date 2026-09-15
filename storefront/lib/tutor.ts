@@ -8,6 +8,7 @@ import { wrapUntrusted } from "./untrusted";
 import {
   assembleDrill,
   resolveDefects,
+  composeExercise,
   sessionCount,
   unfixed,
   validateLesson,
@@ -247,8 +248,21 @@ const LessonOutput = z.object({
       .describe(
         "One concrete Messages API task, answerable in writing in about a third of the session. E.g. write a request body, predict a response field, find the bug in a snippet. Include any snippet inline in markdown.",
       ),
-    deliverable: z.string().describe("Exactly what to submit, e.g. 'The request body as JSON, plus one sentence on why'."),
-    rubric: z.array(z.string()).describe("Three to five pass/fail criteria a reviewer can check against the submission."),
+    format: z.string().describe("The form of the submission in a few words, e.g. 'Two or three sentences' or 'The request body as JSON'. Do not count the parts: the page numbers them."),
+    parts: z
+      .array(
+        z.object({
+          ask: z
+            .string()
+            .describe("One thing the submission must contain, as the learner reads it, e.g. 'name the field and value that proves it'. Under 90 characters."),
+          criterion: z
+            .string()
+            .describe("The pass/fail check for this part and nothing more. It may not require anything the ask does not."),
+        }),
+      )
+      .describe(
+        "Two to five parts. They become the numbered deliverable and, in the same order, the rubric the review grades — and nothing else is graded, so do not leave a check out of the parts.",
+      ),
   }),
   starter: z
     .object({
@@ -257,7 +271,7 @@ const LessonOutput = z.object({
         .array(
           z.object({
             mistakeId: z.string().describe("The id of an authored mistake from the list you were given."),
-            criterion: z.number().int().describe("Zero-based index of the rubric criterion that fixing this mistake satisfies."),
+            criterion: z.number().int().describe("Zero-based index of the exercise part whose criterion fixing this mistake satisfies."),
           }),
         )
         .describe("One or two planted mistakes."),
@@ -274,7 +288,7 @@ function starterInstructions(labIds: readonly string[], level: Intake["level"]):
   const offered = [...MISTAKES.values()].filter((m) => labIds.includes(m.labId));
   if (offered.length === 0) return "Set starter to null: there are no authored mistakes for these documents.";
   return [
-    "Starter code. If the exercise is about writing or fixing code, the editor can open with a short program for the learner to fix instead of a blank page. Build it around one or two of the authored mistakes below — no others. Copy each planted `wrong` line into the code exactly as written. Everything else in the starter must be correct, and nothing in it may point at the mistakes: no comments like \"bug here\". Every planted mistake needs its own rubric criterion, and that criterion is what fixing it satisfies.",
+    "Starter code. If the exercise is about writing or fixing code, the editor can open with a short program for the learner to fix instead of a blank page. Build it around one or two of the authored mistakes below — no others. Copy each planted `wrong` line into the code exactly as written. Everything else in the starter must be correct, and nothing in it may point at the mistakes: no comments like \"bug here\". Every planted mistake needs its own exercise part, whose ask is to fix it and whose criterion is met when it is fixed.",
     "When you use a starter, the exercise prompt should say the code runs but has problems and describe what the learner would observe, without naming the fix. Do not repeat the starter code in the prompt: the editor already shows it.",
     level === "shipped"
       ? "This learner has shipped on the API. Prefer null unless finding the bug is the point: writing it from a blank editor is the practice."
@@ -309,6 +323,10 @@ export async function prepareLesson(input: {
             ? `They have been missing recall questions from ${weak.join(", ")}; where it fits, connect this session back to that material.`
             : "",
           starterInstructions(labIds, input.level),
+          // The page builds the deliverable and the rubric from the parts, so they always line up. What code cannot check is
+          // whether a criterion asks for more than its ask says; a learner marked down for something they were never asked
+          // for learns to distrust the review.
+          "Exercise parts: a learner who does exactly what every ask says, correctly, must pass. So a criterion checks its own ask and nothing more — no extra explanation, no second piece of evidence, no reason why. If something matters enough to grade, make it its own ask. Keep the numbered deliverable under 600 characters.",
         ]
           .filter(Boolean)
           .join("\n\n"),
@@ -317,11 +335,13 @@ export async function prepareLesson(input: {
   });
 
   const draft = requireParsed(response);
+  const { exercise, droppedParts } = composeExercise(draft.exercise);
   const { lesson, dropped } = validateLesson(
-    { sessionN: session.n, title: session.title, brief: draft.brief, exercise: draft.exercise, starter: draft.starter },
+    { sessionN: session.n, title: session.title, brief: draft.brief, exercise, starter: draft.starter },
     KNOWN_IDS,
     [...MISTAKES.values()].filter((m) => labIds.includes(m.labId)),
   );
+  if (droppedParts) dropped.push(`${droppedParts} exercise part(s)`);
   // An exercise with no prompt has nothing to review, and the review route
   // would reject it after the learner had already written an attempt.
   if (!lesson.exercise.prompt) throw new TutorError("The tutor did not produce an exercise for that session. Try again.");
@@ -341,8 +361,21 @@ export async function prepareLesson(input: {
 
 const ReviewOutput = z.object({
   verdict: z.enum(["pass", "revise"]).describe("'pass' only if every rubric criterion is met."),
+  rightSoFar: z
+    .string()
+    .describe("One sentence to the learner, as 'you': what the attempt already gets right. Empty only if nothing in it is right."),
   rubric: z
-    .array(z.object({ criterion: z.string(), met: z.boolean(), note: z.string().describe("One short sentence.") }))
+    .array(
+      z.object({
+        criterion: z.string(),
+        met: z.boolean(),
+        gap: z
+          .enum(["missing", "incorrect"])
+          .nullable()
+          .describe("Null when met. 'missing' if the attempt does not address it; 'incorrect' if it does and gets it wrong."),
+        note: z.string().describe("One short sentence to the learner, as 'you'. When unmet, say what to add or change."),
+      }),
+    )
     .describe("Every rubric criterion, in the order given, judged against the submission."),
   fixes: z
     .array(
@@ -352,7 +385,9 @@ const ReviewOutput = z.object({
         labRef: z.string().nullable().describe("The course document id that covers it, or null."),
       }),
     )
-    .describe("What to fix before the next lesson, most important first. Empty on a clean pass."),
+    .describe(
+      "Problems the rubric notes do not already cover, most important first — e.g. a misconception the attempt shows outside any criterion. Never restate a failed criterion here. Usually empty.",
+    ),
   beforeNextLesson: z.string().describe("One sentence: the single thing to do before moving on."),
 });
 
@@ -377,7 +412,7 @@ export async function reviewAttempt(input: {
           `Exercise:\n${exercise.prompt}`,
           `Deliverable: ${exercise.deliverable}`,
           `Rubric:\n${exercise.rubric.map((r, i) => `${i + 1}. ${r}`).join("\n")}`,
-          "Judge strictly against the rubric and the course documents. Be direct about what to fix; do not pad with praise.",
+          "Judge strictly against the rubric and the course documents, and grade only the rubric: nothing the deliverable does not ask for. Write to the learner as 'you'. Be direct about what is missing or wrong, and do not pad with praise — but when an attempt is close, say so plainly in rightSoFar, because a learner who is one sentence away needs to know that.",
           planted.length
             ? `The learner started from code with these mistakes planted in it. A criterion tied to one is met only if the mistake is fixed:\n${planted
                 .map((m) => `- criterion ${m.criterion + 1}: \`${m.wrong.trim()}\` — ${m.why} The fix looks like:\n${m.right}`)
