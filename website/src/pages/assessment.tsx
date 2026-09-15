@@ -2,6 +2,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import Layout from "@theme/Layout";
 import Link from "@docusaurus/Link";
 import Heading from "@theme/Heading";
+import { track } from "@vercel/analytics";
 import {
   MECHANICS,
   DIAGNOSIS,
@@ -107,6 +108,13 @@ export default function AssessmentPage(): ReactNode {
     return { mech, diag, judg, total, judgedCount: judged.length };
   }, [answers, selfScore]);
 
+  const nextStep =
+    result.mech < 0.75
+      ? { to: "/docs/labs/lab-1-first-call", label: "Revisit mechanics in Labs 1–2" }
+      : result.diag < 0.75
+        ? { to: "/docs/labs/lab-3-tool-use", label: "Practice diagnosis in Labs 3–6" }
+        : { to: "/mission", label: "Apply it in the Northwind mission" };
+
   return (
     <Layout
       title="Assessment"
@@ -115,8 +123,8 @@ export default function AssessmentPage(): ReactNode {
       <main className="container margin-vert--lg">
         <Heading as="h1">Assessment</Heading>
         <p className={styles.lead}>
-          Twelve questions. The first eight are marked automatically. The last
-          four are not, and that is deliberate — a multiple-choice version of
+          Seventeen questions. The first twelve are marked automatically. The last
+          five are not, and that is deliberate — a multiple-choice version of
           &ldquo;how would you handle PHI in this design&rdquo; would test
           whether you remember an opinion, not whether you can reason. You
           answer those in writing and grade yourself against a rubric that
@@ -147,6 +155,9 @@ export default function AssessmentPage(): ReactNode {
                 weight={WEIGHTS.judgment}
               />
             </div>
+            <p className={styles.scoreNext}>
+              Your next useful step: <Link to={nextStep.to}>{nextStep.label} →</Link>
+            </p>
           </div>
         )}
 
@@ -179,7 +190,7 @@ export default function AssessmentPage(): ReactNode {
               <Scored
                 key={q.id}
                 question={q}
-                index={i + 5}
+                index={i + MECHANICS.length + 1}
                 picked={answers[q.id]}
                 revealed={revealed}
                 onPick={(v) => setAnswers((a) => ({ ...a, [q.id]: v }))}
@@ -194,7 +205,13 @@ export default function AssessmentPage(): ReactNode {
               type="button"
               className="button button--primary button--lg"
               disabled={answeredCount < scored.length}
-              onClick={() => setRevealed(true)}
+              onClick={() => {
+                setRevealed(true);
+                track("Assessment marked", {
+                  mechanics: Math.round(result.mech * 100),
+                  diagnosis: Math.round(result.diag * 100),
+                });
+              }}
             >
               {answeredCount < scored.length
                 ? `${scored.length - answeredCount} left in sections 1–2`
@@ -212,7 +229,7 @@ export default function AssessmentPage(): ReactNode {
             {JUDGMENT.map((q, i) => (
               <li key={q.id} className={styles.q}>
                 <p className={styles.prompt}>
-                  <span className={styles.qnum}>{i + 9}</span>
+                  <span className={styles.qnum}>{i + scored.length + 1}</span>
                   {q.prompt}
                 </p>
                 <textarea
@@ -230,9 +247,10 @@ export default function AssessmentPage(): ReactNode {
                     type="button"
                     className={styles.commit}
                     disabled={(written[q.id] ?? "").trim().length < 40}
-                    onClick={() =>
-                      setShownRubric((r) => ({ ...r, [q.id]: true }))
-                    }
+                    onClick={() => {
+                      setShownRubric((r) => ({ ...r, [q.id]: true }));
+                      track("Assessment judgment committed", { question: q.id });
+                    }}
                   >
                     {(written[q.id] ?? "").trim().length < 40
                       ? "Write an answer first"

@@ -102,6 +102,14 @@
 .scoreNote { font-size: 0.72rem; color: var(--ifm-color-emphasis-600); margin-top: 0.3rem; }
 
 .scoreParts { display: flex; flex-direction: column; gap: 0.55rem; }
+.scoreNext {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--ifm-toc-border-color);
+  font-size: 0.88rem;
+}
+.scoreNext a { font-weight: 700; }
 .part { display: grid; grid-template-columns: 1fr 3.5rem; gap: 0.5rem 0.75rem; align-items: center; }
 .partHead { display: flex; justify-content: space-between; font-size: 0.8rem; grid-column: 1; }
 .partWeight { color: var(--ifm-color-emphasis-500); font-size: 0.7rem; }

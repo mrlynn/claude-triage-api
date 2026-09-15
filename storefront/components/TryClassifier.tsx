@@ -2,6 +2,7 @@
 
 import { useState, type SyntheticEvent } from "react";
 import Link from "next/link";
+import { track } from "@vercel/analytics";
 import { labs } from "@/lib/links";
 import {
   CATEGORY_CHIP,
@@ -66,6 +67,18 @@ const EXAMPLES = [
   },
 ];
 
+const REQUEST_TIMEOUT_MS = 35_000;
+
+/**
+ * Keep funnel events useful without turning support text into analytics data.
+ * The content of a ticket never leaves this component except in the request
+ * that classifies it; analytics gets only the route a visitor chose and broad
+ * outcome flags.
+ */
+function trackDemoEvent(name: string, properties: Record<string, string | number | boolean>) {
+  track(name, properties);
+}
+
 export default function TryClassifier() {
   const [message, setMessage] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
@@ -78,28 +91,51 @@ export default function TryClassifier() {
     setError(null);
     setOutcome(null);
 
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
     try {
       const res = await fetch("/api/support", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message }),
+        signal: controller.signal,
       });
-      const body = await res.json();
+      const body: unknown = await res.json().catch(() => null);
 
       if (!res.ok) {
         // The pipeline's failure detail is already written for a customer to
         // read ("give it a few minutes", "resets at midnight UTC"), so it goes
         // through unedited rather than being flattened into "request failed".
-        setError(body.detail ?? "That did not go through. Try again in a moment.");
+        const detail =
+          body && typeof body === "object" && "detail" in body && typeof body.detail === "string"
+            ? body.detail
+            : "That did not go through. Try again in a moment.";
+        trackDemoEvent("Northwind triage failed", { status: res.status });
+        setError(detail);
         setState("error");
         return;
       }
 
-      setOutcome(body as Outcome);
+      const result = body as Outcome;
+      trackDemoEvent("Northwind triage completed", {
+        category: result.triage.category,
+        requiresHuman: result.triage.requires_human,
+        cacheHit: result.cache_hit,
+      });
+      setOutcome(result);
       setState("done");
-    } catch {
-      setError("Could not reach the classifier. Check your connection.");
+    } catch (err) {
+      const timedOut = err instanceof DOMException && err.name === "AbortError";
+      trackDemoEvent("Northwind triage failed", { status: timedOut ? "timeout" : "network" });
+      setError(
+        timedOut
+          ? "The classifier is taking longer than usual. We have not retried it automatically — try again in a moment."
+          : "Could not reach the classifier. Check your connection and try again.",
+      );
       setState("error");
+    } finally {
+      window.clearTimeout(timeout);
     }
   }
 
@@ -148,6 +184,7 @@ export default function TryClassifier() {
                   key={ex.label}
                   type="button"
                   onClick={() => setMessage(ex.text)}
+                  aria-label={`Try example: ${ex.label}`}
                   className="rounded-full border border-pine/20 px-3 py-1 text-xs text-pine/75 hover:border-spruce hover:text-spruce"
                 >
                   {ex.label}
@@ -195,6 +232,19 @@ export default function TryClassifier() {
 
           {error && <p className={ERROR_BANNER}>{error}</p>}
 
+          {state === "error" && (
+            <button
+              type="button"
+              onClick={() => {
+                setError(null);
+                setState("idle");
+              }}
+              className="mt-3 text-sm font-medium text-spruce underline underline-offset-2"
+            >
+              Edit your message and try again
+            </button>
+          )}
+
           {outcome && (
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-wide text-pine/40">
@@ -240,6 +290,7 @@ export default function TryClassifier() {
                   <p>
                     <Link
                       href={`/queue#${outcome.ticket_id}`}
+                      onClick={() => trackDemoEvent("Northwind triage next step", { destination: "queue" })}
                       className="underline underline-offset-2"
                     >
                       Read it in the reviewer queue
@@ -250,6 +301,7 @@ export default function TryClassifier() {
                 <p>
                   <a
                     href={labs("/docs/labs/lab-2-structured-outputs")}
+                    onClick={() => trackDemoEvent("Northwind triage next step", { destination: "lab_2" })}
                     className="underline underline-offset-2"
                   >
                     Build this yourself
