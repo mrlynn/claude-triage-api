@@ -143,7 +143,7 @@ export default function AssessmentPage(): ReactNode {
               <span className={styles.scoreNote}>
                 {result.judg === null
                   ? "sections 1–2 only"
-                  : `all three sections, ${result.judgedCount}/4 self-assessed`}
+                  : `all three sections, ${result.judgedCount}/${JUDGMENT.length} self-assessed`}
               </span>
             </div>
             <div className={styles.scoreParts}>
