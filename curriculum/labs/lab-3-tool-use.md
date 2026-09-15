@@ -247,4 +247,37 @@ the number means.
    [`src/lib/authority.ts`](../../src/lib/authority.ts), which does the check
    *after* the loop instead, and decide which placement you prefer and why.
 
+```mistake
+[
+  {
+    "id": "tool-description-what-not-when",
+    "wrong": "  description: \"Looks up an order.\",",
+    "right": "  description:\n    \"Retrieve an order by its identifier. Call this before stating any fact about an order's \" +\n    \"contents, price, status, or delivery date — never rely on what the customer claims.\",",
+    "symptom": "The loop runs and the answer sounds right, but the trace often has no `lookup_order` call: the model took the customer's word for what they ordered.",
+    "why": "The description is the only documentation the model sees for a tool. \"Looks up an order\" repeats the schema; saying when to call it is what changes behaviour."
+  },
+  {
+    "id": "tool-run-returns-object",
+    "wrong": "  run: ({ amount_usd }) => ({ within_limit: amount_usd <= 200, approver: \"supervisor\" }),",
+    "right": "  run: ({ amount_usd }) =>\n    JSON.stringify({ within_limit: amount_usd <= 200, approver: amount_usd <= 200 ? \"agent\" : \"supervisor\" }),",
+    "symptom": "TypeScript rejects it: `run` must resolve to a string or an array of content blocks, not an object.",
+    "why": "A tool result goes back to the model as content. Serializing it yourself is the point: the shape you choose is what the model reads."
+  },
+  {
+    "id": "runner-awaited-not-iterated",
+    "wrong": "const final = await runner;",
+    "right": "for await (const message of runner) {\n  usagePerTurn.push(summarizeUsage(message.usage, message.model));\n}\nconst final = await runner.done();",
+    "symptom": "The resolution is correct and the cost is too low. On a three-turn run you have only the last turn's usage.",
+    "why": "Each turn is its own request and is billed separately. Awaiting the runner gives you the final message; iterating it is how you see, and sum, every turn."
+  },
+  {
+    "id": "iteration-cap-unchecked",
+    "wrong": "return c.json({ resolution });",
+    "right": "const hitCap = usagePerTurn.length >= MAX_ITERATIONS;\n// When hitCap is true the loop was cut off, so the resolution may rest on lookups it never made.\nreturn c.json({ resolution, meta: { stop_reason: final.stop_reason, hit_iteration_cap: hitCap } });",
+    "symptom": "HTTP 200 and a schema-valid body, even when the loop stopped at the cap before it looked up the order.",
+    "why": "Hitting `max_iterations` is not an error. Nothing downstream can tell a finished answer from an interrupted one unless you check and say so."
+  }
+]
+```
+
 **Answers:** [../solutions/lab-3.md](../solutions/lab-3.md)

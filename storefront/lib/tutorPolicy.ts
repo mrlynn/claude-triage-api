@@ -17,7 +17,11 @@
  *      verdict is derived from the rubric, not asserted alongside it;
  *   5. sets a hint's level from how many came before it, not from the model —
  *      the third hint is the strongest one whatever the model thought it wrote,
- *      and there is no fourth.
+ *      and there is no fourth;
+ *   6. keeps a starter only if every defect in it is an authored mistake from
+ *      the session's labs whose line is really in the code — and fails any
+ *      criterion whose planted line is still in the attempt, whatever the
+ *      review said.
  *
  * Deliberately free of imports so it can be unit-tested from the root package
  * without Next, `server-only`, or the SDK. The website hand-mirrors the types
@@ -36,6 +40,8 @@ export const TUTOR_LIMITS = {
   /** Nudge, pointer, partial step. Past that the review is the better teacher. */
   maxHints: 3,
   maxQuestionChars: 500,
+  /** Planted mistakes per starter. One is a bug hunt; three is a rewrite. */
+  maxDefects: 2,
 } as const;
 
 /**
@@ -57,6 +63,10 @@ export const TUTOR_FIELDS = {
   rubric: 8,
   hint: 1_500,
   lookFor: 160,
+  /** Well under maxAttemptChars, so a learner can fix a starter without deleting to make room. */
+  starterCode: 3_000,
+  starterLines: 60,
+  mistakeId: 60,
 } as const;
 
 /** Trimmed and cut to fit, so a route's `.trim().max(n)` accepts it. */
@@ -85,6 +95,41 @@ export interface QuizItem {
   note?: string;
 }
 
+/**
+ * A mistake an author has seen learners make, written as a ```mistake block in
+ * the lab that teaches it. It is the raw material for an exercise's starter
+ * code: the Tutor may plant `wrong` and grade against `right`, but it does not
+ * get to invent what counts as a mistake.
+ */
+export interface MistakeItem {
+  /** Kebab-case, unique across the whole corpus. */
+  id: string;
+  /** The one line a starter plants. One line, so "is it still there?" is a substring check. */
+  wrong: string;
+  /** The fix. May span lines. */
+  right: string;
+  /** What the learner sees when they run it. Often: nothing is wrong, yet. */
+  symptom: string;
+  /** Why it is wrong, in one or two sentences. */
+  why: string;
+}
+
+export const MISTAKE_FIELDS = { wrong: 160 } as const;
+
+/** Why a mistake item is unusable, or null if it is fine. Shared by the sync and the tests. */
+export function mistakeProblem(item: Partial<MistakeItem>): string | null {
+  for (const key of ["id", "wrong", "right", "symptom", "why"] as const) {
+    if (typeof item[key] !== "string" || !item[key].trim()) return `needs a non-empty "${key}"`;
+  }
+  const { id, wrong, right } = item as MistakeItem;
+  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(id)) return `id "${id}" is not kebab-case`;
+  if (wrong.includes("\n")) return `"wrong" must be one line`;
+  if (wrong.length > MISTAKE_FIELDS.wrong) return `"wrong" is over ${MISTAKE_FIELDS.wrong} characters`;
+  // A fix that still contains the planted line would read as unfixed forever.
+  if (right.includes(wrong.trim())) return `"right" still contains the "wrong" line`;
+  return null;
+}
+
 export interface DrillItem extends QuizItem {
   labId: string;
   source: "authored" | "generated";
@@ -108,12 +153,32 @@ export interface Plan {
   sessions: PlanSession[];
 }
 
+/** One planted mistake: which authored item, and which rubric criterion fixing it satisfies. */
+export interface StarterDefect {
+  mistakeId: string;
+  /** Zero-based index into `exercise.rubric`. */
+  criterion: number;
+}
+
+/**
+ * Code the exercise editor opens with. It runs; it is wrong in the ways
+ * `defects` name. The page holds the ids, not the mistakes' text — the server
+ * looks those up from the corpus, so an echoed id can only select an authored
+ * mistake, never supply one.
+ */
+export interface Starter {
+  code: string;
+  defects: StarterDefect[];
+}
+
 export interface Lesson {
   sessionN: number;
   title: string;
   brief: { point: string; labId: string }[];
   drill: DrillItem[];
   exercise: { prompt: string; deliverable: string; rubric: string[] };
+  /** Null when the exercise starts blank. Absent on lessons saved before starters existed. */
+  starter?: Starter | null;
 }
 
 export interface Review {
@@ -227,6 +292,8 @@ export function assembleDrill(
 export function validateLesson(
   lesson: Omit<Lesson, "drill">,
   known: ReadonlySet<string>,
+  /** The authored mistakes from this session's labs: the only ones a starter may plant. */
+  mistakes: readonly MistakeItem[] = [],
 ): { lesson: Omit<Lesson, "drill">; dropped: string[] } {
   const dropped: string[] = [];
   const brief = lesson.brief.filter((b) => {
@@ -241,16 +308,102 @@ export function validateLesson(
     // The review route needs at least one criterion to grade against.
     rubric: rubric.length ? rubric : ["Answers the exercise correctly, using only what the course teaches."],
   };
+  const starter = validateStarter(lesson.starter ?? null, mistakes, exercise.rubric.length, dropped);
   return {
-    lesson: { ...lesson, title: fit(lesson.title, TUTOR_FIELDS.title) || `Session ${lesson.sessionN}`, brief, exercise },
+    lesson: {
+      ...lesson,
+      title: fit(lesson.title, TUTOR_FIELDS.title) || `Session ${lesson.sessionN}`,
+      brief,
+      exercise,
+      starter,
+    },
     dropped,
   };
 }
 
-export function validateReview(review: Review, known: ReadonlySet<string>): Review {
-  const anyMissed = review.rubric.some((r) => !r.met);
+/**
+ * A starter is only worth opening with if its bugs are the ones it claims. So
+ * each defect must name an allowed mistake, point at a real criterion, and
+ * have its `wrong` line actually in the code. A starter left with no defects is
+ * dropped whole: correct code with nothing to fix is a worked answer.
+ *
+ * The code is never cut to fit. Truncating it could remove a planted line or
+ * leave it unparseable, so an oversized starter is dropped instead.
+ */
+function validateStarter(
+  starter: Starter | null,
+  mistakes: readonly MistakeItem[],
+  rubricLength: number,
+  dropped: string[],
+): Starter | null {
+  if (!starter) return null;
+  const code = starter.code.replace(/\s+$/, "");
+  if (!code.trim() || code.length > TUTOR_FIELDS.starterCode || code.split("\n").length > TUTOR_FIELDS.starterLines) {
+    dropped.push("starter (empty or too long)");
+    return null;
+  }
+  const byId = new Map(mistakes.map((m) => [m.id, m]));
+  const seen = new Set<string>();
+  const defects: StarterDefect[] = [];
+  for (const d of starter.defects) {
+    const mistake = byId.get(d.mistakeId);
+    const ok =
+      mistake &&
+      !seen.has(d.mistakeId) &&
+      Number.isInteger(d.criterion) &&
+      d.criterion >= 0 &&
+      d.criterion < rubricLength &&
+      code.includes(mistake.wrong.trim());
+    if (!ok) {
+      dropped.push(`starter defect ${d.mistakeId}`);
+      continue;
+    }
+    seen.add(d.mistakeId);
+    defects.push({ mistakeId: d.mistakeId, criterion: d.criterion });
+  }
+  if (defects.length === 0) {
+    dropped.push("starter (no verifiable defect)");
+    return null;
+  }
+  return { code, defects: defects.slice(0, TUTOR_LIMITS.maxDefects) };
+}
+
+/**
+ * Turns defects the page echoed back into the authored mistakes they name,
+ * dropping any id the corpus does not have or criterion the rubric does not.
+ */
+export function resolveDefects(
+  defects: readonly StarterDefect[],
+  catalog: ReadonlyMap<string, MistakeItem>,
+  rubricLength: number,
+): (MistakeItem & { criterion: number })[] {
+  return defects.flatMap((d) => {
+    const mistake = catalog.get(d.mistakeId);
+    return mistake && d.criterion >= 0 && d.criterion < rubricLength ? [{ ...mistake, criterion: d.criterion }] : [];
+  });
+}
+
+/** The planted mistakes whose line is still in the text. A substring check, which is why `wrong` is one line. */
+export function unfixed<M extends Pick<MistakeItem, "wrong">>(planted: readonly M[], attempt: string): M[] {
+  return planted.filter((m) => attempt.includes(m.wrong.trim()));
+}
+
+export function validateReview(
+  review: Review,
+  known: ReadonlySet<string>,
+  /** Planted mistakes whose line is still in the attempt. Their criteria fail, whatever the model judged. */
+  stillPlanted: readonly (Pick<MistakeItem, "wrong"> & { criterion: number })[] = [],
+): Review {
+  const rubric = review.rubric.map((r, i) => {
+    const planted = stillPlanted.find((m) => m.criterion === i);
+    return planted && r.met
+      ? { ...r, met: false, note: `The starter's mistake is still in your code: \`${planted.wrong.trim()}\`` }
+      : r;
+  });
+  const anyMissed = rubric.some((r) => !r.met) || stillPlanted.length > 0;
   return {
     ...review,
+    rubric,
     verdict: anyMissed ? "revise" : review.verdict,
     fixes: review.fixes.map((f) => ({ ...f, labRef: f.labRef && known.has(f.labRef) ? f.labRef : null })),
   };

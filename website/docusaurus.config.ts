@@ -7,6 +7,7 @@ import remarkQuiz from "./plugins/remark-quiz.mjs";
 import remarkTry from "./plugins/remark-try.mjs";
 import remarkReceipt from "./plugins/remark-receipt.mjs";
 import remarkPath from "./plugins/remark-path.mjs";
+import remarkMistake from "./plugins/remark-mistake.mjs";
 
 const GITHUB_ORG = process.env.DOCS_GITHUB_ORG ?? "mrlynn";
 const GITHUB_REPO = process.env.DOCS_GITHUB_REPO ?? "claude-triage-api";
@@ -165,7 +166,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: "./sidebars.ts",
-          remarkPlugins: [remarkQuiz, remarkTry, remarkReceipt, remarkPath],
+          remarkPlugins: [remarkQuiz, remarkTry, remarkReceipt, remarkPath, remarkMistake],
           routeBasePath: "docs",
           editUrl: ({ docPath }) => {
             const source = DOC_SOURCES[docPath];

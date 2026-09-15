@@ -237,4 +237,43 @@ add `cache_control` to the system prompt and observe that nothing changes —
 your prompt is under Opus 5's 512-token caching minimum, so the breakpoint is
 accepted and ignored. That failure is the setup for Lab 5.
 
+```mistake
+{
+  "id": "content-index-zero",
+  "wrong": "console.log(response.content[0].text);",
+  "right": "for (const block of response.content) {\n  if (block.type === \"text\") console.log(block.text);\n}",
+  "symptom": "TypeScript rejects it: `text` does not exist on every member of the ContentBlock union. In JavaScript it prints undefined whenever the first block is a thinking block.",
+  "why": "`content` is an array of blocks of different types. On Opus 5 adaptive thinking is on by default, so index 0 is often not the text block."
+}
+```
+
+```mistake
+{
+  "id": "cost-from-output-only",
+  "wrong": "const cost = (response.usage.output_tokens * 25) / 1_000_000;",
+  "right": "const { usage } = response;\nconst cost = (usage.input_tokens * 5 + usage.output_tokens * 25) / 1_000_000;\n// plus cache_creation_input_tokens and cache_read_input_tokens, each at its own rate",
+  "symptom": "The number looks plausible and is always too low. Once the handbook goes out on every request, it is too low by most of the bill.",
+  "why": "You pay for input too, and input is usually the larger count. `usage` has four fields because all four are billed, at different rates."
+}
+```
+
+```mistake
+[
+  {
+    "id": "max-tokens-too-low",
+    "wrong": "  max_tokens: 20,",
+    "right": "  max_tokens: 1024,",
+    "symptom": "HTTP 200 and no error. `stop_reason` is \"max_tokens\", and the text is cut off, or missing entirely because thinking used the whole budget.",
+    "why": "`max_tokens` is a hard ceiling on output, and thinking tokens count against it. Too low, and the model is stopped before it finishes, or before it starts writing text."
+  },
+  {
+    "id": "truncation-by-punctuation",
+    "wrong": "if (!text.trim().endsWith(\".\")) console.warn(\"reply may be truncated\");",
+    "right": "if (response.stop_reason === \"max_tokens\") console.warn(\"reply was truncated\");",
+    "symptom": "It warns on complete replies that end in a list, a code block or a question, and it misses truncations that happen to stop at a period.",
+    "why": "The API tells you why generation stopped. `stop_reason` is the detector; guessing from the text is not."
+  }
+]
+```
+
 **Answers:** [../solutions/lab-1.md](../solutions/lab-1.md)

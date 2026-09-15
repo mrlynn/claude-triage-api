@@ -281,4 +281,33 @@ Three things to go and check, in order of how much they will teach you:
    [Lab 8](lab-8-trust-boundary.md), and it is the strongest argument in the
    course for ranking defences by kind rather than by how clever they are.
 
+```mistake
+[
+  {
+    "id": "parsed-output-asserted",
+    "wrong": "const triage = response.parsed_output!;",
+    "right": "const triage = response.parsed_output;\nif (!triage) {\n  // a refusal, a truncation or a schema miss: send it to a human\n  return escalate(ticket);\n}",
+    "symptom": "Works on every test ticket. Then a refusal or a `max_tokens` truncation returns null, and the next line throws on `triage.category`.",
+    "why": "`parsed_output` is null whenever the response could not be parsed into the schema. The `!` tells TypeScript that cannot happen; it can."
+  },
+  {
+    "id": "json-by-instruction",
+    "wrong": "  system: \"Respond only with JSON matching this shape: { category, confidence, summary }\",",
+    "right": "  output_config: { format: zodOutputFormat(TriageSchema) },\n  // then: const response = await anthropic.messages.parse(request);",
+    "symptom": "Mostly valid JSON, until a reply adds a sentence before the brace or leaves out a field, and the `JSON.parse` in your try/catch fails in production.",
+    "why": "An instruction asks for a shape; `output_config.format` constrains generation to it, and `messages.parse()` hands back a typed object."
+  }
+]
+```
+
+```mistake
+{
+  "id": "confidence-without-describe",
+  "wrong": "  confidence: z.number().min(0).max(1),",
+  "right": "  confidence: z\n    .number()\n    .min(0)\n    .max(1)\n    .describe(\n      \"Your calibrated confidence in this classification. Use the full range — a genuinely ambiguous ticket should score near 0.5, not 0.9.\",\n    ),",
+  "symptom": "Every classification comes back around 0.9, right or wrong, so a routing threshold on confidence sends almost nothing to a human.",
+  "why": "`.describe()` text is compiled into the JSON Schema the model reads. Without it the model has a number field and no idea what the number should mean."
+}
+```
+
 **Answers:** [../solutions/lab-2.md](../solutions/lab-2.md)
