@@ -194,22 +194,22 @@ the body and `thinking` into a `<details>` element.
   },
   {
     "id": "stream-error-not-sent",
-    "wrong": "console.error(\"draft stream failed\", err);",
-    "right": "const { body: errorBody } = toHttpError(err);\n// The status is already 200, so the failure has to travel in-band.\nsend(\"error\", errorBody);",
+    "wrong": "} catch (err) { console.error(\"draft stream failed\", err); }",
+    "right": "} catch (err) {\n  console.error(\"draft stream failed\", err);\n  // The status is already 200, so the failure has to travel in-band.\n  send(\"error\", toHttpError(err).body);\n}",
     "symptom": "The client sees HTTP 200, half a reply, and the stream closing. It shows the half reply as if it were finished.",
     "why": "By the time generation starts the status line has been sent. A mid-stream failure can only reach the client as an event it explicitly handles."
   },
   {
     "id": "disconnect-not-aborted",
-    "wrong": "c.req.raw.signal.addEventListener(\"abort\", () => console.log(\"client disconnected\"));",
-    "right": "c.req.raw.signal.addEventListener(\"abort\", () => stream.abort());",
+    "wrong": "request.signal.addEventListener(\"abort\", () => console.log(\"client disconnected\"));",
+    "right": "request.signal.addEventListener(\"abort\", () => stream.abort());",
     "symptom": "Kill the client mid-reply and the server log looks fine, but generation runs to the end and the output tokens are billed for a reply nobody receives.",
     "why": "The client leaving does not stop the upstream request. Only aborting the stream does."
   },
   {
     "id": "sse-headers-buffered",
-    "wrong": "  \"Cache-Control\": \"no-cache\",",
-    "right": "  \"Cache-Control\": \"no-cache, no-transform\",\n  Connection: \"keep-alive\",\n  \"X-Accel-Buffering\": \"no\",",
+    "wrong": "const SSE_HEADERS = { \"Content-Type\": \"text/event-stream\", \"Cache-Control\": \"no-cache\" };",
+    "right": "const SSE_HEADERS = {\n  \"Content-Type\": \"text/event-stream; charset=utf-8\",\n  \"Cache-Control\": \"no-cache, no-transform\",\n  Connection: \"keep-alive\",\n  \"X-Accel-Buffering\": \"no\",\n};",
     "symptom": "Streams token by token locally. Behind nginx in production, the whole reply arrives in one chunk after generation finishes.",
     "why": "A proxy buffers responses by default. `X-Accel-Buffering: no` turns that off for nginx, and `no-transform` stops intermediaries that would compress or rewrite the stream."
   },

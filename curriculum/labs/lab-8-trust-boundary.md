@@ -402,8 +402,8 @@ only worth building if something downstream acts on it.
   },
   {
     "id": "authority-from-model-boolean",
-    "wrong": "if (validated.data.within_agent_authority) return c.json({ resolution: validated.data });",
-    "right": "const authority = enforceAuthority(validated.data, trace);\nreturn c.json({ resolution: authority.corrected, meta: { authority_allowed: authority.allowed } });",
+    "wrong": "if (resolution.within_agent_authority) {",
+    "right": "const authority = enforceAuthority(resolution, trace);\nif (authority.allowed) {",
     "symptom": "Normal refunds work. A persuasive ticket gets a $900 refund marked within authority, because the model was talked into saying so.",
     "why": "The boolean is the model's opinion about whether the model may act. Recompute it from the tool trace and the $200 limit, and let the recomputation win."
   },

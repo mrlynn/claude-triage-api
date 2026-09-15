@@ -104,6 +104,18 @@ export interface QuizItem {
  * the lab that teaches it. It is the raw material for an exercise's starter
  * code: the Tutor may plant `wrong` and grade against `right`, but it does not
  * get to invent what counts as a mistake.
+ *
+ * Two rules for writing `wrong`, both learned from live lessons:
+ *
+ *   - Portable. It must read naturally in a short script, not only inside the
+ *     route it came from. `if (validated.data.within_agent_authority) return
+ *     c.json(...)` only fits the Hono route, so a starter written as a script
+ *     rewrote it, the rewrite failed the substring check, and the bug went
+ *     ungraded. `if (resolution.within_agent_authority) {` fits anywhere.
+ *   - Gone after any correct fix. The review fails a criterion while this
+ *     line is in the attempt, so it must be a line every correct fix changes
+ *     or removes. `console.error(...)` in a catch block survives a fix that
+ *     adds `send("error", ...)` after it; the whole one-line catch does not.
  */
 export interface MistakeItem {
   /** Kebab-case, unique across the whole corpus. */
