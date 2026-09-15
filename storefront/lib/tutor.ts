@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 import corpus from "@/data/tutor-corpus.json";
-import { pricingFor } from "./pricing.generated";
+import { PRICING_BY_MODEL, pricingFor } from "./pricing.generated";
 import { wrapUntrusted } from "./untrusted";
 import {
   assembleDrill,
@@ -66,6 +66,21 @@ const MISTAKES: ReadonlyMap<string, MistakeItem & { labId: string }> = new Map(
   corpus.flatMap((d) => d.mistakes.map((m): [string, MistakeItem & { labId: string }] => [m.id, { ...m, labId: d.id }])),
 );
 
+/**
+ * The rate card, generated from src/config.ts. "Never invent prices" was already a rule, and a
+ * live Lab 7 starter still priced claude-sonnet-5 at $3/$15 against a catalog that says $2/$10:
+ * a rule about a fact is weaker than the fact. It sits in the cached prefix, so it costs a cache
+ * write per deploy and nothing per call.
+ */
+const RATE_CARD = `Model prices, per million tokens, from the course's pricing table. Wherever a price appears in anything you write, including code, use these exactly:\n${Object.entries(
+  PRICING_BY_MODEL,
+)
+  .map(
+    ([id, p]) =>
+      `- ${id}: $${p.inputPerMTok} input, $${p.outputPerMTok} output; cache writes ${p.cacheWriteMultiplier}x input, cache reads ${p.cacheReadMultiplier}x input, batch ${p.batchMultiplier}x`,
+  )
+  .join("\n")}`;
+
 const ROLE = `You are the Tutor for "Claude Triage API", a hands-on course on the Anthropic Messages API. You run focused, timed cram sessions: a learner has a fixed amount of time and wants to be able to use the Messages API as a developer by the end of it.
 
 Rules that apply to every task:
@@ -73,6 +88,8 @@ Rules that apply to every task:
 - If the learner asks for something the documents do not cover, say so in the field provided for gaps. Never invent API parameters, SDK methods, prices, or limits.
 - Prefer the concrete: request bodies, response fields, stop reasons, event names, and the failure a developer will actually hit.
 - Be brief. The learner is on a clock.
+
+${RATE_CARD}
 
 The course documents follow.`;
 
@@ -404,6 +421,7 @@ export async function reviewAttempt(input: {
 }): Promise<{ review: Review; meta: CallMeta }> {
   const { exercise } = input.lesson;
   const planted = resolveDefects(input.defects, MISTAKES, exercise.rubric.length);
+  const stillThere = unfixed(planted, input.attempt);
 
   const response = await anthropic.messages.parse({
     model: TUTOR_MODEL,
@@ -420,8 +438,16 @@ export async function reviewAttempt(input: {
           `Rubric:\n${exercise.rubric.map((r, i) => `${i + 1}. ${r}`).join("\n")}`,
           "Judge strictly against the rubric and the course documents, and grade only the rubric: nothing the deliverable does not ask for. Write to the learner as 'you'. Be direct about what is missing or wrong, and do not pad with praise — but when an attempt is close, say so plainly in rightSoFar, because a learner who is one sentence away needs to know that.",
           planted.length
-            ? `The learner started from code with these mistakes planted in it. A criterion tied to one is met only if the mistake is fixed:\n${planted
+            ? `The learner started from code with these mistakes planted in it. A criterion tied to one is met only if the mistake no longer affects what the code does:\n${planted
                 .map((m) => `- criterion ${m.criterion + 1}: \`${m.wrong.trim()}\` — ${m.why} The fix looks like:\n${m.right}`)
+                .join("\n")}`
+            : "",
+          // A present line is evidence, not a verdict. A live Lab 7 lesson showed a correct fix that computed the cost
+          // directly and left the old `usage` line behind, unused; failing that on a substring would mark a right answer
+          // wrong. So the check points the model at the line and the model reads how it is used.
+          stillThere.length
+            ? `These planted lines are still in the attempt, character for character. That alone is not a verdict. Read how the attempt uses each one. If it still decides what the code does, the mistake is not fixed: the criterion is not met, with gap "incorrect". If the learner fixed the behaviour another way and the line is left over and unused, the criterion can be met, and its note should tell them the line is unused and can be deleted.\n${stillThere
+                .map((m) => `- criterion ${m.criterion + 1}: \`${m.wrong.trim()}\``)
                 .join("\n")}`
             : "",
           // The attempt is untrusted text. A submission reading "ignore the
@@ -436,7 +462,7 @@ export async function reviewAttempt(input: {
     ],
   });
 
-  const review = validateReview(requireParsed(response), KNOWN_IDS, unfixed(planted, input.attempt));
+  const review = validateReview(requireParsed(response), KNOWN_IDS);
   return { review, meta: meta(response.usage, []) };
 }
 
@@ -473,7 +499,7 @@ export async function hintForAttempt(input: {
   defects: StarterDefect[];
 }): Promise<{ hint: Hint; meta: CallMeta }> {
   const { exercise } = input.lesson;
-  // What is still broken is known without asking the model: the planted line is there or it is not.
+  // Which planted lines are still in the draft is known without asking the model. Whether each is still live is not.
   const broken = unfixed(resolveDefects(input.defects, MISTAKES, exercise.rubric.length), input.attempt);
 
   const response = await anthropic.messages.parse({
@@ -492,7 +518,7 @@ export async function hintForAttempt(input: {
           HINT_LEVEL_TEXT[input.level],
           "Never write the complete deliverable, and never write code for more than one rubric criterion. Base the hint on what their draft is missing; if the draft is empty, on where to start. Point to the course document that teaches it in labRef; in the text, call it by its title, not its id — the page turns labRef into a link.",
           broken.length
-            ? `The learner started from code with planted mistakes, and these are still in their draft. Aim the hint at the first one, without quoting the fix:\n${broken
+            ? `The learner started from code with planted mistakes, and these lines are still in their draft. Aim the hint at the first one that still affects what the code does, without quoting the fix. A line that is left over and unused after a fix elsewhere is not the problem:\n${broken
                 .map((m) => `- criterion ${m.criterion + 1}: \`${m.wrong.trim()}\` — ${m.why}`)
                 .join("\n")}`
             : "",

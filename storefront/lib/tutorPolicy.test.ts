@@ -309,28 +309,27 @@ test("echoed defect ids resolve only to authored mistakes on real criteria", () 
   assert.deepEqual(unfixed(planted, "for (const block of response.content) {}"), []);
 });
 
-test("a criterion whose planted mistake is still in the attempt fails, whatever the review said", () => {
+test("a planted line still in the attempt is reported, not graded: the review's verdict stands", () => {
+  // A correct fix can leave the planted line behind, unused. unfixed() finds it so the review can be pointed
+  // at it; validateReview no longer overrides a met criterion on that evidence alone.
+  const leftover = `${starterCode}\nfor (const block of response.content) if (block.type === "text") console.log(block.text);`;
+  assert.deepEqual(unfixed([{ ...indexZero, criterion: 0 }], leftover).map((m) => m.id), ["content-index-zero"]);
   const review = validateReview(
     {
       verdict: "pass",
       rightSoFar: "",
       rubric: [
-        { criterion: "narrows content", met: true, gap: null, note: "Looks good." },
+        { criterion: "narrows content", met: true, gap: null, note: "The old line is unused and can be deleted." },
         { criterion: "budget fits", met: true, gap: null, note: "" },
       ],
       fixes: [],
       beforeNextLesson: "",
     },
     known,
-    [{ ...indexZero, criterion: 0 }],
   );
-  assert.equal(review.verdict, "revise");
-  assert.equal(review.rubric[0]?.met, false);
-  // The line is there and wrong: that is incorrect work, not missing work.
-  assert.equal(review.rubric[0]?.gap, "incorrect");
-  assert.match(review.rubric[0]?.note ?? "", /content\[0\]\.text/);
-  assert.equal(review.rubric[1]?.met, true);
-  assert.equal(review.rubric[1]?.gap, null);
+  assert.equal(review.verdict, "pass");
+  assert.equal(review.rubric[0]?.met, true);
+  assert.equal(review.rubric[0]?.gap, null);
 });
 
 test("an unmet criterion always says whether it was missing or wrong, and a met one never does", () => {
