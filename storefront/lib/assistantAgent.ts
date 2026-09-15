@@ -1,13 +1,15 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import Anthropic from "@anthropic-ai/sdk";
+import type Anthropic from "@anthropic-ai/sdk";
 import { betaZodTool } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
-import { MODEL } from "./triage";
-import { pricingFor } from "./pricing.generated";
+import { houseClient } from "./anthropicClient";
+import { ASSISTANT_MAX_ITERATIONS, ASSISTANT_MAX_TOKENS, MODEL } from "./callLimits";
+import { costMicros } from "./cost";
 import { getDb, ensureIndexes, HAS_MONGO } from "./mongo";
 import { recordCall } from "./telemetry";
 import { redactPII, sanitizeToolOutput, wrapUntrusted } from "./untrusted";
+import { redactSecrets } from "./secrets";
 import { checkLimits } from "./ratelimit";
 import { insertEscalation } from "./models";
 import { SUPPORT_POLICY, actionSummary, underAuthority, withinAuthority, type SupportAction } from "./assistantPolicy";
@@ -37,13 +39,9 @@ import { findJourney, JOURNEY } from "./assistantJourney";
  * not allowed to grant.
  */
 
-const anthropic = new Anthropic({ maxRetries: 2 });
-
-/** Hard ceiling on turns. An uncapped agent loop is an uncapped bill. */
-const MAX_ITERATIONS = 6;
-
-/** A chat answer is a few hundred tokens; this bounds a runaway. */
-const MAX_TOKENS = 1200;
+/** The turn and token ceilings live in callLimits.ts, where cost.ts can price a worst-case run. */
+const MAX_ITERATIONS = ASSISTANT_MAX_ITERATIONS;
+const MAX_TOKENS = ASSISTANT_MAX_TOKENS;
 
 /** Long enough to read the proposal and decide, short enough to expire. */
 const PROPOSAL_TTL_MS = 15 * 60_000;
@@ -73,7 +71,9 @@ export type AssistantEvent =
   | { type: "text"; text: string }
   | { type: "tool"; name: string; label: string }
   | { type: "proposal"; proposal: ProposalView }
-  | { type: "error"; detail: string }
+  | { type: "error"; detail: string; code?: string }
+  /** The learner's credit after this exchange. Sent by the route, not the loop. */
+  | { type: "meter"; meter: import("./funding").Meter }
   | { type: "done"; turns: number };
 
 /**
@@ -118,6 +118,12 @@ interface RunInput {
   message: string;
   surface: AssistantSurface;
   context: AssistantContext;
+  /** Who pays. The house key unless the route says otherwise. */
+  client?: Anthropic;
+  /** Told the whole run's cost once, when it ends — including a run that failed part-way. */
+  onSpend?: (micros: number) => void;
+  /** A chance to turn an upstream failure into something the visitor can act on, e.g. a rejected key. */
+  onError?: (error: unknown) => Promise<{ detail: string; code: string } | null>;
 }
 
 /**
@@ -138,9 +144,10 @@ const STACK = {
   database_does: [
     "Retention: TTL indexes (expireAfterSeconds) on every collection holding anything derived from a person, so escalations, sessions, proposals and usage counters delete themselves. The retention policy is the index, not a cron job.",
     "Rate limiting and the spend cap: one atomic findOneAndUpdate with $inc and $setOnInsert under an upsert, so two concurrent requests cannot both read the same count and both decide they are under the limit.",
+    "Free credit: before a call, one conditional $inc reserves its worst-case cost only if it still fits under the learner's grant; after it, the difference is refunded. Learners' own API keys are stored AES-256-GCM encrypted and expire after a day unused, by TTL index.",
     "The reviewer queue: escalated tickets only, stored redacted, behind a compound index.",
   ],
-  database_does_not: "No Atlas Search, no vector search, no aggregation pipelines, no transactions. Five TTL indexes, one compound index, and an atomic upsert.",
+  database_does_not: "No Atlas Search, no vector search, no aggregation pipelines, no transactions. Eight TTL indexes, two secondary indexes, and atomic conditional updates.",
   hosting: "Next.js on Vercel Functions; the Mongo client is module-level and pooled because instances are reused across invocations.",
   source: "https://github.com/mrlynn/claude-triage-api",
   production_reference: "https://github.com/mrlynn/triage-api",
@@ -313,11 +320,12 @@ export async function* runAssistant(input: RunInput): AsyncGenerator<AssistantEv
   let outputTokens = 0;
   let cacheRead = 0;
   let cacheWrite = 0;
+  let model = MODEL;
 
   await touchSession(input);
 
   try {
-    const runner = anthropic.beta.messages.toolRunner({
+    const runner = (input.client ?? houseClient()).beta.messages.toolRunner({
       model: MODEL,
       max_tokens: MAX_TOKENS,
       max_iterations: MAX_ITERATIONS,
@@ -349,6 +357,7 @@ export async function* runAssistant(input: RunInput): AsyncGenerator<AssistantEv
       }
 
       const message = await stream.finalMessage();
+      model = message.model;
       // Usage accumulates across EVERY turn. The final message's usage covers
       // only the final request. History accumulates, so the last turn is the
       // largest, and reporting it alone under-reports a multi-turn run by less
@@ -363,27 +372,29 @@ export async function* runAssistant(input: RunInput): AsyncGenerator<AssistantEv
 
     yield { type: "done", turns };
   } catch (error) {
-    console.error("assistant run failed", error);
-    yield { type: "error", detail: "The assistant could not complete that request." };
+    const mapped = await input.onError?.(error);
+    if (mapped) {
+      yield { type: "error", detail: mapped.detail, code: mapped.code };
+    } else {
+      console.error("assistant run failed", redactSecrets(error));
+      yield { type: "error", detail: "The assistant could not complete that request." };
+    }
   } finally {
     // Fire-and-forget, and only for a call that actually reached the model:
     // recording a zero-cost call for a request that never started would
     // quietly deflate the mean cost per call on /ops.
     if (turns > 0) {
-      const pricing = pricingFor(MODEL);
-      const inRate = pricing.inputPerMTok / 1_000_000;
-      const outRate = pricing.outputPerMTok / 1_000_000;
-      const cost =
-        inputTokens * inRate +
-        cacheWrite * inRate * pricing.cacheWriteMultiplier +
-        cacheRead * inRate * pricing.cacheReadMultiplier +
-        outputTokens * outRate;
-      recordCall({
-        category: "assistant",
-        cacheHit: cacheRead > 0,
-        escalated,
-        costUsd: Math.round(cost * 1e6) / 1e6,
-      });
+      const micros = costMicros(
+        {
+          input_tokens: inputTokens,
+          output_tokens: outputTokens,
+          cache_read_input_tokens: cacheRead,
+          cache_creation_input_tokens: cacheWrite,
+        },
+        model,
+      );
+      recordCall({ surface: "assistant", category: "assistant", cacheHit: cacheRead > 0, escalated, costMicros: micros });
+      input.onSpend?.(micros);
     }
   }
 }

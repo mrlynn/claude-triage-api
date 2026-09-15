@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { runPipeline } from "@/lib/pipeline";
-import { clientIp } from "@/lib/ratelimit";
 
 /**
  * Plain JSON endpoint. Drains the same generator the streaming route uses and
@@ -13,10 +12,13 @@ export const maxDuration = 30;
 export async function POST(request: Request) {
   const raw = await request.json().catch(() => null);
 
-  for await (const event of runPipeline(raw, clientIp(request.headers))) {
+  // The meter arrives just before the result; it rides along in the same body.
+  let meter: unknown;
+  for await (const event of runPipeline(raw, request)) {
+    if (event.type === "meter") meter = event.meter;
     if (event.type === "failure") {
       return NextResponse.json(
-        { error: event.error, detail: event.detail },
+        { error: event.error, detail: event.detail, ...(event.meter ? { meter: event.meter } : {}) },
         {
           status: event.status,
           // A 429 without Retry-After tells a client to back off and leaves it
@@ -39,6 +41,7 @@ export async function POST(request: Request) {
         // why adding one to the pipeline needs a line here too — the cost of
         // the explicit shape, paid knowingly.
         ...(event.ticket_id ? { ticket_id: event.ticket_id } : {}),
+        ...(meter ? { meter } : {}),
       });
     }
   }

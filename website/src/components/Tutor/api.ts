@@ -1,9 +1,15 @@
 import { storefrontApi } from "@site/src/urls";
+import { reportAi } from "@site/src/components/Account/accountClient";
 import type { CallMeta, DocRef, Hint, Intake, Lesson, Level, Plan, PlanSession, Review } from "./types";
 
 /**
  * The four Tutor calls. The storefront holds the key and stores nothing; this
  * page holds the plan and sends back only the part each call needs.
+ *
+ * Credentials are sent because the storefront decides who pays for each call —
+ * free credit for a signed-in learner, or their own key — from the session
+ * cookie. Every response carries the updated meter, and a refusal for credit
+ * or sign-in opens it.
  */
 
 export class TutorApiError extends Error {
@@ -20,6 +26,7 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   try {
     response = await fetch(`${storefrontApi()}/api/tutor/${path}`, {
       method: "POST",
+      credentials: "include",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     });
@@ -27,6 +34,7 @@ async function post<T>(path: string, body: unknown): Promise<T> {
     throw new TutorApiError("Could not reach the Tutor. Check your connection and try again.", 0);
   }
   const data = (await response.json().catch(() => null)) as ({ detail?: string } & T) | null;
+  reportAi(data);
   if (!response.ok || !data) {
     throw new TutorApiError(data?.detail ?? "The Tutor could not complete that request.", response.status);
   }

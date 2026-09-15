@@ -1,5 +1,6 @@
 import "server-only";
 import { getDb, ensureIndexes, HAS_MONGO } from "./mongo";
+import type { Micros } from "./cost";
 
 /**
  * Usage and cost telemetry for the storefront's Claude calls.
@@ -28,8 +29,12 @@ import { getDb, ensureIndexes, HAS_MONGO } from "./mongo";
  * lab it ships with.
  */
 
-/** Cost in integer micro-dollars. Floats accumulate drift over a $inc. */
-type Micros = number;
+/**
+ * Which page spent it. Coarser than `cost.ts`'s surfaces on purpose: the
+ * owner's question is "where does the money go", and four Tutor calls are one
+ * answer to it.
+ */
+export type SpendSurface = "support" | "injection" | "live" | "tutor" | "assistant";
 
 interface DayDoc {
   _id: string; // YYYY-MM-DD
@@ -40,6 +45,15 @@ interface DayDoc {
   cost_micros: Micros;
   /** Per-category counters, keyed by the triage enum. */
   category: Record<string, number>;
+  /**
+   * Calls and spend per surface, for EVERY paid surface. The top-level
+   * counters above stay what /ops has always shown — submitted tickets and
+   * assistant runs — so forty previews of one draft do not read as forty
+   * tickets or drag down the mean cost per call.
+   */
+  surface?: Partial<Record<SpendSurface, { calls: number; cost_micros: Micros }>>;
+  /** Calls and spend by who paid. See `recordFunding`. */
+  funding?: Partial<Record<"house" | "trial" | "byok", { calls: number; cost_micros: Micros }>>;
   expiresAt: Date;
 }
 
@@ -58,10 +72,11 @@ const today = () => new Date().toISOString().slice(0, 10);
  * not care. Callers do not await this, and it swallows its own errors.
  */
 export function recordCall(input: {
+  surface: "support" | "assistant";
   category: string;
   cacheHit: boolean;
   escalated: boolean;
-  costUsd: number;
+  costMicros: Micros;
 }): void {
   if (!HAS_MONGO) return;
   void (async () => {
@@ -75,12 +90,70 @@ export function recordCall(input: {
             calls: 1,
             cache_hits: input.cacheHit ? 1 : 0,
             escalated: input.escalated ? 1 : 0,
-            cost_micros: Math.round(input.costUsd * 1_000_000),
+            cost_micros: input.costMicros,
             [`category.${input.category}`]: 1,
+            [`surface.${input.surface}.calls`]: 1,
+            [`surface.${input.surface}.cost_micros`]: input.costMicros,
           },
           $setOnInsert: {
             expiresAt: new Date(Date.now() + RETENTION_DAYS * 86_400_000),
           },
+        },
+        { upsert: true },
+      );
+    } catch (err) {
+      console.error("telemetry write failed (ignored)", err);
+    }
+  })();
+}
+
+/**
+ * Spend on a surface that is not a ticket: the live preview, the injection
+ * playground, the Tutor. Same fire-and-forget contract as `recordCall`, but it
+ * touches only the per-surface counters.
+ */
+export function recordSpend(surface: SpendSurface, costMicros: Micros): void {
+  if (!HAS_MONGO) return;
+  void (async () => {
+    try {
+      await ensureIndexes();
+      const db = await getDb();
+      await db.collection<DayDoc>(COLLECTION).updateOne(
+        { _id: today() },
+        {
+          $inc: {
+            [`surface.${surface}.calls`]: 1,
+            [`surface.${surface}.cost_micros`]: costMicros,
+          },
+          $setOnInsert: {
+            expiresAt: new Date(Date.now() + RETENTION_DAYS * 86_400_000),
+          },
+        },
+        { upsert: true },
+      );
+    } catch (err) {
+      console.error("telemetry write failed (ignored)", err);
+    }
+  })();
+}
+
+/**
+ * Who paid, for the owner's view of what the trial costs. `house` is spend on
+ * the owner's key with no ledger at all (BYOK_MODE=off, or an anonymous
+ * visitor in shadow mode); `trial` is the owner's key against a learner's
+ * credit; `byok` is the learner's own key.
+ */
+export function recordFunding(funding: "house" | "trial" | "byok", costMicros: Micros): void {
+  if (!HAS_MONGO) return;
+  void (async () => {
+    try {
+      await ensureIndexes();
+      const db = await getDb();
+      await db.collection<DayDoc>(COLLECTION).updateOne(
+        { _id: today() },
+        {
+          $inc: { [`funding.${funding}.calls`]: 1, [`funding.${funding}.cost_micros`]: costMicros },
+          $setOnInsert: { expiresAt: new Date(Date.now() + RETENTION_DAYS * 86_400_000) },
         },
         { upsert: true },
       );
@@ -123,6 +196,8 @@ export interface UsageSummary {
   /** Mean cost of a call that actually reached the model. */
   costPerCallUsd: number | null;
   categories: { name: string; count: number }[];
+  /** Every paid surface, dearest first. Empty for days recorded before surfaces were counted. */
+  surfaces: { name: SpendSurface; calls: number; costUsd: number }[];
   /** Newest last, for a sparkline. */
   daily: { date: string; calls: number; costUsd: number }[];
 }
@@ -149,6 +224,14 @@ export async function usageSummary(days = 30): Promise<UsageSummary | null> {
     }
   }
 
+  const surfaceTotals = new Map<SpendSurface, { calls: number; cost_micros: Micros }>();
+  for (const row of rows) {
+    for (const [name, v] of Object.entries(row.surface ?? {}) as [SpendSurface, { calls: number; cost_micros: Micros }][]) {
+      const t = surfaceTotals.get(name) ?? { calls: 0, cost_micros: 0 };
+      surfaceTotals.set(name, { calls: t.calls + (v.calls ?? 0), cost_micros: t.cost_micros + (v.cost_micros ?? 0) });
+    }
+  }
+
   return {
     days,
     calls,
@@ -162,6 +245,9 @@ export async function usageSummary(days = 30): Promise<UsageSummary | null> {
     categories: [...catTotals.entries()]
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count),
+    surfaces: [...surfaceTotals.entries()]
+      .map(([name, t]) => ({ name, calls: t.calls, costUsd: t.cost_micros / 1_000_000 }))
+      .sort((a, b) => b.costUsd - a.costUsd),
     daily: rows.map((d) => ({
       date: d._id,
       calls: d.calls ?? 0,

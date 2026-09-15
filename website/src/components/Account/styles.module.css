@@ -1,0 +1,142 @@
+/*
+ * The credit meter. Bottom-left, because Ask Northwind owns bottom-right, and
+ * a panel that opens upward from its own pill cannot cover the other one.
+ * Grounds and text come from Infima variables so dark mode needs no second
+ * rule set; the pill tones are fixed brand colours that read on both.
+ */
+.meter {
+  position: fixed;
+  left: 1.25rem;
+  bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+  z-index: 49;
+  font-size: 0.875rem;
+}
+
+:global(body.nw-presenter) .meter {
+  display: none;
+}
+
+.pill {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.65rem 1rem;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 10px 28px rgba(31, 61, 51, 0.28);
+}
+
+.anon { background: var(--nw-pine); color: var(--nw-bone); }
+.good { background: var(--nw-spruce); }
+.low { background: #b7791f; }
+.out { background: var(--nw-ember); }
+.byok { background: #1e4e79; }
+
+.panel {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 0.75rem;
+  width: min(22rem, calc(100vw - 2.5rem));
+  max-height: calc(100dvh - 6rem);
+  overflow-y: auto;
+  padding: 1rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 0.6rem;
+  background: var(--ifm-background-color);
+  color: var(--ifm-font-color-base);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+}
+
+.panel p { margin: 0; }
+
+.title { font-weight: 700; }
+
+.muted {
+  margin-top: 0.3rem !important;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.notice {
+  margin-bottom: 0.75rem !important;
+  padding: 0.55rem 0.65rem;
+  border-radius: 0.4rem;
+  background: var(--ifm-color-emphasis-100);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.bar {
+  height: 0.5rem;
+  margin-top: 0.5rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--ifm-color-emphasis-200);
+}
+
+.bar > div { height: 100%; }
+
+.primary {
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border: 0;
+  border-radius: 0.4rem;
+  background: var(--nw-pine);
+  color: var(--nw-bone);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+html[data-theme="dark"] .primary { background: var(--nw-spruce); color: #0d1a15; }
+
+.primary:disabled, .link:disabled { opacity: 0.5; cursor: default; }
+
+.link {
+  margin-top: 0.6rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.form {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.form label { display: block; font-size: 0.8125rem; font-weight: 700; }
+
+.form input {
+  width: 100%;
+  margin-top: 0.3rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 0.4rem;
+  background: var(--ifm-background-surface-color);
+  color: inherit;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.8125rem;
+}
+
+.error { margin-top: 0.4rem !important; font-size: 0.75rem; font-weight: 700; color: var(--nw-ember); }
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1rem !important;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--ifm-color-emphasis-200);
+  font-size: 0.75rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.footer .link { margin-top: 0; font-size: 0.75rem; }

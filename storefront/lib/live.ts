@@ -1,7 +1,9 @@
 import "server-only";
 import { z } from "zod";
-import Anthropic from "@anthropic-ai/sdk";
+import type Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+import { houseClient } from "./anthropicClient";
+import { LIVE_MODEL, MAX_LIVE_TOKENS } from "./callLimits";
 import { buildSystem, MAX_MESSAGE_CHARS } from "./triage";
 import { wrapUntrusted } from "./untrusted";
 
@@ -42,15 +44,8 @@ import { wrapUntrusted } from "./untrusted";
  * injection, not a reason to drop the defence.
  */
 
-/** The cheaper tier, deliberately. See the header — this is a hint, not a verdict. */
-export const LIVE_MODEL = process.env.LIVE_MODEL ?? "claude-sonnet-5";
-
-/**
- * Five fields is about 60 output tokens. The real schema's `summary` alone is
- * more than that, and nobody can read a summary of a sentence they are still
- * writing.
- */
-export const MAX_LIVE_TOKENS = 300;
+/** The model and output ceiling live in callLimits.ts, where cost.ts can price them. */
+export { LIVE_MODEL, MAX_LIVE_TOKENS };
 
 /** Below this there is nothing to classify and the model will guess. */
 export const MIN_LIVE_CHARS = 12;
@@ -107,18 +102,17 @@ export const LIVE_FIELDS = [
 ] as const;
 export type LiveField = (typeof LIVE_FIELDS)[number];
 
-const anthropic = new Anthropic({ maxRetries: 1 });
-
 /**
  * One preview pass, streamed.
  *
  * `maxRetries: 1` rather than the triage client's 2: a preview that is slow
  * has already failed at its job, and the next keystroke will start a fresh
  * one anyway. Retrying hard on a request the user is about to supersede
- * spends money on an answer nobody will read.
+ * spends money on an answer nobody will read. It is set on the request, not
+ * the client, because the client is shared.
  */
-export function streamLive(message: string, signal?: AbortSignal) {
-  return anthropic.messages.stream(
+export function streamLive(message: string, signal?: AbortSignal, client: Anthropic = houseClient()) {
+  return client.messages.stream(
     {
       model: LIVE_MODEL,
       max_tokens: MAX_LIVE_TOKENS,
@@ -140,7 +134,7 @@ export function streamLive(message: string, signal?: AbortSignal) {
         },
       ],
     },
-    { signal },
+    { signal, maxRetries: 1 },
   );
 }
 

@@ -3,6 +3,7 @@ import AssistantMarkdown from "@site/src/components/AssistantMarkdown";
 import { useSpeechInput } from "./useSpeechInput";
 import { NorthwindAssistantMark } from "@site/src/components/NorthwindLogo";
 import { storefrontApi as assistantApi } from "@site/src/urls";
+import { publishMeter, reportAi } from "@site/src/components/Account/accountClient";
 
 /**
  * Line art rather than the 🎙 emoji, which renders as a full-colour studio
@@ -133,6 +134,7 @@ export default function AssistantDock() {
 
       if (!response.ok || !response.body) {
         const detail = await response.json().catch(() => null);
+        reportAi(detail);
         settle(detail?.detail ?? detail?.error ?? `Ask Northwind is unavailable (HTTP ${response.status}).`);
         return;
       }
@@ -155,7 +157,9 @@ export default function AssistantDock() {
             settle(answer);
           }
           if (event.type === "tool") setStatus(event.label);
+          if (event.type === "meter") publishMeter(event.meter);
           if (event.type === "error") {
+            if (event.code) reportAi({ error: event.code, detail: event.detail });
             answer ||= event.detail ?? "The assistant could not complete that request.";
             settle(answer);
           }

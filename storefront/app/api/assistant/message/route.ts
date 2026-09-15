@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { cors, sessionId } from "@/lib/assistant";
 import { runAssistant } from "@/lib/assistantAgent";
-import { checkLimits, clientIp } from "@/lib/ratelimit";
+import { ASSISTANT_LIMITS } from "@/lib/callLimits";
+import { AiGateError, gateResponse, guardAi, keyError, settle } from "@/lib/funding";
 
 /**
  * One exchange with Ask Northwind, streamed.
@@ -24,15 +25,19 @@ export const runtime = "nodejs";
  */
 export const maxDuration = 60;
 
+// The same numbers cost.ts prices a worst-case run from.
 const Body = z.object({
-  message: z.string().trim().min(1).max(2_000),
+  message: z.string().trim().min(1).max(ASSISTANT_LIMITS.messageChars),
   surface: z.enum(["storefront", "course"]),
   context: z.object({
-    path: z.string().max(300),
-    title: z.string().max(200).optional(),
-    product: z.string().max(120).optional(),
-    orderId: z.string().max(40).optional(),
-    progress: z.array(z.string().max(80)).max(20).default([]),
+    path: z.string().max(ASSISTANT_LIMITS.pathChars),
+    title: z.string().max(ASSISTANT_LIMITS.titleChars).optional(),
+    product: z.string().max(ASSISTANT_LIMITS.productChars).optional(),
+    orderId: z.string().max(ASSISTANT_LIMITS.orderIdChars).optional(),
+    progress: z
+      .array(z.string().max(ASSISTANT_LIMITS.progressItemChars))
+      .max(ASSISTANT_LIMITS.progressItems)
+      .default([]),
   }),
 });
 
@@ -57,38 +62,43 @@ export async function POST(request: Request) {
   // not, which made the chat box the cheapest way to spend the project's key.
   // One conversation is up to six model calls, so it gets its own window
   // rather than sharing the form's — neither surface should be able to
-  // exhaust the other.
-  const verdict = await checkLimits(clientIp(request.headers), "assistant");
-  if (!verdict.ok) {
-    // "unconfigured" means no database, so no counter, so no spend ceiling —
-    // the limiter fails closed in production by design. Reporting that as
-    // "you are going too fast" would send someone to wait out a minute for a
-    // deployment problem that a minute does not fix.
-    const unconfigured = verdict.reason === "unconfigured";
-    return cors(
-      request,
-      Response.json(
-        {
-          error: unconfigured ? "unconfigured" : "rate_limited",
-          detail: unconfigured
-            ? "Ask Northwind is not configured on this deployment."
-            : "Ask Northwind is busy from your connection. Try again in a minute.",
-        },
-        {
-          status: unconfigured ? 503 : 429,
-          headers: unconfigured ? {} : { "Retry-After": String(verdict.retryAfterSec) },
-        },
-      ),
-    );
+  // exhaust the other. `guardAi` applies that window, then decides who pays.
+  let funding;
+  try {
+    funding = await guardAi(request, "assistant", "assistant_turn");
+  } catch (error) {
+    if (!(error instanceof AiGateError)) throw error;
+    return gateResponse(request, error);
   }
 
   const encoder = new TextEncoder();
   const body = new ReadableStream<Uint8Array>({
     async start(controller) {
+      let spent = 0;
       try {
-        for await (const event of runAssistant({ sessionId: id, ...parsed.data })) {
+        const run = runAssistant({
+          sessionId: id,
+          ...parsed.data,
+          client: funding.client,
+          onSpend: (micros) => {
+            spent = micros;
+          },
+          onError: async (error) => {
+            const refused = await keyError(funding, error);
+            return refused ? { detail: refused.detail, code: refused.code } : null;
+          },
+        });
+        for await (const event of run) {
+          // Settle before `done`, so the meter lands while the page is still listening.
+          if (event.type === "done") {
+            const meter = await settle(funding, spent);
+            if (meter) controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "meter", meter })}\n\n`));
+          }
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
         }
+        // A run that ended in an error never yields `done`.
+        const meter = await settle(funding, spent);
+        if (meter) controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "meter", meter })}\n\n`));
       } catch (error) {
         // `runAssistant` already converts its own failures into an error event.
         // This is the belt for anything that escapes it, because a stream that
@@ -100,6 +110,9 @@ export async function POST(request: Request) {
           ),
         );
       } finally {
+        // Idempotent: a no-op when the loop above already settled. Here for the
+        // crash path, which would otherwise leave the whole reservation taken.
+        await settle(funding, spent);
         controller.close();
       }
     },

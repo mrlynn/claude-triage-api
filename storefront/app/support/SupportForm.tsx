@@ -20,6 +20,7 @@ import {
   confidenceBar,
   urgencyChip,
 } from "@/lib/triage-ui";
+import { publishMeter, reportAi } from "@/lib/accountClient";
 
 /**
  * The closed loop.
@@ -138,7 +139,10 @@ export default function SupportForm() {
                 detail: event.detail ?? prev[event.id as StageId].detail,
               },
             }));
+          } else if (event.type === "meter") {
+            publishMeter(event.meter);
           } else if (event.type === "failure") {
+            reportAi(event);
             setError(event.detail ?? "Something went wrong.");
             failed = true;
           } else if (event.type === "result") {

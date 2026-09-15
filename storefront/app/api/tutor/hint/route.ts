@@ -42,10 +42,10 @@ const Body = z.object({
 export const OPTIONS = tutorOptions;
 
 export async function POST(request: Request) {
-  return tutorPost(request, Body, (input) => {
+  return tutorPost(request, Body, "tutor_hint", (input, options) => {
     // `.max()` above makes this non-null; the check keeps the type honest.
     const level = nextHintLevel(input.previous.length);
     if (!level) throw new Error("hint limit reached");
-    return hintForAttempt({ ...input, level });
+    return hintForAttempt({ ...input, level }, options);
   });
 }

@@ -1,7 +1,8 @@
 import "server-only";
 import { z } from "zod";
-import { checkLimits } from "./ratelimit";
-import { pricingFor } from "./pricing.generated";
+import { AiGateError, guardAi, keyError, settle, type Funding, type GateCode, type Meter } from "./funding";
+import { redactSecrets } from "./secrets";
+import { costMicros, microsToUsd, uncachedCostMicros } from "./cost";
 import { redactPII } from "./untrusted";
 import { insertEscalation } from "./models";
 import { HAS_MONGO } from "./mongo";
@@ -69,7 +70,7 @@ export interface FailureEvent {
   type: "failure";
   id: StageId;
   status: number;
-  error: string;
+  error: string | GateCode;
   detail: string;
   /**
    * Seconds until a retry could succeed, when we know. The limiter has always
@@ -77,9 +78,17 @@ export interface FailureEvent {
    * told the client to back off without saying for how long.
    */
   retryAfterSec?: number;
+  /** Present on a credit refusal, so the page can show where the learner stands. */
+  meter?: Meter | null;
 }
 
-export type PipelineEvent = StageEvent | ResultEvent | FailureEvent;
+/** The learner's credit after this call. Absent when nobody is metered (BYOK_MODE=off). */
+export interface MeterEvent {
+  type: "meter";
+  meter: Meter;
+}
+
+export type PipelineEvent = StageEvent | ResultEvent | FailureEvent | MeterEvent;
 
 const Input = z.object({
   message: z.string().min(10).max(MAX_MESSAGE_CHARS),
@@ -89,7 +98,7 @@ const Input = z.object({
 
 export async function* runPipeline(
   raw: unknown,
-  ip: string,
+  request: Request,
 ): AsyncGenerator<PipelineEvent> {
   const t0 = Date.now();
   const mark = () => Date.now();
@@ -124,12 +133,15 @@ export async function* runPipeline(
     },
   };
 
-  // ---- 2. Rate limit ----------------------------------------------------
+  // ---- 2. Who pays ------------------------------------------------------
   s = mark();
   yield { type: "stage", id: "ratelimit", status: "running" };
 
-  const verdict = await checkLimits(ip);
-  if (!verdict.ok) {
+  let funding: Funding;
+  try {
+    funding = await guardAi(request, "support", "classify");
+  } catch (error) {
+    if (!(error instanceof AiGateError)) throw error;
     // Counted separately: a blocked request has no category and no cost, and
     // folding it into `calls` would quietly deflate the mean cost per call.
     recordBlocked();
@@ -137,17 +149,11 @@ export async function* runPipeline(
     yield {
       type: "failure",
       id: "ratelimit",
-      status: 429,
-      error: verdict.reason,
-      retryAfterSec: verdict.retryAfterSec,
-      detail:
-        verdict.reason === "per_ip"
-          ? "You have submitted a few of these already. Give it a few minutes."
-          : verdict.reason === "daily_cap"
-            ? "This demo has hit its daily cap. It resets at midnight UTC."
-            : verdict.reason === "store_error"
-              ? "We cannot verify the demo's spend limit right now, so live submissions are paused."
-              : "The demo is not configured to accept live submissions right now.",
+      status: error.status,
+      error: error.code,
+      retryAfterSec: error.retryAfterSec,
+      detail: error.detail,
+      meter: error.meter,
     };
     return;
   }
@@ -157,9 +163,17 @@ export async function* runPipeline(
     id: "ratelimit",
     status: "done",
     ms: mark() - s,
-    headline: `Allowed. ${verdict.remaining} of today's budget left`,
+    headline:
+      funding.kind === "byok"
+        ? "Allowed. Running on your own API key"
+        : funding.kind === "trial"
+          ? "Allowed. Worst case reserved from your free credit"
+          : "Allowed. Within this connection's limits",
     detail: {
-      why: "A public form that calls a frontier model is an uncapped bill. Two atomic increments in MongoDB, one per IP window and one global for the day, both on documents that expire themselves.",
+      why:
+        funding.kind === "trial"
+          ? "A call's cost is unknown until it returns, so the most it could cost is reserved first — one conditional $inc that only matches if it fits — and the difference is refunded after. Two requests racing for the last dollar cannot both win."
+          : "A public form that calls a frontier model is an uncapped bill. Every call passes a per-connection window in MongoDB, an atomic increment on a document that expires itself.",
       store: "MongoDB Atlas, TTL-indexed",
       fails: "closed — if the ceiling cannot be checked, nothing is spent",
     },
@@ -212,19 +226,25 @@ export async function* runPipeline(
 
   let response;
   try {
-    response = await callClaude(system, message);
+    response = await callClaude(system, message, { client: funding.client });
   } catch (err) {
-    console.error("model call failed", err);
+    const meter = await settle(funding, 0);
+    const refused = await keyError(funding, err);
+    if (!refused) console.error("model call failed", redactSecrets(err));
     yield { type: "stage", id: "model", status: "failed", ms: mark() - s };
     yield {
       type: "failure",
       id: "model",
-      status: 502,
-      error: "upstream_error",
-      detail: "We could not classify that just now. Try again shortly.",
+      status: refused?.status ?? 502,
+      error: refused?.code ?? "upstream_error",
+      detail: refused?.detail ?? "We could not classify that just now. Try again shortly.",
+      meter,
     };
     return;
   }
+  // Settled the moment the bill is known, before anything below can fail: a
+  // reply that does not validate was still paid for.
+  const settled = settle(funding, costMicros(response.usage, response.model));
   const modelMs = mark() - s;
 
   yield {
@@ -245,6 +265,8 @@ export async function* runPipeline(
   yield { type: "stage", id: "parse", status: "running" };
 
   if (!response.parsed_output) {
+    const meter = await settled;
+    if (meter) yield { type: "meter", meter };
     yield { type: "stage", id: "parse", status: "failed", ms: mark() - s };
     // Three different failures arrive as null. Say which one it was.
     const refused = response.stop_reason === "refusal";
@@ -283,18 +305,12 @@ export async function* runPipeline(
   // Its source is MODEL_CATALOG in the API repo's src/config.ts; regenerate
   // with `npm run sync:storefront`. Hardcoding $5/$25 was how this file
   // quietly kept reporting Opus prices no matter what TRIAGE_MODEL said.
-  const pricing = pricingFor(MODEL);
-  const inRate = pricing.inputPerMTok / 1_000_000;
-  const outRate = pricing.outputPerMTok / 1_000_000;
+  // Priced by the model that answered, not the one we asked for (Decision 9).
   const cacheWrite = u.cache_creation_input_tokens ?? 0;
   const cacheRead = u.cache_read_input_tokens ?? 0;
-  const cost =
-    u.input_tokens * inRate +
-    cacheWrite * inRate * pricing.cacheWriteMultiplier +
-    cacheRead * inRate * pricing.cacheReadMultiplier +
-    u.output_tokens * outRate;
-  const uncached =
-    (u.input_tokens + cacheWrite + cacheRead) * inRate + u.output_tokens * outRate;
+  const micros = costMicros(u, response.model);
+  const cost = microsToUsd(micros);
+  const uncached = microsToUsd(uncachedCostMicros(u, response.model));
 
   yield {
     type: "stage",
@@ -367,7 +383,7 @@ export async function* runPipeline(
         redactions,
         triage: response.parsed_output,
         model: MODEL,
-        cost_usd: Math.round(cost * 1e6) / 1e6,
+        cost_usd: cost,
       });
 
       yield {
@@ -404,16 +420,20 @@ export async function* runPipeline(
   // Fire-and-forget: telemetry must never be able to fail a customer's
   // request, and by this point the classification has already succeeded.
   recordCall({
+    surface: "support",
     category: response.parsed_output.category,
     cacheHit: cacheRead > 0,
     escalated: needsHuman,
-    costUsd: Math.round(cost * 1e6) / 1e6,
+    costMicros: micros,
   });
+
+  const meter = await settled;
+  if (meter) yield { type: "meter", meter };
 
   yield {
     type: "result",
     triage: response.parsed_output,
-    cost_usd: Math.round(cost * 1e6) / 1e6,
+    cost_usd: cost,
     cache_hit: cacheRead > 0,
     latency_ms: modelMs,
     total_ms: Date.now() - t0,

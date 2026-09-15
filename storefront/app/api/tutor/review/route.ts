@@ -39,5 +39,5 @@ const Body = z.object({
 export const OPTIONS = tutorOptions;
 
 export async function POST(request: Request) {
-  return tutorPost(request, Body, reviewAttempt);
+  return tutorPost(request, Body, "tutor_review", reviewAttempt);
 }

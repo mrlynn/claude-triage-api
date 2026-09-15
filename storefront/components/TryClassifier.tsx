@@ -4,6 +4,7 @@ import { useState, type SyntheticEvent } from "react";
 import Link from "next/link";
 import { track } from "@vercel/analytics";
 import { labs } from "@/lib/links";
+import { reportAi } from "@/lib/accountClient";
 import {
   CATEGORY_CHIP,
   HUMAN_CHIP,
@@ -102,6 +103,7 @@ export default function TryClassifier() {
         signal: controller.signal,
       });
       const body: unknown = await res.json().catch(() => null);
+      reportAi(body);
 
       if (!res.ok) {
         // The pipeline's failure detail is already written for a customer to

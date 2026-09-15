@@ -126,6 +126,22 @@ export async function ensureIndexes(): Promise<void> {
       // A confirmed proposal becomes a row in `escalations`, which already has
       // its own retention above. There is no third collection: the assistant
       // files onto the same queue the support form feeds.
+
+      // Who pays for a call (docs/byok). Three collections, each deleting
+      // itself: a user half a year after they were last seen, a session after
+      // a week, a sealed key after a day unused. `byok_keys` is the one that
+      // matters most — the retention of a credential is the index, not the
+      // sign-out button.
+      db
+        .collection("users")
+        .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, name: "ttl" }),
+      db
+        .collection("auth_sessions")
+        .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, name: "ttl" }),
+      db.collection("auth_sessions").createIndex({ userId: 1 }, { name: "user" }),
+      db
+        .collection("byok_keys")
+        .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, name: "ttl" }),
     ]);
   })();
   await indexReady;

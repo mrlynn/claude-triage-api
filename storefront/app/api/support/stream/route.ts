@@ -1,5 +1,4 @@
 import { runPipeline } from "@/lib/pipeline";
-import { clientIp } from "@/lib/ratelimit";
 
 /**
  * The narrated version. Same pipeline, emitted stage by stage over SSE so the
@@ -14,13 +13,12 @@ export const maxDuration = 30;
 
 export async function POST(request: Request) {
   const raw = await request.json().catch(() => null);
-  const ip = clientIp(request.headers);
   const encoder = new TextEncoder();
 
   const body = new ReadableStream<Uint8Array>({
     async start(controller) {
       try {
-        for await (const event of runPipeline(raw, ip)) {
+        for await (const event of runPipeline(raw, request)) {
           controller.enqueue(
             encoder.encode(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`),
           );

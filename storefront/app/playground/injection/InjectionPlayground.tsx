@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import payloads from "@/data/injections.json";
+import { reportAi } from "@/lib/accountClient";
 import {
   CATEGORY_CHIP,
   HUMAN_CHIP,
@@ -80,6 +81,7 @@ export default function InjectionPlayground() {
         body: JSON.stringify({ message, defended }),
       });
       const body = await res.json();
+      reportAi(body);
       if (!res.ok) {
         setError(body.detail ?? "Something went wrong.");
         return;

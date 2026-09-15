@@ -4,7 +4,7 @@ import Link from "@docusaurus/Link";
 
 import styles from "./legal.module.css";
 
-const UPDATED = "30 August 2026";
+const UPDATED = "15 September 2026";
 
 export default function Privacy(): ReactNode {
   return (
@@ -88,7 +88,71 @@ export default function Privacy(): ReactNode {
           <p>
             <strong>Please do not type anything sensitive into the assistant.</strong> It is a
             teaching demo, not a support desk for a real company. Do not enter passwords,
-            API keys, payment details, government identifiers, or health information.
+            API keys, payment details, government identifiers, or health information into
+            the chat. (Your own Anthropic key has its own form, described below.)
+          </p>
+        </section>
+
+        <section>
+          <h2>Signing in with GitHub, and free credit</h2>
+          <p>
+            The AI features — the Tutor, Ask Northwind, and the demos on the storefront — run
+            on the Claude API, which costs money per request. Where the site asks you to
+            &ldquo;Sign in with GitHub&rdquo;, it is to give each learner a small amount of free
+            credit and to stop that credit being claimed over and over.
+          </p>
+          <ul>
+            <li>
+              The site requests <strong>no GitHub scopes</strong>. It reads your public profile
+              once and keeps only your numeric GitHub id, your username, and when your GitHub
+              account was created (to decide whether it qualifies for free credit). It does
+              not receive or store your email address, and it discards the GitHub access
+              token immediately after that one read.
+            </li>
+            <li>
+              Against that id it stores how much free credit you were given and how much you
+              have used, in dollars. It does not store what you asked.
+            </li>
+            <li>
+              A session cookie (<code>nw_session</code>) keeps you signed in. The database
+              holds only a one-way hash of it. See the <Link to="/cookies">cookie policy</Link>.
+            </li>
+          </ul>
+          <p>
+            You can revoke the site&rsquo;s access from your{" "}
+            <a href="https://github.com/settings/applications">GitHub application settings</a>.
+          </p>
+        </section>
+
+        <section>
+          <h2>Your own Anthropic API key</h2>
+          <p>
+            When your free credit runs out you can add your own Anthropic API key. If you do:
+          </p>
+          <ul>
+            <li>
+              It is sent once, over HTTPS, to the storefront, checked with Anthropic by a
+              request that costs nothing, and stored <strong>encrypted</strong> (AES-256-GCM)
+              and bound to your current sign-in session, so it cannot be used from any other
+              session.
+            </li>
+            <li>
+              It is used only to make the AI requests you make on this site, and it is never
+              shown back to you or to anyone else — the page only ever sees its last four
+              characters.
+            </li>
+            <li>
+              It is deleted automatically after 24 hours without use, immediately when you
+              press &ldquo;Remove key&rdquo; or sign out, and immediately if Anthropic rejects it.
+            </li>
+            <li>
+              Requests made with your key are billed to your Anthropic account by Anthropic.
+              The site records how much it spent this session so the meter can show you.
+            </li>
+          </ul>
+          <p>
+            A key created for this purpose, with a spend limit set in the Anthropic Console,
+            is a good idea, and you can revoke it there at any time.
           </p>
         </section>
 
@@ -145,6 +209,18 @@ export default function Privacy(): ReactNode {
                   <td>Until the window ends</td>
                 </tr>
                 <tr>
+                  <td>Your own Anthropic API key, encrypted</td>
+                  <td>24 hours after it was last used, or until you remove it or sign out</td>
+                </tr>
+                <tr>
+                  <td>Sign-in sessions</td>
+                  <td>7 days</td>
+                </tr>
+                <tr>
+                  <td>GitHub id, username and credit used, where you signed in with GitHub</td>
+                  <td>180 days after you were last active</td>
+                </tr>
+                <tr>
                   <td>Course and lab progress</td>
                   <td>In your browser, until you clear it</td>
                 </tr>
@@ -169,11 +245,14 @@ export default function Privacy(): ReactNode {
             </li>
             <li>
               <strong>MongoDB Atlas</strong> — the database that holds assistant
-              conversations and escalations.
+              conversations, escalations, sign-in records and encrypted API keys.
             </li>
             <li>
               <strong>Anthropic</strong> — the Claude API, which receives assistant messages
-              in order to answer them.
+              in order to answer them, and verifies an API key you add.
+            </li>
+            <li>
+              <strong>GitHub</strong> — only if you choose to sign in with it.
             </li>
           </ul>
           <p>
@@ -194,6 +273,10 @@ export default function Privacy(): ReactNode {
             <li>
               Revoke Google sign-in access from your{" "}
               <a href="https://myaccount.google.com/permissions">Google account permissions</a> page.
+            </li>
+            <li>
+              Remove your Anthropic key or sign out from the credit meter in the corner of any
+              page; both delete the stored key at once.
             </li>
           </ul>
         </section>

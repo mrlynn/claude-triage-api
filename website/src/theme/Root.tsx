@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import AssistantDock from "@site/src/components/AssistantDock";
+import AccountMeter from "@site/src/components/Account";
 
 /**
  * Wraps every page. Docusaurus has no root layout to edit, so `theme/Root` is
@@ -12,12 +13,16 @@ import AssistantDock from "@site/src/components/AssistantDock";
  * exists and is better. No cookies, no cross-site identifier.
  *
  * It no-ops off Vercel, so `npm start` locally sends nothing.
+ *
+ * The credit meter renders nothing unless the storefront has sign-in and
+ * metering switched on, so a local course server looks exactly as before.
  */
 export default function Root({ children }: { children: ReactNode }): ReactNode {
   return (
     <>
       {children}
       <Analytics />
+      <AccountMeter />
       <AssistantDock />
     </>
   );

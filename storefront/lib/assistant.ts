@@ -1,6 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
+import { ALLOWED_ORIGINS } from "./origins";
 
 /**
  * Session identity and cross-origin rules for Ask Northwind.
@@ -11,13 +12,17 @@ import { NextResponse } from "next/server";
 export const ASSISTANT_COOKIE = "northwind_assistant";
 const SEVEN_DAYS = 60 * 60 * 24 * 7;
 
-export function sessionId(request: Request): string | undefined {
+export function readCookie(request: Request, name: string): string | undefined {
   return request.headers
     .get("cookie")
     ?.split(";")
     .map((part) => part.trim())
-    .find((part) => part.startsWith(`${ASSISTANT_COOKIE}=`))
-    ?.slice(ASSISTANT_COOKIE.length + 1);
+    .find((part) => part.startsWith(`${name}=`))
+    ?.slice(name.length + 1);
+}
+
+export function sessionId(request: Request): string | undefined {
+  return readCookie(request, ASSISTANT_COOKIE);
 }
 
 export function addSessionCookie(response: NextResponse, id = randomUUID()): NextResponse {
@@ -35,13 +40,7 @@ export function addSessionCookie(response: NextResponse, id = randomUUID()): Nex
 /** Only the deployed course and shop may send credentialed assistant requests. */
 export function cors(request: Request, response: Response): Response {
   const origin = request.headers.get("origin");
-  const allowed = new Set([
-    "https://triage.mlynn.dev",
-    "https://northwind.mlynn.dev",
-    "http://localhost:3001",
-    "http://localhost:3002",
-  ]);
-  if (origin && allowed.has(origin)) {
+  if (origin && ALLOWED_ORIGINS.has(origin)) {
     response.headers.set("Access-Control-Allow-Origin", origin);
     response.headers.set("Access-Control-Allow-Credentials", "true");
     response.headers.set("Vary", "Origin");
