@@ -4,7 +4,15 @@ import Drill from "./Drill";
 import { DocLinks, MetaLine } from "./PlanView";
 import type { Phase, SessionProgress } from "./store";
 import styles from "./styles.module.css";
-import { LIMITS, type CallMeta, type DocRef, type DrillItem, type Lesson, type PlanSession } from "./types";
+import {
+  LIMITS,
+  type CallMeta,
+  type DocRef,
+  type DrillItem,
+  type Hint,
+  type Lesson,
+  type PlanSession,
+} from "./types";
 
 /**
  * One timed session: warm-up → brief → drill → exercise → wrap-up.
@@ -50,6 +58,7 @@ export default function SessionRunner({
   onRecord,
   onQueue,
   onReview,
+  onHint,
   onFinish,
   onExit,
 }: {
@@ -62,6 +71,7 @@ export default function SessionRunner({
   onRecord: (item: DrillItem, correct: boolean) => void;
   onQueue: (items: DrillItem[]) => void;
   onReview: (attempt: string) => Promise<void>;
+  onHint: (question: string) => Promise<void>;
   onFinish: () => void;
   onExit: () => void;
 }) {
@@ -103,6 +113,7 @@ export default function SessionRunner({
   const warm = score(progress.warmup.items, progress.warmup.answers);
   const drill = score(lesson.drill, progress.drill);
   const lastReview = progress.attempts.at(-1)?.review;
+  const hints = progress.hints ?? [];
 
   const submit = async () => {
     setReviewing(true);
@@ -227,6 +238,16 @@ export default function SessionRunner({
             </ul>
           </details>
 
+          {lastReview?.verdict !== "pass" && (
+            <StuckPanel
+              hints={hints}
+              labIds={session.labIds}
+              docs={docs}
+              onBrief={() => go("brief")}
+              onHint={onHint}
+            />
+          )}
+
           {lastReview && <ReviewCard review={lastReview} attempt={progress.attempts.length} docs={docs} />}
           <MetaLine meta={progress.attempts.at(-1)?.meta} what="Reviewed" />
 
@@ -298,6 +319,14 @@ export default function SessionRunner({
               <dt>Attempts</dt>
               <dd>{progress.attempts.length}</dd>
             </div>
+            {hints.length > 0 && (
+              <div>
+                <dt>Hints</dt>
+                <dd>
+                  {hints.length}/{LIMITS.maxHints}
+                </dd>
+              </div>
+            )}
           </dl>
           {lastReview && lastReview.verdict !== "pass" && (
             <p>
@@ -371,6 +400,105 @@ function ReviewCard({
           <strong>Next:</strong> {review.beforeNextLesson}
         </p>
       )}
+    </div>
+  );
+}
+
+const HINT_LABEL: Record<Hint["level"], string> = { 1: "Nudge", 2: "Pointer", 3: "Partial step" };
+
+/**
+ * Somewhere to go that is not the back button. The free help comes first — the
+ * labs this session teaches from and the brief, one click away — and then up to
+ * three hints, each giving away more than the last. None of them writes the
+ * deliverable; that is what the review is for. The clock keeps running, because
+ * looking something up is part of doing the exercise.
+ */
+function StuckPanel({
+  hints,
+  labIds,
+  docs,
+  onBrief,
+  onHint,
+}: {
+  hints: NonNullable<SessionProgress["hints"]>;
+  labIds: string[];
+  docs: DocRef[];
+  onBrief: () => void;
+  onHint: (question: string) => Promise<void>;
+}) {
+  const [question, setQuestion] = useState("");
+  const [asking, setAsking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const left = LIMITS.maxHints - hints.length;
+
+  const ask = async () => {
+    setAsking(true);
+    setError(null);
+    try {
+      await onHint(question.trim());
+      setQuestion("");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "The hint failed. Try again.");
+    } finally {
+      setAsking(false);
+    }
+  };
+
+  return (
+    <div className={styles.stuck}>
+      <p className={styles.sub}>Stuck?</p>
+      <p className={styles.muted}>
+        This is taught in <DocLinks ids={labIds} docs={docs} /> — or{" "}
+        <button type="button" className={styles.inlineLink} onClick={onBrief}>
+          re-read the brief
+        </button>
+        . Your draft is kept.
+      </p>
+
+      {hints.length > 0 && (
+        <ol className={styles.hints}>
+          {hints.map(({ hint }, i) => (
+            <li key={i}>
+              <span className={styles.cite}>
+                Hint {i + 1} · {HINT_LABEL[hint.level]}
+              </span>
+              <AssistantMarkdown>{hint.text}</AssistantMarkdown>
+              {hint.labRef && (
+                <p className={styles.meta}>
+                  Read more: <DocLinks ids={[hint.labRef]} docs={docs} />
+                  {hint.lookFor ? ` — look for \u201c${hint.lookFor}\u201d` : ""}
+                </p>
+              )}
+            </li>
+          ))}
+        </ol>
+      )}
+      <MetaLine meta={hints.at(-1)?.meta} what="Hinted" />
+
+      {left > 0 ? (
+        <div className={styles.hintAsk}>
+          <input
+            type="text"
+            className={styles.hintQuestion}
+            value={question}
+            maxLength={LIMITS.maxQuestionChars}
+            placeholder="What are you stuck on? (optional)"
+            aria-label="What are you stuck on?"
+            onChange={(e) => setQuestion(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !asking) void ask();
+            }}
+          />
+          <button type="button" className="button button--secondary" disabled={asking} onClick={ask}>
+            {asking ? "Thinking…" : hints.length ? `Another hint (${left} left)` : "Give me a hint"}
+          </button>
+        </div>
+      ) : (
+        <p className={styles.muted}>
+          That is all the hints. Submit what you have — the review says exactly what is missing and where to read.
+        </p>
+      )}
+      {error && <p className={styles.error}>{error}</p>}
     </div>
   );
 }

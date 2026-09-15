@@ -59,6 +59,16 @@ export interface Review {
   beforeNextLesson: string;
 }
 
+/** 1 nudge (the idea), 2 pointer (the field or method), 3 step (the shape of one piece). */
+export type HintLevel = 1 | 2 | 3;
+
+export interface Hint {
+  level: HintLevel;
+  text: string;
+  labRef: string | null;
+  lookFor: string | null;
+}
+
 export interface CallMeta {
   model: string;
   costUsd: number;
@@ -79,6 +89,8 @@ export const LIMITS = {
   maxSessionsPerDay: 3,
   maxSessions: 14,
   maxAttemptChars: 6_000,
+  maxHints: 3,
+  maxQuestionChars: 500,
 } as const;
 
 export function sessionCount(intake: Pick<Intake, "days" | "sessionsPerDay">): number {

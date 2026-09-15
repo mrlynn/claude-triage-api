@@ -14,7 +14,10 @@
  *   3. forces the session count to what the learner confirmed, and clamps
  *      minutes to it — the scope was agreed before the call, not by the model;
  *   4. downgrades a "pass" with an unmet rubric criterion to "revise" — the
- *      verdict is derived from the rubric, not asserted alongside it.
+ *      verdict is derived from the rubric, not asserted alongside it;
+ *   5. sets a hint's level from how many came before it, not from the model —
+ *      the third hint is the strongest one whatever the model thought it wrote,
+ *      and there is no fourth.
  *
  * Deliberately free of imports so it can be unit-tested from the root package
  * without Next, `server-only`, or the SDK. The website hand-mirrors the types
@@ -30,6 +33,9 @@ export const TUTOR_LIMITS = {
   maxDrill: 10,
   authoredPerLesson: 4,
   maxAttemptChars: 6_000,
+  /** Nudge, pointer, partial step. Past that the review is the better teacher. */
+  maxHints: 3,
+  maxQuestionChars: 500,
 } as const;
 
 /**
@@ -49,6 +55,8 @@ export const TUTOR_FIELDS = {
   deliverable: 400,
   rubricItem: 300,
   rubric: 8,
+  hint: 1_500,
+  lookFor: 160,
 } as const;
 
 /** Trimmed and cut to fit, so a route's `.trim().max(n)` accepts it. */
@@ -113,6 +121,17 @@ export interface Review {
   rubric: { criterion: string; met: boolean; note: string }[];
   fixes: { issue: string; why: string; labRef: string | null }[];
   beforeNextLesson: string;
+}
+
+/** 1 nudge (the idea), 2 pointer (the field or method), 3 step (the shape of one piece). */
+export type HintLevel = 1 | 2 | 3;
+
+export interface Hint {
+  level: HintLevel;
+  text: string;
+  labRef: string | null;
+  /** A heading or phrase to find in `labRef`, so the link lands somewhere useful. */
+  lookFor: string | null;
 }
 
 /** A corpus entry, as much of one as these rules need. */
@@ -234,5 +253,25 @@ export function validateReview(review: Review, known: ReadonlySet<string>): Revi
     ...review,
     verdict: anyMissed ? "revise" : review.verdict,
     fixes: review.fixes.map((f) => ({ ...f, labRef: f.labRef && known.has(f.labRef) ? f.labRef : null })),
+  };
+}
+
+/** The level the next hint is, given how many the learner already has; null once they are used up. */
+export function nextHintLevel(previous: number): HintLevel | null {
+  return previous >= 0 && previous < TUTOR_LIMITS.maxHints ? ((previous + 1) as HintLevel) : null;
+}
+
+export function validateHint(
+  hint: { text: string; labRef: string | null; lookFor: string | null },
+  known: ReadonlySet<string>,
+  level: HintLevel,
+): Hint {
+  const labRef = hint.labRef && known.has(hint.labRef) ? hint.labRef : null;
+  return {
+    level,
+    text: fit(hint.text, TUTOR_FIELDS.hint),
+    labRef,
+    // A phrase to look for in a document we just dropped points nowhere.
+    lookFor: labRef ? fit(hint.lookFor ?? "", TUTOR_FIELDS.lookFor) || null : null,
   };
 }

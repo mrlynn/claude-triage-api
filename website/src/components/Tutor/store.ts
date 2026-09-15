@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Deck } from "./leitner";
-import type { CallMeta, DocRef, DrillItem, Intake, Lesson, Plan, Review } from "./types";
+import type { CallMeta, DocRef, DrillItem, Hint, Intake, Lesson, Plan, Review } from "./types";
 
 /**
  * Everything the Tutor remembers lives in this browser, under one versioned
@@ -25,6 +25,8 @@ export interface SessionProgress {
   drill: Record<number, number>;
   attempts: { text: string; review?: Review; meta?: CallMeta }[];
   draft: string;
+  /** Optional so progress saved before hints existed still loads. */
+  hints?: { hint: Hint; meta: CallMeta }[];
   done?: boolean;
 }
 
