@@ -191,4 +191,30 @@ presentation order across runs and report the position-bias rate — the fractio
 of times the judge preferred whichever came first. If that rate is far from
 50%, your judge is measuring position, not quality.
 
+```mistake
+[
+  {
+    "id": "judge-numeric-score",
+    "wrong": "  score: z.number().min(1).max(10).describe(\"Overall quality of the reply.\"),",
+    "right": "  apology_count_ok: z.boolean().describe(\"Rubric 2: at most one apology in the entire reply.\"),\n  no_banned_phrases: z.boolean().describe(\"Rubric 3: contains none of 'unfortunately', 'as per our policy'.\"),\n  // ...one boolean per rubric item, then a fail-if-any verdict",
+    "symptom": "Scores bunch around 7 or 8, move between runs of the same reply, and no threshold separates a reply with three apologies from a good one.",
+    "why": "A 1–10 scale asks the judge for a feeling. Concrete booleans each ask a question with an answer you can check, and a fail-if-any verdict leaves nothing to round up."
+  },
+  {
+    "id": "ci-gated-on-judge",
+    "wrong": "if (judgePassRate < THRESHOLD) process.exit(1);",
+    "right": "if (accuracy < THRESHOLD) process.exit(1);\n// The judge's pass rate is reported, not gated: it is a model grading a model.",
+    "symptom": "CI goes red and green on the same commit with nothing changed, and the team learns to rerun it until it passes.",
+    "why": "Only the deterministic half is stable enough to gate a merge on. A judge needs its own eval before its numbers can block anything."
+  },
+  {
+    "id": "confidence-single-mean",
+    "wrong": "console.log(`  mean confidence: ${mean(results.map((r) => r.confidence))}`);",
+    "right": "console.log(`  mean confidence on passes: ${fmtMetric(calibration.onPass)}`);\nconsole.log(`  mean confidence on fails:  ${fmtMetric(calibration.onFail)}`);",
+    "symptom": "Prints a healthy-looking 0.91 whether or not the wrong answers also score 0.91.",
+    "why": "A confidence score is useful only if it separates right answers from wrong ones. One mean hides the gap that decides whether you can route on it."
+  }
+]
+```
+
 **Answers:** [../solutions/lab-6.md](../solutions/lab-6.md)

@@ -287,4 +287,37 @@ gap — policy packs in place of Northwind's hardcoded taxonomy, signed webhook
 ingest, helpdesk connectors, and the one guardrail argument this course does not
 make: what a control should do when it *cannot run*.
 
+```mistake
+[
+  {
+    "id": "promise-all-unbounded",
+    "wrong": "const results = await Promise.all(cases.map((c) => runCase(c)));",
+    "right": "const results = await mapWithConcurrency(cases, 4, (c) => runCase(c));",
+    "symptom": "Fast on twelve cases. On twelve hundred, every request goes out at once and the run dies on 429s.",
+    "why": "`Promise.all` has no ceiling. A fixed number of workers is fast enough and never becomes unbounded."
+  },
+  {
+    "id": "rate-limit-tight-retry",
+    "wrong": "if (isRateLimit(err)) continue;",
+    "right": "if (!isRateLimit(err)) throw err;\nthis.throttleEvents++;\nthis.width = Math.max(1, Math.floor(this.width / 2));\nawait sleep((rateLimitsFromError(err)?.retry_after ?? 2) * 1000);\ncontinue;",
+    "symptom": "A 429 turns into a burst of immediate retries at the same concurrency, which draws more 429s.",
+    "why": "The SDK has already retried by the time a 429 gets here. What is left to do is send less: narrow the width and wait out `retry-after`."
+  },
+  {
+    "id": "model-alias-pinned",
+    "wrong": "  triage: \"claude-haiku-4-5\",",
+    "right": "  triage: \"claude-haiku-4-5-20251001\",",
+    "symptom": "Nothing is deployed, and the eval still moves one Tuesday, because the alias started pointing somewhere else.",
+    "why": "`claude-haiku-4-5` is an alias that can move or be retired. A pin is only a pin if it names the dated snapshot."
+  },
+  {
+    "id": "mcp-tool-description-forked",
+    "wrong": "server.registerTool(\"search_policy\", { description: \"Search the policy handbook.\" }, searchPolicy);",
+    "right": "for (const def of TOOL_DEFS) {\n  server.registerTool(def.name, { description: def.description, inputSchema: def.inputSchema.shape }, run(def));\n}",
+    "symptom": "Works in Claude Desktop. The MCP client now follows a description that says nothing about when to call the tool, while `/v1/resolve` follows the real one.",
+    "why": "The description is the tool's behaviour. Two copies drift, so both surfaces should map over the same `TOOL_DEFS` array."
+  }
+]
+```
+
 **Answers:** [../solutions/lab-9.md](../solutions/lab-9.md)
