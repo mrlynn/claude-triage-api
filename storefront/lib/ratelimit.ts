@@ -51,6 +51,11 @@ const SCOPES = {
   // preview against a cached prefix is roughly a fiftieth of a triage call, so
   // forty of them cost less than two submitted tickets.
   live: Number(process.env.LIVE_IP_LIMIT ?? 40),
+  // The Tutor. A session is roughly four calls — a lesson, a review or two, and
+  // a plan once per cram — so twenty per window is a learner working steadily,
+  // not a script. Its own window, because someone cramming for an afternoon
+  // must not be the reason the support form says "busy".
+  tutor: Number(process.env.TUTOR_IP_LIMIT ?? 20),
   // Token probing, not spending. A higher ceiling than the paid surfaces
   // because a facilitator refreshing the board during a session is normal
   // traffic — the point is a floor under brute force, not a tight budget.

@@ -224,6 +224,9 @@ const config: Config = {
             { to: "/mission", label: "Mission" },
           ],
         },
+        // The cram path. Next to Assessment because they are the two places a
+        // reader goes to test themselves rather than read.
+        { to: "/tutor", position: "left", label: "Tutor" },
         { to: "/assessment", position: "left", label: "Assessment" },
         // Explicit, so search sits ahead of the two outbound links rather
         // than auto-appending past the colour-mode toggle at the far edge.

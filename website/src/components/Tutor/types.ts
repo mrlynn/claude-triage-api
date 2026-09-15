@@ -1,0 +1,103 @@
+/**
+ * HAND-MIRRORED from `storefront/lib/tutorPolicy.ts`, which carries the rules
+ * these shapes obey. The site and the storefront build from separate roots and
+ * cannot import across them. Change both.
+ */
+
+export type Level = "new" | "some" | "shipped";
+
+export interface Intake {
+  days: number;
+  sessionsPerDay: number;
+  minutesPerSession: number;
+  level: Level;
+  focus: string[];
+}
+
+export interface QuizItem {
+  question: string;
+  options: string[];
+  answer: number;
+  explain: string;
+  note?: string;
+}
+
+export interface DrillItem extends QuizItem {
+  labId: string;
+  source: "authored" | "generated";
+}
+
+export interface PlanSession {
+  n: number;
+  title: string;
+  minutes: number;
+  day: number;
+  labIds: string[];
+  objectives: string[];
+  whyNow: string;
+}
+
+export interface Plan {
+  goal: string;
+  doneMeans: string[];
+  gaps: string[];
+  sessions: PlanSession[];
+}
+
+export interface Lesson {
+  sessionN: number;
+  title: string;
+  brief: { point: string; labId: string }[];
+  drill: DrillItem[];
+  exercise: { prompt: string; deliverable: string; rubric: string[] };
+}
+
+export interface Review {
+  verdict: "pass" | "revise";
+  rubric: { criterion: string; met: boolean; note: string }[];
+  fixes: { issue: string; why: string; labRef: string | null }[];
+  beforeNextLesson: string;
+}
+
+export interface CallMeta {
+  model: string;
+  costUsd: number;
+  cacheReadTokens: number;
+  dropped: string[];
+}
+
+export interface DocRef {
+  id: string;
+  title: string;
+  path: string;
+  time: string | null;
+}
+
+/** Same ceilings the storefront enforces; mirrored so the form cannot ask for more. */
+export const LIMITS = {
+  maxDays: 30,
+  maxSessionsPerDay: 3,
+  maxSessions: 14,
+  maxAttemptChars: 6_000,
+} as const;
+
+export function sessionCount(intake: Pick<Intake, "days" | "sessionsPerDay">): number {
+  return Math.min(LIMITS.maxSessions, Math.max(1, Math.round(intake.days * intake.sessionsPerDay)));
+}
+
+/**
+ * The focus picker. Ids must match `storefront/data/tutor-corpus.json`; the
+ * storefront drops any it does not know, so a stale entry here narrows nothing
+ * rather than inventing a topic.
+ */
+export const TOPICS: { id: string; label: string }[] = [
+  { id: "lab-1", label: "First call: content, usage, stop_reason" },
+  { id: "lab-2", label: "Structured outputs" },
+  { id: "lab-3", label: "Tool use and the agentic loop" },
+  { id: "lab-4", label: "Streaming and SSE" },
+  { id: "lab-5", label: "Prompt caching and cost" },
+  { id: "lab-6", label: "Evals and LLM-as-judge" },
+  { id: "lab-7", label: "Choosing a model" },
+  { id: "lab-8", label: "Trust boundary and injection" },
+  { id: "lab-9", label: "Shipping: batches, rate limits, MCP" },
+];
