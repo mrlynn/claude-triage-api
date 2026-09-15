@@ -163,7 +163,7 @@ export default function TutorPage(): ReactNode {
             <p className={styles.lead}>
               Timed sessions on the Anthropic Messages API, built from{" "}
               <Link to="/docs/labs">the labs</Link>: a recall warm-up, a short brief, a drill, and one exercise the
-              Tutor reviews and tells you what to fix before the next lesson. What you miss comes back until you
+              Tutor hints at when you are stuck and reviews and tells you what to fix before the next lesson. What you miss comes back until you
               don&rsquo;t.
             </p>
           </header>
@@ -183,6 +183,11 @@ export default function TutorPage(): ReactNode {
             onReview={async (attempt) => {
               const { review, meta } = await tutorApi.review(prepared.lesson, attempt);
               updateActive((p) => ({ ...p, attempts: [...p.attempts, { text: attempt, review, meta }] }));
+            }}
+            onHint={async (question) => {
+              const previous = (progress.hints ?? []).map((h) => h.hint);
+              const result = await tutorApi.hint(prepared.lesson, progress.draft, question, previous);
+              updateActive((p) => ({ ...p, hints: [...(p.hints ?? []), result] }));
             }}
             onFinish={finish}
             onExit={exit}

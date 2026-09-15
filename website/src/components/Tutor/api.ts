@@ -1,8 +1,8 @@
 import { storefrontApi } from "@site/src/urls";
-import type { CallMeta, DocRef, Intake, Lesson, Level, Plan, PlanSession, Review } from "./types";
+import type { CallMeta, DocRef, Hint, Intake, Lesson, Level, Plan, PlanSession, Review } from "./types";
 
 /**
- * The three Tutor calls. The storefront holds the key and stores nothing; this
+ * The four Tutor calls. The storefront holds the key and stores nothing; this
  * page holds the plan and sends back only the part each call needs.
  */
 
@@ -41,5 +41,12 @@ export const tutorApi = {
     post<{ review: Review; meta: CallMeta }>("review", {
       lesson: { title: lesson.title, exercise: lesson.exercise },
       attempt,
+    }),
+  hint: (lesson: Lesson, attempt: string, question: string, previous: Hint[]) =>
+    post<{ hint: Hint; meta: CallMeta }>("hint", {
+      lesson: { title: lesson.title, exercise: lesson.exercise },
+      attempt,
+      question,
+      previous: previous.map((h) => h.text),
     }),
 };

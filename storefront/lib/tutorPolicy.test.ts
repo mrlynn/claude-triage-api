@@ -4,8 +4,10 @@ import {
   TUTOR_FIELDS,
   TUTOR_LIMITS,
   assembleDrill,
+  nextHintLevel,
   sessionCount,
   validateLesson,
+  validateHint,
   validatePlan,
   validateReview,
   type DrillItem,
@@ -177,4 +179,24 @@ test("an exercise with no usable rubric still has one criterion to grade against
     known,
   );
   assert.equal(lesson.exercise.rubric.length, 1);
+});
+
+test("hints escalate by count and stop at the ceiling", () => {
+  assert.equal(nextHintLevel(0), 1);
+  assert.equal(nextHintLevel(2), 3);
+  assert.equal(nextHintLevel(TUTOR_LIMITS.maxHints), null);
+  assert.equal(nextHintLevel(-1), null);
+});
+
+test("a hint never points at a lab that does not exist, and fits what the page echoes back", () => {
+  const hint = validateHint({ text: "z".repeat(5_000), labRef: "lab-11", lookFor: "Parsing" }, known, 2);
+  assert.equal(hint.level, 2);
+  assert.equal(hint.labRef, null);
+  assert.equal(hint.lookFor, null);
+  assert.equal(hint.text.length, TUTOR_FIELDS.hint);
+
+  const cited = validateHint({ text: " Look at parse() ", labRef: "lab-2", lookFor: "  " }, known, 1);
+  assert.equal(cited.text, "Look at parse()");
+  assert.equal(cited.labRef, "lab-2");
+  assert.equal(cited.lookFor, null);
 });

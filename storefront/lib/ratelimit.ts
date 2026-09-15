@@ -52,7 +52,8 @@ const SCOPES = {
   // forty of them cost less than two submitted tickets.
   live: Number(process.env.LIVE_IP_LIMIT ?? 40),
   // The Tutor. A session is roughly four calls — a lesson, a review or two, and
-  // a plan once per cram — so twenty per window is a learner working steadily,
+  // a plan once per cram — plus at most three hints, which run at low effort
+  // and a small max_tokens. Twenty per window is still a learner working steadily,
   // not a script. Its own window, because someone cramming for an afternoon
   // must not be the reason the support form says "busy".
   tutor: Number(process.env.TUTOR_IP_LIMIT ?? 20),
