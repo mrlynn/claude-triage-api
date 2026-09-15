@@ -76,10 +76,14 @@ export default function SiteHeader() {
   const panelRef = useRef<HTMLDivElement>(null);
   const workshopRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  // Close both menus on navigation. Adjusted during render rather than in an
+  // effect, so the new page never paints with the old page's menu still open.
+  const [shownPath, setShownPath] = useState(pathname);
+  if (pathname !== shownPath) {
+    setShownPath(pathname);
     setOpen(false);
     setWorkshopOpen(false);
-  }, [pathname]);
+  }
 
   useEffect(() => {
     if (!open && !workshopOpen) return;
