@@ -508,6 +508,28 @@
   margin: 0;
 }
 
+.verdictCount {
+  font-weight: 400;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.rightSoFar {
+  margin: 0 0 0.6rem;
+}
+
+.gap {
+  display: inline-block;
+  margin-right: 0.4rem;
+  padding: 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-radius: var(--ifm-global-radius);
+  background: var(--ifm-color-emphasis-200);
+  color: var(--ifm-color-emphasis-800);
+}
+
 .met,
 .missed {
   display: flex;
@@ -522,6 +544,11 @@
 
 .missed > span:first-child {
   color: var(--ifm-color-danger);
+}
+
+/* Not addressed is closer than wrong: say so in the mark too. */
+.notAddressed > span:first-child {
+  color: var(--ifm-color-warning-darkest);
 }
 
 .fixes {

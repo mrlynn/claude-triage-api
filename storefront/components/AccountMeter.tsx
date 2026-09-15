@@ -28,6 +28,16 @@ function formatUsd(usd: number): string {
   return usd < 0.1 && usd > 0 ? `$${usd.toFixed(3)}` : `$${usd.toFixed(2)}`;
 }
 
+/** Null when the account cannot be read: a meter that cannot load is a missing pill, not a broken page. */
+async function fetchAccount(api: string): Promise<Account | null> {
+  try {
+    const res = await fetch(`${api}/api/account`, { credentials: "include", cache: "no-store" });
+    return res.ok ? ((await res.json()) as Account) : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function AccountMeter({ api = "" }: { api?: string }) {
   const [account, setAccount] = useState<Account | null>(null);
   const [open, setOpen] = useState(false);
@@ -44,30 +54,31 @@ export default function AccountMeter({ api = "" }: { api?: string }) {
   }, [account]);
 
   const refresh = useCallback(async () => {
-    try {
-      const res = await fetch(`${api}/api/account`, { credentials: "include", cache: "no-store" });
-      if (res.ok) setAccount((await res.json()) as Account);
-    } catch {
-      // A meter that cannot load is a missing pill, not a broken page.
-    }
+    const next = await fetchAccount(api);
+    if (next) setAccount(next);
   }, [api]);
 
   useEffect(() => {
-    void refresh();
-    const onVisible = () => document.visibilityState === "visible" && void refresh();
-    document.addEventListener("visibilitychange", onVisible);
-
     // Back from GitHub: say what happened once, then take the flag out of the URL.
     const url = new URL(window.location.href);
     const flag = url.searchParams.get("signin");
     if (flag) {
-      setNotice(SIGNIN_NOTICE[flag] ?? null);
-      setOpen(true);
       url.searchParams.delete("signin");
       window.history.replaceState(window.history.state, "", url.toString());
     }
+    void fetchAccount(api).then((next) => {
+      if (next) setAccount(next);
+      if (flag) {
+        setNotice(SIGNIN_NOTICE[flag] ?? null);
+        setOpen(true);
+      }
+    });
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void refresh();
+    };
+    document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [refresh]);
+  }, [api, refresh]);
 
   useEffect(() => {
     const offMeter = onMeter((meter) => {
@@ -117,6 +128,8 @@ export default function AccountMeter({ api = "" }: { api?: string }) {
   function signIn() {
     const back = new URL(window.location.href);
     back.searchParams.delete("signin");
+    // A full navigation to an API route that redirects to GitHub, not a client-side page change.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.href = `${api}${account!.signInPath}?returnTo=${encodeURIComponent(back.toString())}`;
   }
 

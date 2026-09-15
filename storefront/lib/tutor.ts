@@ -6,11 +6,13 @@ import corpus from "@/data/tutor-corpus.json";
 import { houseClient } from "./anthropicClient";
 import { TUTOR_MAX_TOKENS, TUTOR_MODEL } from "./callLimits";
 import { costMicros, microsToUsd } from "./cost";
+import { PRICING_BY_MODEL } from "./pricing.generated";
 import { recordSpend } from "./telemetry";
 import { wrapUntrusted } from "./untrusted";
 import {
   assembleDrill,
   resolveDefects,
+  composeExercise,
   sessionCount,
   unfixed,
   validateLesson,
@@ -74,6 +76,21 @@ const MISTAKES: ReadonlyMap<string, MistakeItem & { labId: string }> = new Map(
   corpus.flatMap((d) => d.mistakes.map((m): [string, MistakeItem & { labId: string }] => [m.id, { ...m, labId: d.id }])),
 );
 
+/**
+ * The rate card, generated from src/config.ts. "Never invent prices" was already a rule, and a
+ * live Lab 7 starter still priced claude-sonnet-5 at $3/$15 against a catalog that says $2/$10:
+ * a rule about a fact is weaker than the fact. It sits in the cached prefix, so it costs a cache
+ * write per deploy and nothing per call.
+ */
+const RATE_CARD = `Model prices, per million tokens, from the course's pricing table. Wherever a price appears in anything you write, including code, use these exactly:\n${Object.entries(
+  PRICING_BY_MODEL,
+)
+  .map(
+    ([id, p]) =>
+      `- ${id}: $${p.inputPerMTok} input, $${p.outputPerMTok} output; cache writes ${p.cacheWriteMultiplier}x input, cache reads ${p.cacheReadMultiplier}x input, batch ${p.batchMultiplier}x`,
+  )
+  .join("\n")}`;
+
 const ROLE = `You are the Tutor for "Claude Triage API", a hands-on course on the Anthropic Messages API. You run focused, timed cram sessions: a learner has a fixed amount of time and wants to be able to use the Messages API as a developer by the end of it.
 
 Rules that apply to every task:
@@ -81,6 +98,8 @@ Rules that apply to every task:
 - If the learner asks for something the documents do not cover, say so in the field provided for gaps. Never invent API parameters, SDK methods, prices, or limits.
 - Prefer the concrete: request bodies, response fields, stop reasons, event names, and the failure a developer will actually hit.
 - Be brief. The learner is on a clock.
+
+${RATE_CARD}
 
 The course documents follow.`;
 
@@ -259,8 +278,23 @@ const LessonOutput = z.object({
       .describe(
         "One concrete Messages API task, answerable in writing in about a third of the session. E.g. write a request body, predict a response field, find the bug in a snippet. Include any snippet inline in markdown.",
       ),
-    deliverable: z.string().describe("Exactly what to submit, e.g. 'The request body as JSON, plus one sentence on why'."),
-    rubric: z.array(z.string()).describe("Three to five pass/fail criteria a reviewer can check against the submission."),
+    format: z.string().describe("The form of the submission in a few words, e.g. 'Two or three sentences' or 'The request body as JSON'. Do not count the parts: the page numbers them."),
+    parts: z
+      .array(
+        z.object({
+          ask: z
+            .string()
+            .describe(
+              "One thing the submission must contain, as the learner reads it, e.g. 'name the field and value that proves it'. Under 90 characters. It says what to deliver, never what the answer is: 'fix how the script decides a call hit the cache', not 'use cache_read_input_tokens instead of input_tokens'.",
+            ),
+          criterion: z
+            .string()
+            .describe("The pass/fail check for this part and nothing more. It may not require anything the ask does not."),
+        }),
+      )
+      .describe(
+        "Two to five parts. They become the numbered deliverable and, in the same order, the rubric the review grades — and nothing else is graded, so do not leave a check out of the parts.",
+      ),
   }),
   starter: z
     .object({
@@ -269,7 +303,7 @@ const LessonOutput = z.object({
         .array(
           z.object({
             mistakeId: z.string().describe("The id of an authored mistake from the list you were given."),
-            criterion: z.number().int().describe("Zero-based index of the rubric criterion that fixing this mistake satisfies."),
+            criterion: z.number().int().describe("Zero-based index of the exercise part whose criterion fixing this mistake satisfies."),
           }),
         )
         .describe("One or two planted mistakes."),
@@ -286,8 +320,15 @@ function starterInstructions(labIds: readonly string[], level: Intake["level"]):
   const offered = [...MISTAKES.values()].filter((m) => labIds.includes(m.labId));
   if (offered.length === 0) return "Set starter to null: there are no authored mistakes for these documents.";
   return [
-    "Starter code. If the exercise is about writing or fixing code, the editor can open with a short program for the learner to fix instead of a blank page. Build it around one or two of the authored mistakes below — no others. Copy each planted `wrong` line into the code exactly as written. Everything else in the starter must be correct, and nothing in it may point at the mistakes: no comments like \"bug here\". Every planted mistake needs its own rubric criterion, and that criterion is what fixing it satisfies.",
-    "When you use a starter, the exercise prompt should say the code runs but has problems and describe what the learner would observe, without naming the fix. Do not repeat the starter code in the prompt: the editor already shows it.",
+    "Starter code. If the exercise is about writing or fixing code, the editor can open with a short program for the learner to fix instead of a blank page. Build it around one or two of the authored mistakes below — no others. Copy each planted `wrong` line into the code exactly as written. If a line does not fit your scenario, change the scenario, not the line: declare the names it uses, in the shape it expects. A line that is not in the code exactly is dropped, and the bug it was meant to plant goes ungraded. Everything else in the starter must be correct, and nothing in it may point at the mistakes: no comments like \"bug here\". Every planted mistake needs its own exercise part, whose ask is to fix it and whose criterion is met when it is fixed.",
+    "The starter must be able to show its problems when it is run, and the fixed version must show them gone. Never stand in for something that behaviour depends on with a placeholder: a caching demo whose prompt is a few words sits below the model's minimum cacheable prefix and cannot show a hit, fixed or not. Where something is too long to inline, load the course's real file the documents name (for example `readFileSync(\"data/policies.md\", \"utf8\")` for the handbook) or pick a scenario that does not need it. A stand-in the behaviour does not depend on is fine.",
+    // "Runnable" alone pushed a live Lab 9 starter to call the real API once per ticket for a 1,200-ticket queue:
+    // running it as the exercise invites would cost the learner tens of dollars and real 429s.
+    "Running the starter must be cheap and safe. If the problem only shows up under volume, failures or rate limits, stand in for the API with a small mock that produces them (for example a fake client that returns a 429 above a few requests in flight), and never write a starter that makes more than two real API calls when run.",
+    "When you use a starter, the exercise prompt should say the code runs but has problems and describe what the learner would observe, without naming the fix. Base that description on each planted mistake's authored symptom below, and do not predict printed values the symptom does not state: a live Lab 5 lesson said the script printed `cacheHit: false` when running it printed `true`. Do not repeat the starter code in the prompt: the editor already shows it.",
+    // The rule used to cover only the prompt, and a live Lab 5 lesson put the answer in part 2 instead:
+    // "based on the correct usage field(s), not input_tokens". The parts are what the learner reads last.
+    "The same rule covers the exercise parts. An ask may name the symptom or the behaviour to fix. It may not name the line, field or value that is wrong, or what to use instead: that is the exercise. The criteria may be specific, because they grade.",
     level === "shipped"
       ? "This learner has shipped on the API. Prefer null unless finding the bug is the point: writing it from a blank editor is the practice."
       : "Set starter to null if no mistake below fits the exercise.",
@@ -324,6 +365,10 @@ export async function prepareLesson(
             ? `They have been missing recall questions from ${weak.join(", ")}; where it fits, connect this session back to that material.`
             : "",
           starterInstructions(labIds, input.level),
+          // The page builds the deliverable and the rubric from the parts, so they always line up. What code cannot check is
+          // whether a criterion asks for more than its ask says; a learner marked down for something they were never asked
+          // for learns to distrust the review.
+          "Exercise parts: a learner who does exactly what every ask says, correctly, must pass. So a criterion checks its own ask and nothing more — no extra explanation, no second piece of evidence, no reason why. If something matters enough to grade, make it its own ask. Keep the numbered deliverable under 600 characters.",
         ]
           .filter(Boolean)
           .join("\n\n"),
@@ -333,11 +378,13 @@ export async function prepareLesson(
   const spent = spend(response, onSpend);
 
   const draft = requireParsed(response);
+  const { exercise, droppedParts } = composeExercise(draft.exercise);
   const { lesson, dropped } = validateLesson(
-    { sessionN: session.n, title: session.title, brief: draft.brief, exercise: draft.exercise, starter: draft.starter },
+    { sessionN: session.n, title: session.title, brief: draft.brief, exercise, starter: draft.starter },
     KNOWN_IDS,
     [...MISTAKES.values()].filter((m) => labIds.includes(m.labId)),
   );
+  if (droppedParts) dropped.push(`${droppedParts} exercise part(s)`);
   // An exercise with no prompt has nothing to review, and the review route
   // would reject it after the learner had already written an attempt.
   if (!lesson.exercise.prompt) throw new TutorError("The tutor did not produce an exercise for that session. Try again.");
@@ -357,8 +404,21 @@ export async function prepareLesson(
 
 const ReviewOutput = z.object({
   verdict: z.enum(["pass", "revise"]).describe("'pass' only if every rubric criterion is met."),
+  rightSoFar: z
+    .string()
+    .describe("One sentence to the learner, as 'you': what the attempt already gets right. Empty only if nothing in it is right."),
   rubric: z
-    .array(z.object({ criterion: z.string(), met: z.boolean(), note: z.string().describe("One short sentence.") }))
+    .array(
+      z.object({
+        criterion: z.string(),
+        met: z.boolean(),
+        gap: z
+          .enum(["missing", "incorrect"])
+          .nullable()
+          .describe("Null when met. 'missing' if the attempt does not address it; 'incorrect' if it does and gets it wrong."),
+        note: z.string().describe("One short sentence to the learner, as 'you'. When unmet, say what to add or change."),
+      }),
+    )
     .describe("Every rubric criterion, in the order given, judged against the submission."),
   fixes: z
     .array(
@@ -368,7 +428,9 @@ const ReviewOutput = z.object({
         labRef: z.string().nullable().describe("The course document id that covers it, or null."),
       }),
     )
-    .describe("What to fix before the next lesson, most important first. Empty on a clean pass."),
+    .describe(
+      "Problems the rubric notes do not already cover, most important first — e.g. a misconception the attempt shows outside any criterion. Never restate a failed criterion here. Usually empty.",
+    ),
   beforeNextLesson: z.string().describe("One sentence: the single thing to do before moving on."),
 });
 
@@ -382,6 +444,7 @@ export async function reviewAttempt(
 ): Promise<{ review: Review; meta: CallMeta }> {
   const { exercise } = input.lesson;
   const planted = resolveDefects(input.defects, MISTAKES, exercise.rubric.length);
+  const stillThere = unfixed(planted, input.attempt);
 
   const response = await client.messages.parse({
     model: TUTOR_MODEL,
@@ -396,10 +459,20 @@ export async function reviewAttempt(
           `Exercise:\n${exercise.prompt}`,
           `Deliverable: ${exercise.deliverable}`,
           `Rubric:\n${exercise.rubric.map((r, i) => `${i + 1}. ${r}`).join("\n")}`,
-          "Judge strictly against the rubric and the course documents. Be direct about what to fix; do not pad with praise.",
+          "Judge strictly against the rubric and the course documents, and grade only the rubric: nothing the deliverable does not ask for. Criterion n grades part n of the deliverable. If a criterion demands more than its part asks, grade to the part: a learner who does exactly what the part says has met it, and the note may mention the extra as advice. Write to the learner as 'you'. Be direct about what is missing or wrong, and do not pad with praise — but when an attempt is close, say so plainly in rightSoFar, because a learner who is one sentence away needs to know that.",
           planted.length
-            ? `The learner started from code with these mistakes planted in it. A criterion tied to one is met only if the mistake is fixed:\n${planted
-                .map((m) => `- criterion ${m.criterion + 1}: \`${m.wrong.trim()}\` — ${m.why} The fix looks like:\n${m.right}`)
+            ? // The authored fix used to read as the required answer. A live Lab 9 review failed a correct exponential backoff
+              // because the authored fix also halves concurrency and reads retry-after, which part 2 never asked for.
+              `The learner started from code with these mistakes planted in it. A criterion tied to one is met when the mistake no longer affects what the code does, in the way its part asks. The fix shown is one correct fix, not the required one: a different change that does what the part asks meets the criterion, and anything more the shown fix does can go in the note as advice.\n${planted
+                .map((m) => `- criterion ${m.criterion + 1}: \`${m.wrong.trim()}\` — ${m.why} One correct fix:\n${m.right}`)
+                .join("\n")}`
+            : "",
+          // A present line is evidence, not a verdict. A live Lab 7 lesson showed a correct fix that computed the cost
+          // directly and left the old `usage` line behind, unused; failing that on a substring would mark a right answer
+          // wrong. So the check points the model at the line and the model reads how it is used.
+          stillThere.length
+            ? `These planted lines are still in the attempt, character for character. That alone is not a verdict. Read how the attempt uses each one. If it still decides what the code does, the mistake is not fixed: the criterion is not met, with gap "incorrect". If the learner fixed the behaviour another way and the line is left over and unused, the criterion can be met, and its note should tell them the line is unused and can be deleted.\n${stillThere
+                .map((m) => `- criterion ${m.criterion + 1}: \`${m.wrong.trim()}\``)
                 .join("\n")}`
             : "",
           // The attempt is untrusted text. A submission reading "ignore the
@@ -415,7 +488,7 @@ export async function reviewAttempt(
   });
   const spent = spend(response, onSpend);
 
-  const review = validateReview(requireParsed(response), KNOWN_IDS, unfixed(planted, input.attempt));
+  const review = validateReview(requireParsed(response), KNOWN_IDS);
   return { review, meta: { ...spent, dropped: [] } };
 }
 
@@ -455,7 +528,7 @@ export async function hintForAttempt(
   { client = houseClient(), onSpend }: CallOptions = {},
 ): Promise<{ hint: Hint; meta: CallMeta }> {
   const { exercise } = input.lesson;
-  // What is still broken is known without asking the model: the planted line is there or it is not.
+  // Which planted lines are still in the draft is known without asking the model. Whether each is still live is not.
   const broken = unfixed(resolveDefects(input.defects, MISTAKES, exercise.rubric.length), input.attempt);
 
   const response = await client.messages.parse({
@@ -474,7 +547,7 @@ export async function hintForAttempt(
           HINT_LEVEL_TEXT[input.level],
           "Never write the complete deliverable, and never write code for more than one rubric criterion. Base the hint on what their draft is missing; if the draft is empty, on where to start. Point to the course document that teaches it in labRef; in the text, call it by its title, not its id — the page turns labRef into a link.",
           broken.length
-            ? `The learner started from code with planted mistakes, and these are still in their draft. Aim the hint at the first one, without quoting the fix:\n${broken
+            ? `The learner started from code with planted mistakes, and these lines are still in their draft. Aim the hint at the first one that still affects what the code does, without quoting the fix. A line that is left over and unused after a fix elsewhere is not the problem:\n${broken
                 .map((m) => `- criterion ${m.criterion + 1}: \`${m.wrong.trim()}\` — ${m.why}`)
                 .join("\n")}`
             : "",

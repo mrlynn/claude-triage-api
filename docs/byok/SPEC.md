@@ -106,9 +106,9 @@ Modules added beyond the table in §3: `callLimits.ts` (every model id and token
 | `live` | $0.028 |
 | `tutor_plan` | $0.072 |
 | `classify` | $0.085 |
-| `tutor_hint` | $0.19 |
-| `tutor_review` | $0.21 |
-| `tutor_lesson` | $0.22 |
+| `tutor_hint` | $0.20 |
+| `tutor_review` | $0.22 |
+| `tutor_lesson` | $0.23 |
 | `assistant_turn` | $0.81 |
 
 ### 3.3 `secrets.ts`

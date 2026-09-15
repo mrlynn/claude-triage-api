@@ -104,7 +104,7 @@ interface CorpusDoc {
   title: string;
   objectives: string[];
   body: string;
-  mistakes: { id: string; wrong: string; symptom: string }[];
+  mistakes: { id: string; wrong: string; right: string; symptom: string; why: string }[];
 }
 const corpus = JSON.parse(read("..", "data", "tutor-corpus.json")) as CorpusDoc[];
 const tutorRole = /const ROLE = `([^`]*)`/.exec(read("tutor.ts"))?.[1] ?? "";
@@ -116,7 +116,9 @@ test("the Tutor corpus prefix fits its ceiling", () => {
     (n, d) => n + 60 + d.id.length + d.title.length + d.objectives.reduce((m, o) => m + o.length + 3, 0) + d.body.length,
     0,
   );
-  const tokens = tokensOf(tutorRole.length + docs);
+  // ROLE interpolates the rate card; the regex above sees only its placeholder.
+  const rateCard = 200 + Object.keys(PRICING_BY_MODEL).length * 160;
+  const tokens = tokensOf(tutorRole.length + rateCard + docs);
   assert.ok(tokens <= OWN_TEXT_TOKENS.tutorCorpus, `${tokens} > ${OWN_TEXT_TOKENS.tutorCorpus}`);
 });
 
@@ -130,12 +132,17 @@ test("the Tutor plan index fits its ceiling", () => {
 });
 
 test("the authored mistakes for the most mistake-heavy labs fit their ceiling", () => {
+  // Every field any call can quote: the lesson shows `wrong` and `symptom`, the
+  // review and hint show `wrong`, `why` and `right`. Counting all of them for
+  // every call is the pessimistic, simple version of the same bound.
   const perLab = corpus
-    .map((d) => d.mistakes.reduce((n, m) => n + 30 + m.id.length + m.wrong.length + m.symptom.length, 0))
+    .map((d) =>
+      d.mistakes.reduce((n, m) => n + 30 + m.id.length + m.wrong.length + m.right.length + m.symptom.length + m.why.length, 0),
+    )
     .sort((a, b) => b - a)
     .slice(0, TUTOR_FIELDS.labIds);
   // Plus the fixed starter instructions around them.
-  const tokens = tokensOf(perLab.reduce((a, b) => a + b, 0) + 2_000);
+  const tokens = tokensOf(perLab.reduce((a, b) => a + b, 0) + 3_000);
   assert.ok(tokens <= OWN_TEXT_TOKENS.tutorMistakes, `${tokens} > ${OWN_TEXT_TOKENS.tutorMistakes}`);
 });
 

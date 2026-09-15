@@ -66,9 +66,14 @@ export interface Lesson {
   starter?: Starter | null;
 }
 
+/** "missing": not addressed. "incorrect": addressed and wrong. */
+export type Gap = "missing" | "incorrect";
+
 export interface Review {
   verdict: "pass" | "revise";
-  rubric: { criterion: string; met: boolean; note: string }[];
+  /** Optional, like `gap`: reviews saved before these existed still load. */
+  rightSoFar?: string;
+  rubric: { criterion: string; met: boolean; gap?: Gap | null; note: string }[];
   fixes: { issue: string; why: string; labRef: string | null }[];
   beforeNextLesson: string;
 }

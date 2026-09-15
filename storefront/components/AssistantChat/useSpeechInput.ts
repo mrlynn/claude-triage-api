@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 
 /**
  * Voice input, using the browser's own speech recognition.
@@ -45,6 +51,11 @@ function constructor(): RecognitionConstructor | undefined {
   return scope.SpeechRecognition ?? scope.webkitSpeechRecognition;
 }
 
+/** Browser support does not change while the page is open. */
+function subscribeNever(): () => void {
+  return () => {};
+}
+
 export function useSpeechInput({
   onStart,
   onTranscript,
@@ -52,13 +63,16 @@ export function useSpeechInput({
   onStart: () => void;
   onTranscript: (text: string) => void;
 }) {
-  const [supported, setSupported] = useState(false);
+  // The server snapshot is `false`: this renders on the server first, where
+  // `window` does not exist, and hydration must match that before the client
+  // snapshot switches the button on.
+  const supported = useSyncExternalStore(
+    subscribeNever,
+    () => Boolean(constructor()),
+    () => false,
+  );
   const [listening, setListening] = useState(false);
   const recognition = useRef<Recognition | null>(null);
-
-  // Detected in an effect rather than at module scope: this renders on the
-  // server first, where `window` does not exist.
-  useEffect(() => setSupported(Boolean(constructor())), []);
 
   const toggle = useCallback(() => {
     if (listening) {

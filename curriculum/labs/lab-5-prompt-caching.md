@@ -277,4 +277,37 @@ Add a `cache_hit_rate` counter to the service and expose it at
 not "hit rate < 100%" — cold starts are legitimate. What is the actual
 signal?)
 
+```mistake
+[
+  {
+    "id": "timestamp-in-cached-prefix",
+    "wrong": "text: `Generated at ${new Date().toISOString()}\\n${roleText}\\n\\n---\\n\\n${POLICY_HANDBOOK}`,",
+    "right": "text: `${roleText}\\n\\n---\\n\\n${POLICY_HANDBOOK}`,\n// Anything that changes per request goes in the volatile block, after the breakpoint.",
+    "symptom": "HTTP 200 and correct answers. `cache_read_input_tokens` is 0 on every call, and the handbook line costs ten times what it should.",
+    "why": "Caching is a byte-for-byte prefix match. A timestamp at the top changes the prefix on every request, so nothing after it can ever be read from cache."
+  },
+  {
+    "id": "breakpoint-on-volatile-block",
+    "wrong": "{ type: \"text\", text: volatile, cache_control: { type: \"ephemeral\" } },",
+    "right": "{ type: \"text\", text: `${roleText}\\n\\n---\\n\\n${POLICY_HANDBOOK}`, cache_control: { type: \"ephemeral\" } },\n{ type: \"text\", text: volatile },",
+    "symptom": "Every call reports a large `cache_creation_input_tokens` and a `cache_read_input_tokens` of 0: the request pays the write premium each time and never reads.",
+    "why": "The cached prefix runs up to the breakpoint. Put it after per-request text and the prefix is different on every call."
+  },
+  {
+    "id": "cache-hit-from-input-tokens",
+    "wrong": "const cacheHit = response.usage.input_tokens < 500;",
+    "right": "const cacheHit = (response.usage.cache_read_input_tokens ?? 0) > 0;",
+    "symptom": "Reports a hit on calls that wrote the cache and read nothing, because written tokens are not counted in `input_tokens` either.",
+    "why": "`input_tokens` counts only uncached tokens after the last breakpoint. The one field that proves a read happened is `cache_read_input_tokens`."
+  },
+  {
+    "id": "cache-minimum-hardcoded",
+    "wrong": "const CACHE_MINIMUM_TOKENS = 1024;",
+    "right": "const cacheMinimum = MODEL_CATALOG[model].cacheMinimumTokens;",
+    "symptom": "The prefix check passes on one model and says nothing when `TRIAGE_MODEL` changes to one with a higher minimum. The breakpoint is then accepted and ignored.",
+    "why": "The shortest cacheable prefix is a per-model property: 512 on Opus 5, 1024 on Sonnet 5, 4096 on Haiku 4.5. A literal is right for one model at most."
+  }
+]
+```
+
 **Answers:** [../solutions/lab-5.md](../solutions/lab-5.md)

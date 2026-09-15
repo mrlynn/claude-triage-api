@@ -84,8 +84,8 @@ export const OWN_TEXT_TOKENS = {
   tutorCorpus: 48_000,
   /** The Tutor role plus titles and objectives: what the plan call reads instead. */
   tutorIndex: 3_000,
-  /** The authored mistakes a lesson call may be offered, for up to `TUTOR_FIELDS.labIds` labs. */
-  tutorMistakes: 3_000,
+  /** The authored mistakes a call may quote, for up to `TUTOR_FIELDS.labIds` labs, plus the instructions around them. */
+  tutorMistakes: 7_000,
   /** Ask Northwind's system prompt, four tool definitions, and the policy and journey tool results. */
   assistantFixed: 4_000,
   /** The instructions around each user turn, plus the output schema, which is billed as input. */

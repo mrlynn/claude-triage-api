@@ -14,14 +14,19 @@
  *   3. forces the session count to what the learner confirmed, and clamps
  *      minutes to it — the scope was agreed before the call, not by the model;
  *   4. downgrades a "pass" with an unmet rubric criterion to "revise" — the
- *      verdict is derived from the rubric, not asserted alongside it;
+ *      verdict is derived from the rubric, not asserted alongside it — and
+ *      builds that rubric from the deliverable's parts, one criterion per
+ *      part, so the review cannot grade something the learner was never
+ *      asked for;
  *   5. sets a hint's level from how many came before it, not from the model —
  *      the third hint is the strongest one whatever the model thought it wrote,
  *      and there is no fourth;
  *   6. keeps a starter only if every defect in it is an authored mistake from
- *      the session's labs whose line is really in the code — and fails any
- *      criterion whose planted line is still in the attempt, whatever the
- *      review said.
+ *      the session's labs whose line is really in the code, and tells the
+ *      review which planted lines are still in the attempt. It does NOT fail
+ *      those criteria by itself: a correct fix can leave a planted line behind,
+ *      unused, and a substring check cannot tell dead code from a live bug.
+ *      That judgement is the model's, pointed at the exact line.
  *
  * Deliberately free of imports so it can be unit-tested from the root package
  * without Next, `server-only`, or the SDK. The website hand-mirrors the types
@@ -58,7 +63,8 @@ export const TUTOR_FIELDS = {
   objectives: 6,
   whyNow: 400,
   prompt: 4_000,
-  deliverable: 400,
+  /** Room for a format and five numbered parts; see composeExercise. */
+  deliverable: 700,
   rubricItem: 300,
   rubric: 8,
   hint: 1_500,
@@ -100,6 +106,18 @@ export interface QuizItem {
  * the lab that teaches it. It is the raw material for an exercise's starter
  * code: the Tutor may plant `wrong` and grade against `right`, but it does not
  * get to invent what counts as a mistake.
+ *
+ * Two rules for writing `wrong`, both learned from live lessons:
+ *
+ *   - Portable. It must read naturally in a short script, not only inside the
+ *     route it came from. `if (validated.data.within_agent_authority) return
+ *     c.json(...)` only fits the Hono route, so a starter written as a script
+ *     rewrote it, the rewrite failed the substring check, and the bug went
+ *     ungraded. `if (resolution.within_agent_authority) {` fits anywhere.
+ *   - Gone after any correct fix. The review fails a criterion while this
+ *     line is in the attempt, so it must be a line every correct fix changes
+ *     or removes. `console.error(...)` in a catch block survives a fix that
+ *     adds `send("error", ...)` after it; the whole one-line catch does not.
  */
 export interface MistakeItem {
   /** Kebab-case, unique across the whole corpus. */
@@ -181,9 +199,30 @@ export interface Lesson {
   starter?: Starter | null;
 }
 
+/**
+ * An exercise as the model writes it: what to submit, in parts, each with the
+ * one check that grades it. `composeExercise` turns this into the deliverable
+ * and rubric the page shows, so the two cannot disagree.
+ */
+export interface ExerciseDraft {
+  prompt: string;
+  /** The form of the submission, e.g. "Two or three sentences". */
+  format: string;
+  parts: { ask: string; criterion: string }[];
+}
+
+/**
+ * "missing": the attempt does not address the criterion. "incorrect": it does,
+ * and gets it wrong. A learner who left something out is closer than one who
+ * got it wrong, and the review should say which.
+ */
+export type Gap = "missing" | "incorrect";
+
 export interface Review {
   verdict: "pass" | "revise";
-  rubric: { criterion: string; met: boolean; note: string }[];
+  /** What the attempt already gets right, to the learner. Empty when nothing is. */
+  rightSoFar: string;
+  rubric: { criterion: string; met: boolean; gap: Gap | null; note: string }[];
   fixes: { issue: string; why: string; labRef: string | null }[];
   beforeNextLesson: string;
 }
@@ -388,24 +427,53 @@ export function unfixed<M extends Pick<MistakeItem, "wrong">>(planted: readonly 
   return planted.filter((m) => attempt.includes(m.wrong.trim()));
 }
 
-export function validateReview(
-  review: Review,
-  known: ReadonlySet<string>,
-  /** Planted mistakes whose line is still in the attempt. Their criteria fail, whatever the model judged. */
-  stillPlanted: readonly (Pick<MistakeItem, "wrong"> & { criterion: number })[] = [],
-): Review {
-  const rubric = review.rubric.map((r, i) => {
-    const planted = stillPlanted.find((m) => m.criterion === i);
-    return planted && r.met
-      ? { ...r, met: false, note: `The starter's mistake is still in your code: \`${planted.wrong.trim()}\`` }
-      : r;
-  });
-  const anyMissed = rubric.some((r) => !r.met) || stillPlanted.length > 0;
+export function validateReview(review: Review, known: ReadonlySet<string>): Review {
+  const rubric = review.rubric.map((r) => ({
+    ...r,
+    // A met criterion has no gap; an unmet one without a stated gap was at least not addressed.
+    gap: r.met ? null : (r.gap ?? "missing"),
+  }));
+  const anyMissed = rubric.some((r) => !r.met);
   return {
     ...review,
+    rightSoFar: review.rightSoFar.trim(),
     rubric,
     verdict: anyMissed ? "revise" : review.verdict,
     fixes: review.fixes.map((f) => ({ ...f, labRef: f.labRef && known.has(f.labRef) ? f.labRef : null })),
+  };
+}
+
+/**
+ * The deliverable and the rubric, built from the same list. Part n of the
+ * deliverable is criterion n of the rubric, so every check the review makes is
+ * something the learner was told to submit.
+ *
+ * If the numbered deliverable will not fit the field the routes accept, parts
+ * are dropped from the end — from both lists together. Cutting the text
+ * instead would leave a criterion grading a part the learner cannot see.
+ */
+export function composeExercise(draft: ExerciseDraft): {
+  exercise: Lesson["exercise"];
+  droppedParts: number;
+} {
+  const parts = draft.parts
+    .map((p) => ({ ask: p.ask.trim().replace(/[.;]+$/, ""), criterion: fit(p.criterion, TUTOR_FIELDS.rubricItem) }))
+    .filter((p) => p.ask && p.criterion);
+  const format = draft.format.trim().replace(/[.:]+$/, "");
+  const deliverableFor = (ps: typeof parts) => {
+    const list = ps.length === 1 ? ps[0]!.ask : ps.map((p, i) => `(${i + 1}) ${p.ask}`).join("; ");
+    return format ? `${format}: ${list}.` : `${list}.`;
+  };
+
+  let kept = parts.slice(0, TUTOR_FIELDS.rubric);
+  while (kept.length > 1 && deliverableFor(kept).length > TUTOR_FIELDS.deliverable) kept = kept.slice(0, -1);
+  return {
+    exercise: {
+      prompt: draft.prompt,
+      deliverable: kept.length ? deliverableFor(kept) : "",
+      rubric: kept.map((p) => p.criterion),
+    },
+    droppedParts: draft.parts.length - kept.length,
   };
 }
 

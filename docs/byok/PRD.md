@@ -155,9 +155,9 @@ in `usage_daily` replace it with measured numbers.
 | Live preview | Sonnet 5 | $0.028 | < $0.01 |
 | Tutor plan | Sonnet 5 | $0.072 | ~$0.03 |
 | Classify / support form / injection | Opus 5 | $0.085 | ~$0.02–0.03 |
-| Tutor hint | Sonnet 5 | $0.192 | ~$0.02 |
-| Tutor review | Sonnet 5 | $0.205 | ~$0.04 |
-| Tutor lesson | Sonnet 5 | $0.216 | ~$0.05–0.08 |
+| Tutor hint | Sonnet 5 | $0.203 | ~$0.02 |
+| Tutor review | Sonnet 5 | $0.216 | ~$0.04 |
+| Tutor lesson | Sonnet 5 | $0.227 | ~$0.05–0.08 |
 | Ask Northwind turn (≤ 6 tool iterations) | Opus 5 | $0.814 | ~$0.05–0.15 |
 
 In practice $2 is a few Tutor sessions plus a good look at the demos. That is

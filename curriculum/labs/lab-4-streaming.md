@@ -183,4 +183,44 @@ Build a 40-line HTML page that consumes `/v1/draft` with `EventSource` (note:
 for a POST body — discovering that is part of the exercise). Render `text` into
 the body and `thinking` into a `<details>` element.
 
+```mistake
+[
+  {
+    "id": "final-message-hand-rolled",
+    "wrong": "const final = await new Promise((resolve) => stream.on(\"message\", resolve));",
+    "right": "const final = await stream.finalMessage();",
+    "symptom": "Works on every happy-path request. When the stream errors or the client aborts, the promise never settles, and the request hangs with no `done` event.",
+    "why": "`message` only fires on success. `finalMessage()` resolves with the complete message and rejects on errors and aborts, which is the part a hand-rolled promise leaves out."
+  },
+  {
+    "id": "stream-error-not-sent",
+    "wrong": "} catch (err) { console.error(\"draft stream failed\", err); }",
+    "right": "} catch (err) {\n  console.error(\"draft stream failed\", err);\n  // The status is already 200, so the failure has to travel in-band.\n  send(\"error\", toHttpError(err).body);\n}",
+    "symptom": "The client sees HTTP 200, half a reply, and the stream closing. It shows the half reply as if it were finished.",
+    "why": "By the time generation starts the status line has been sent. A mid-stream failure can only reach the client as an event it explicitly handles."
+  },
+  {
+    "id": "disconnect-not-aborted",
+    "wrong": "request.signal.addEventListener(\"abort\", () => console.log(\"client disconnected\"));",
+    "right": "request.signal.addEventListener(\"abort\", () => stream.abort());",
+    "symptom": "Kill the client mid-reply and the server log looks fine, but generation runs to the end and the output tokens are billed for a reply nobody receives.",
+    "why": "The client leaving does not stop the upstream request. Only aborting the stream does."
+  },
+  {
+    "id": "sse-headers-buffered",
+    "wrong": "const SSE_HEADERS = { \"Content-Type\": \"text/event-stream\", \"Cache-Control\": \"no-cache\" };",
+    "right": "const SSE_HEADERS = {\n  \"Content-Type\": \"text/event-stream; charset=utf-8\",\n  \"Cache-Control\": \"no-cache, no-transform\",\n  Connection: \"keep-alive\",\n  \"X-Accel-Buffering\": \"no\",\n};",
+    "symptom": "Streams token by token locally. Behind nginx in production, the whole reply arrives in one chunk after generation finishes.",
+    "why": "A proxy buffers responses by default. `X-Accel-Buffering: no` turns that off for nginx, and `no-transform` stops intermediaries that would compress or rewrite the stream."
+  },
+  {
+    "id": "thinking-display-omitted",
+    "wrong": "  thinking: { type: \"adaptive\" },",
+    "right": "  thinking: { type: \"adaptive\", display: \"summarized\" },",
+    "symptom": "`thinking` events arrive with empty text, so the reasoning panel stays blank while the user waits, even though the thinking is happening and being billed.",
+    "why": "`display` controls whether thinking text is returned, not whether thinking happens. The default omits it."
+  }
+]
+```
+
 **Answers:** [../solutions/lab-4.md](../solutions/lab-4.md)

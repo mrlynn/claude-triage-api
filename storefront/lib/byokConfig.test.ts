@@ -3,12 +3,18 @@ import test from "node:test";
 import { byokMode, byokSettings } from "./byokConfig";
 
 function withEnv(vars: Record<string, string | undefined>, fn: () => void) {
-  const saved = Object.fromEntries(Object.keys(vars).map((k) => [k, process.env[k]]));
-  for (const [k, v] of Object.entries(vars)) v === undefined ? delete process.env[k] : (process.env[k] = v);
+  const set = (entries: [string, string | undefined][]) => {
+    for (const [k, v] of entries) {
+      if (v === undefined) delete process.env[k];
+      else process.env[k] = v;
+    }
+  };
+  const saved = Object.keys(vars).map((k): [string, string | undefined] => [k, process.env[k]]);
+  set(Object.entries(vars));
   try {
     fn();
   } finally {
-    for (const [k, v] of Object.entries(saved)) v === undefined ? delete process.env[k] : (process.env[k] = v);
+    set(saved);
   }
 }
 

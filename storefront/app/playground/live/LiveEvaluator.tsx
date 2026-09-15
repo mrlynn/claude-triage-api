@@ -229,35 +229,42 @@ export default function LiveEvaluator() {
     }
   }, []);
 
-  // Rule 1: the debounce. Every edit reschedules; only a pause fires.
-  useEffect(() => {
-    if (timer.current) clearTimeout(timer.current);
+  // Every change to the message goes through here, so the state that depends
+  // on the words is reset in the same event as the words themselves.
+  function edit(next: string) {
+    if (next === message) return;
+    setMessage(next);
 
-    const text = message.trim();
-    if (text.length < MIN_CHARS) {
+    // Editing the message invalidates the committed verdict — it was a verdict
+    // on different words. Leaving it on screen would invite a comparison
+    // between the live reading and a verdict about a message that no longer
+    // exists, which is exactly the wrong lesson.
+    setVerdict(null);
+    setCommitError(null);
+
+    if (next.trim().length < MIN_CHARS) {
       abort.current?.abort();
       seq.current++; // invalidate anything still in flight
       setPhase("idle");
       setReading({});
       setMeta(null);
-      return;
+    } else {
+      setPhase("waiting");
     }
+  }
 
-    setPhase("waiting");
+  // Rule 1: the debounce. Every edit reschedules; only a pause fires.
+  useEffect(() => {
+    if (timer.current) clearTimeout(timer.current);
+
+    const text = message.trim();
+    if (text.length < MIN_CHARS) return;
+
     timer.current = setTimeout(() => void run(text), DEBOUNCE_MS);
     return () => {
       if (timer.current) clearTimeout(timer.current);
     };
   }, [message, run]);
-
-  // Editing the message invalidates the committed verdict — it was a verdict
-  // on different words. Leaving it on screen would invite a comparison
-  // between the live reading and a verdict about a message that no longer
-  // exists, which is exactly the wrong lesson.
-  useEffect(() => {
-    setVerdict(null);
-    setCommitError(null);
-  }, [message]);
 
   useEffect(() => () => abort.current?.abort(), []);
 
@@ -301,7 +308,7 @@ export default function LiveEvaluator() {
           <textarea
             id="live-msg"
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={(e) => edit(e.target.value)}
             rows={9}
             maxLength={2000}
             placeholder="Start typing a complaint. Stop for half a second and the panel on the right will begin filling in…"
@@ -314,7 +321,7 @@ export default function LiveEvaluator() {
               <button
                 key={ex.label}
                 type="button"
-                onClick={() => setMessage(ex.text)}
+                onClick={() => edit(ex.text)}
                 className="rounded-full border border-pine/20 px-3 py-1 text-xs text-pine/75 hover:border-spruce hover:text-spruce"
               >
                 {ex.label}
@@ -323,7 +330,7 @@ export default function LiveEvaluator() {
             {message && (
               <button
                 type="button"
-                onClick={() => setMessage("")}
+                onClick={() => edit("")}
                 className="rounded-full px-2 py-1 text-xs text-pine/45 hover:text-ember"
               >
                 clear

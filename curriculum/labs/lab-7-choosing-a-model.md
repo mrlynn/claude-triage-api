@@ -397,4 +397,37 @@ tier's prose with the pinned judge. Predict the result first — writing a
 customer-facing paragraph is a very different task from classifying one, and
 the tier ordering you measured for classification may not survive.
 
+```mistake
+[
+  {
+    "id": "escalate-from-flagship",
+    "wrong": "const escalate = confidence < ESCALATE_BELOW;",
+    "right": "const escalate = confidence < ESCALATE_BELOW && response.model !== FLAGSHIP_MODEL;",
+    "symptom": "A ticket already answered by the flagship is sent to the flagship again whenever it is unsure. The cost doubles and the answer does not change.",
+    "why": "Escalation means asking a stronger model. Re-asking the same model the same question pays twice for nothing."
+  },
+  {
+    "id": "escalation-usage-last-pass",
+    "wrong": "const usage = second ? second.usage : first.usage;",
+    "right": "const passes = second ? [first, second] : [first];\nconst usage = passes.map((p) => p.usage); // every billed call, summed when reported",
+    "symptom": "An escalated ticket reports only the flagship call's cost. The cheap first pass is paid for and never counted.",
+    "why": "A two-pass route makes two billed calls. Reporting the last one is the same under-count as reading the final turn's usage in a tool loop."
+  },
+  {
+    "id": "usage-priced-at-config-model",
+    "wrong": "const cost = costOf(response.usage, MODEL);",
+    "right": "const cost = costOf(response.usage, response.model);",
+    "symptom": "Under `?tier=auto`, Sonnet calls are priced at Opus rates, so the cost column says the cheap tier saves nothing.",
+    "why": "The response says which model actually answered. The config constant only says which one you asked for by default."
+  },
+  {
+    "id": "judge-follows-model-under-test",
+    "wrong": "const judgeModel = modelUnderTest;",
+    "right": "const judgeModel = JUDGE_MODEL; // pinned: never varies with the model under test",
+    "symptom": "A tier's tone score moves, and there is no way to tell whether the drafts got worse or the grader got more lenient.",
+    "why": "If the ruler changes with the thing being measured, a difference has two causes. Pinning the judge makes the comparison single-variable."
+  }
+]
+```
+
 **Answers:** [../solutions/lab-7.md](../solutions/lab-7.md)
