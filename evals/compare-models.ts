@@ -3,8 +3,8 @@
  *
  * Runs the same gold set against several models and prints a table you can
  * make a decision from, plus a disagreement matrix showing WHICH cases each
- * model loses. The second thing matters more than the first: "Haiku scores
- * 11/12" tells you almost nothing, while "Haiku loses exactly the business-day
+ * model loses. The second thing matters more than the first: "Sonnet scores
+ * 11/12" tells you almost nothing, while "Sonnet loses exactly the business-day
  * case" tells you whether to ship it.
  *
  * TEACHING NOTE — three disciplines this run enforces, all of which are easy
@@ -17,8 +17,8 @@
  *
  *   2. EFFORT IS REPORTED, NOT ASSUMED. Haiku 4.5 rejects
  *      `output_config.effort` with a 400, so `buildTriageRequest` drops it.
- *      That means the cheap tier is running at a DIFFERENT setting from the
- *      others, and a table that hid this would be comparing low-effort Opus
+ *      Pass it with --models and it runs at a DIFFERENT setting from the
+ *      others; a table that hid this would be comparing low-effort Opus
  *      against no-effort Haiku while implying they were like for like.
  *
  *   3. COST IS PROJECTED TO THE REAL WORKLOAD. A twelve-case total is an
@@ -27,7 +27,7 @@
  *
  * Usage:
  *   npm run eval:models
- *   npm run eval:models -- --models claude-opus-5,claude-haiku-4-5
+ *   npm run eval:models -- --models claude-opus-5,claude-sonnet-5,claude-haiku-4-5
  *   npm run eval:models -- --concurrency 4 --judge-sample 4
  *   npm run eval:models -- --no-judge          skip tone judging entirely
  */

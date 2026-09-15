@@ -122,8 +122,8 @@ that get confused constantly.
 | | Input $/MTok | Output $/MTok | Notes |
 |---|---|---|---|
 | `claude-opus-5` | $5.00 | $25.00 | 1M context |
-| `claude-sonnet-5` | $3.00 | $15.00 | 1M context |
-| `claude-haiku-4-5` | $1.00 | $5.00 | 200K context; **rejects `output_config.effort`** |
+| `claude-sonnet-5` | $2.00 | $10.00 | 1M context |
+| `claude-haiku-4-5` | $1.00 | $5.00 | 200K context; **rejects `output_config.effort`**; an alias for `claude-haiku-4-5-20251001`, retiring no sooner than 2026-10-15. No longer a tier in this repo; kept for comparison |
 
 Two things the price column does not tell you, both measured in
 [Lab 7](labs/lab-7-choosing-a-model.md):
@@ -133,10 +133,11 @@ Two things the price column does not tell you, both measured in
    lose the ones where two handbook rules interact. That is not 5% spread
    evenly; it is concentrated in the cases the system exists for.
 2. **The confidence score degrades faster than the accuracy does.** Opus
-   separates its wrong answers from its right ones by ~0.38 of confidence.
-   Haiku separates them by roughly zero — so any control you build on top of
-   that score (threshold routing, escalation, auto-resolve) silently stops
-   working, while still reporting numbers.
+   separates its wrong answers from its right ones by ~0.4 of confidence. The
+   cheaper models' gaps are small and unstable run to run (Sonnet 5 from 0.05
+   to 0.30, Haiku 4.5 from below zero to 0.22), so any control you build on top
+   of that score (threshold routing, escalation, auto-resolve) can silently
+   stop working, while still reporting numbers.
 
 The order of operations that follows: **pick the cheapest model that passes
 your eval, but check the calibration gap before you build anything that routes

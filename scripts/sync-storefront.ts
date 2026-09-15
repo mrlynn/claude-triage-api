@@ -245,6 +245,8 @@ export interface ModelPricing {
   cacheWriteMultiplier: number;
   cacheReadMultiplier: number;
   batchMultiplier: number;
+  /** Haiku 4.5 rejects \`output_config.effort\` with a 400. */
+  supportsEffort: boolean;
 }
 
 export const PRICING_BY_MODEL: Record<string, ModelPricing> = ${JSON.stringify(
@@ -257,6 +259,7 @@ export const PRICING_BY_MODEL: Record<string, ModelPricing> = ${JSON.stringify(
         cacheWriteMultiplier: spec.cacheWriteMultiplier,
         cacheReadMultiplier: spec.cacheReadMultiplier,
         batchMultiplier: spec.batchMultiplier,
+        supportsEffort: spec.supportsEffort,
       },
     ]),
   ),

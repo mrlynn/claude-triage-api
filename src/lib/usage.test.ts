@@ -3,7 +3,8 @@
  *
  * TEACHING NOTE: this file exists because of Lab 3's usage trap. The final
  * message of an agent loop carries only the final turn's usage, and a service
- * that reports it under-reports a five-turn loop by roughly five times. That
+ * that reports it under-reports a five-turn loop by roughly three times —
+ * less than 1/N, because history accumulates and the last turn is the largest. That
  * is not a crash — it is a dashboard that is quietly wrong about money, which
  * is the failure mode nobody notices until the invoice.
  *

@@ -18,11 +18,11 @@ Install the SDK and create a request with a model and a message:
 ```ts
 import Anthropic from "@anthropic-ai/sdk";
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const anthropic = new Anthropic(); // reads ANTHROPIC_API_KEY from the environment
 
 const response = await anthropic.messages.create({
-  model: "claude-sonnet-4-5",
-  max_tokens: 200,
+  model: "claude-opus-5",
+  max_tokens: 16000, // thinking is on by default on Opus 5 and counts against this ceiling
   messages: [{ role: "user", content: "Classify this support ticket: My jacket zipper broke." }],
 });
 ```

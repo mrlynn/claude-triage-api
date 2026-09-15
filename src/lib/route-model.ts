@@ -36,7 +36,7 @@ export interface RoutingDecision {
  * Language that correlates with a case where being wrong is expensive.
  *
  * These are deliberately over-broad. A false positive costs the difference
- * between a Haiku call and an Opus call — a fraction of a cent. A false
+ * between a Sonnet call and an Opus call — a fraction of a cent. A false
  * negative costs a mis-routed injury report. The asymmetry is not close, so
  * the list errs toward matching.
  */
@@ -51,15 +51,16 @@ const HIGH_STAKES = [
   "chargeback", "fraud", "unauthorized",
 ];
 
-/** Below this, a message is almost never a multi-fact case worth a big model. */
-const SHORT_MESSAGE_CHARS = 240;
-
 /**
  * Chooses a model for a ticket, cheapest tier that is defensible.
  *
  * Order matters: the safety check runs FIRST and unconditionally. A short
  * message that mentions a child is still a short message, and it still goes to
  * the flagship model.
+ *
+ * With two tiers there is one cheap destination, so message length no longer
+ * picks between models; it is still reported in `reason` so the decision stays
+ * auditable. (When there was a Haiku tier, short messages went there.)
  */
 export function pickModel(message: string): RoutingDecision {
   const haystack = message.toLowerCase();
@@ -72,16 +73,9 @@ export function pickModel(message: string): RoutingDecision {
     };
   }
 
-  if (message.length <= SHORT_MESSAGE_CHARS) {
-    return {
-      model: MODEL_TIERS.fast,
-      reason: `short message (${message.length} chars), no high-stakes language`,
-    };
-  }
-
   return {
     model: MODEL_TIERS.balanced,
-    reason: `long message (${message.length} chars) — more facts to extract, no high-stakes language`,
+    reason: `no high-stakes language (${message.length} chars)`,
   };
 }
 

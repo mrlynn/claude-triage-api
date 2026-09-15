@@ -1,28 +1,28 @@
 # Lab 7 — answers
 
-**Q1a. Does the silent Haiku cache miss change the tier decision?**
+**Q1a. Do the two cost discoveries change the tier decision?**
 
 No, and saying why is the whole exercise.
 
-It does not change the decision, because the decision was never about cost.
-Fixing the cache would take Haiku from ~$74 to ~$20 a month; the gap between
-those two numbers is $54 against a $4,000 budget. Both round to free. An
-argument that was already dominated by the accuracy column stays dominated by
-the accuracy column.
+They do not change the decision, because the decision was never about cost.
+Moving triage from Opus to Sonnet saves about $63 a month at warm rates ($111
+versus $48). Fixing Haiku's cache would have taken it from ~$77 to ~$20. Against
+a $4,000 budget, all of those round to free. An argument that was already
+dominated by the accuracy column stays dominated by the accuracy column.
 
-What it changes is your confidence in every other number that table produced.
-A measurement contained a fivefold error in one column and nothing flagged it —
-not a test, not a review, not the person who wrote the "Haiku costs about half"
-sentence underneath it. The correct update is not about Haiku. It is that this
-repo could print a wrong cost figure and ship it, which means the next wrong
-cost figure will also ship, and the next one may land on a decision where $54
-is not the stake.
+What they change is your confidence in every other number that table produced.
+The matrix contained two cost errors in one column and nothing flagged either:
+a fivefold cache miss on Haiku, and cold-write overhead that made Sonnet look
+barely cheaper than Opus. Not a test, not a review, not the person who wrote the
+"Haiku costs about half" sentence. The correct update is not about any one
+model. It is that this repo could print a wrong cost figure and ship it, which
+means the next wrong cost figure will also ship, and the next one may land on a
+decision where $63 is not the stake.
 
-Notice also the shape of the error. It did not make the cheap tier look bad; it
-made the cheap tier look *reasonable* — $74 sits close enough to Sonnet's $69
-that the table reads as a coherent story about tiers. Errors that produce
-implausible output get caught. This one produced a plausible story, which is
-why it survived.
+Notice also the shape of the errors. Neither made a tier look absurd. The Haiku
+miss made the cheapest model look *reasonable*, and the Sonnet cold writes made
+the middle tier look *pointless*. Errors that produce implausible output get
+caught. These produced plausible stories, which is why they survived.
 
 **Q1b. Where would this have been caught first?**
 
@@ -82,10 +82,10 @@ where that line sits for your own service is the actual exercise.
 
 **Q1. What does the headroom do to the tier argument?**
 
-It removes it. At 4,100 tickets a week the flagship costs about **$137 a
-month** against a **$4,000** budget. The cheap tier saves roughly $70 as
-measured — under 2% of the budget, in exchange for losing three to five cases
-in twelve. Fix its caching and it saves ~$117, which is under 3%. The argument
+It removes it. At 4,100 tickets a week the flagship costs about **$111 a
+month** warm (the twelve-case matrix projects $132, cold writes included)
+against a **$4,000** budget. Sonnet saves roughly $63 of that — under 2% of the
+budget, in exchange for losing one to three more cases in twelve. The argument
 does not improve when you give it its best case, which is the sign that it was
 never a cost argument.
 
@@ -96,10 +96,9 @@ non-binding constraint has done work that cannot show up in any outcome they
 care about, and has spent accuracy to do it.
 
 Where the argument *would* bite: raise volume to 400,000 tickets a week and
-Opus becomes ~$13,000/month, over budget, and the tradeoff is live again. Or
-add a latency SLA — the cheap tier is genuinely faster (p50 ~9s versus ~10–18s)
-and that is a real difference for an interactive surface, though not for a
-queue processed in batches.
+Opus becomes ~$10,800/month, over budget, while Sonnet is ~$4,600, and the
+tradeoff is live again. Latency will not rescue it: in the 2026-09-15 run Sonnet
+and Opus are within a second of each other at p50 (2.7s versus 3.3s).
 
 So the honest recommendation for *this* system is: ship the flagship, and put
 the effort you would have spent on tiering into the eval set instead.
@@ -111,7 +110,7 @@ Much larger, and the accuracy number actively hides it.
 The gold set is deliberately adversarial: twelve cases chosen because they sit
 where rules touch. Real traffic is not distributed that way — most tickets are
 "where is my package." So the cheap tier's *aggregate* accuracy on live traffic
-would be far better than 6/12 suggests, and a naive rollout would look fine.
+would be far better than 8/12 or 9/12 suggests, and a naive rollout would look fine.
 
 But the cases it loses are not randomly drawn from the distribution. They are
 concentrated in exactly the population you built the system for. `eval-04` is a
@@ -139,7 +138,7 @@ of each. You escalate some wrong answers, you escalate just as many right ones,
 and you pay for a second call on all of them. The precision of the mechanism is
 the model's error rate — no better than escalating at random.
 
-In the two runs where Haiku's gap came out negative, it is worse than random:
+In the two earlier runs where Haiku's gap came out negative, it is worse than random:
 the threshold preferentially escalated cases the model had gotten *right*,
 while passing the wrong ones straight through. You are paying a premium to
 double-check the answers that did not need it.
@@ -164,14 +163,15 @@ bottle cap cracked and my kid swallowed a bit of plastic."* That one routes
 correctly, because "swallowed" and "kid" are both on the list. Now write it the
 way a worried, apologetic parent actually writes at 11pm: *"Hi — the lid on the
 32oz came apart and some of it ended up in my daughter's mouth. She seems okay.
-Just thought you should know."* No "swallow," no "injury," no "child." Under 240
-characters, so it routes to the cheap tier, which is the tier that loses
-`eval-04`.
+Just thought you should know."* No "swallow," no "injury," no "child." So it routes to
+Sonnet, the cheap tier. Sonnet passed `eval-04` in the 2026-09-15 run, but the
+router has just sent the case where being wrong is most expensive to the model
+whose confidence you trust least.
 
 It does not need an attacker. The failure mode is *politeness*.
 
 **Why the failure is quiet:** nothing errors. The router logs a confident
-`reason` ("short message, no high-stakes language"), the cheap model returns a
+`reason` ("no high-stakes language"), the cheap model returns a
 well-formed schema-valid classification with 0.9 confidence, and the ticket goes
 in the normal queue. Every component reports success. The only artifact is a
 `meta.routed.reason` in a log nobody reads, and you find out when the safety
@@ -194,11 +194,13 @@ written to route itself down deliberately.
 On the cheap tier: close to nothing, for the reasons in Q3. Its confidence does
 not predict its errors, so the trigger fires on the wrong population.
 
-On the middle tier: something real. Sonnet's gap is 0.20–0.30 — not flagship,
-but genuinely informative, so a 0.7 threshold does select disproportionately
-for wrong answers. `sonnet → escalate to opus` is a defensible architecture:
-you pay flagship rates on the minority of tickets that are hard, and Sonnet
-rates on the rest.
+On Sonnet: possibly something, and you do not know yet. Across four earlier
+runs its gap was 0.20–0.30 — not flagship, but informative enough that a 0.7
+threshold selects disproportionately for wrong answers, which would make
+`sonnet → escalate to opus` a defensible architecture. The 2026-09-15 run put it
+at 0.05, with a wrong answer at 0.90 confidence. Twelve cases cannot tell you
+which is the real number. Before shipping escalation from Sonnet, run the matrix
+five times and look at the distribution of the gap, not a single value.
 
 The general shape: **escalation is only as good as the calibration of the model
 you escalate *from*.** It is not a safety net you can bolt onto any tier; it is
@@ -259,11 +261,11 @@ Raising the sample is most of the work, and deciding how far to raise it is
 
 For Northwind's triage queue: **almost nothing, and saying so is the point.**
 4,100 tickets a week arrive into a queue nobody reads in real time. Whether a
-classification takes 9 seconds or 22 makes no difference to any human — the
+classification takes 3 seconds or 30 makes no difference to any human — the
 tickets are processed faster than they arrive at every tier, and the constraint
 that binds is accuracy on the cases where two handbook rules interact. Shipping
-Haiku to save 13 seconds nobody experiences, at the price of three to five
-cases in twelve, is the same mistake as shipping it to save $65 against a
+Sonnet to save 0.6 seconds nobody experiences, at the price of one to three
+cases in twelve, is the same mistake as shipping it to save $63 against a
 $4,000 budget. Same error, different column.
 
 That is the transferable habit and it is worth stating flatly: **optimize the
@@ -276,10 +278,11 @@ before you look.
 stops being decoration:
 
 - **The storefront support form.** A customer watches the pipeline run while
-  they wait. 22 seconds of spinner is a bad experience and 9 is a tolerable
-  one, and the classification is not what they came for — they came to file a
-  ticket. Ship the cheap tier and let the escalation path from Step 5 catch the
-  cases where confidence is low.
+  they wait. Here the p95 column matters (5.5s on Opus, 4.4s on Sonnet), and
+  the classification is not what they came for — they came to file a ticket.
+  The gap between tiers is small enough that the answer may be neither: stream
+  a provisional result, or classify after submission. Measure p95 on the real
+  form before deciding.
 - **An agent-assist panel** that classifies while a human reads the ticket. The
   budget is however long the person spends reading, which is a few seconds. p95
   is the number that matters, not p50, because the failure is "the panel was

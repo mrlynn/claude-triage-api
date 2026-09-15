@@ -18,9 +18,6 @@ import styles from "./styles.module.css";
  * package, so the rows are duplicated here on purpose — check them against
  * src/config.ts when either moves. Lab 7 adds the model selector that makes
  * the extra rows reachable from the UI.
- *
- * Sonnet 5 is listed at LIST price ($3/$15). Its introductory rate expires,
- * and a budget built on a promotion breaks the day it does.
  */
 const PRICING_BY_MODEL = {
   "claude-opus-5": {
@@ -30,8 +27,8 @@ const PRICING_BY_MODEL = {
     cacheReadMultiplier: 0.1,
   },
   "claude-sonnet-5": {
-    inputPerMTok: 3.0,
-    outputPerMTok: 15.0,
+    inputPerMTok: 2.0,
+    outputPerMTok: 10.0,
     cacheWriteMultiplier: 1.25,
     cacheReadMultiplier: 0.1,
   },

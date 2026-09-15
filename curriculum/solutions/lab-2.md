@@ -2,15 +2,24 @@
 
 **Q1. When is `parsed_output` null, and what should production do?**
 
-Null when the response could not be parsed and validated against the schema —
-in practice, most often when generation was cut short by `max_tokens`, leaving
-truncated JSON, or when the turn ended for a non-`end_turn` reason.
+Null when the response has **no text block to parse**, most often a refusal
+(`stop_reason: "refusal"`, with the reason in `stop_details`). The failure most
+people expect to produce null does not: when there is text that fails to parse
+or validate (JSON truncated by `max_tokens`, or a value the schema rejects),
+`messages.parse()` **throws** an `AnthropicError` instead.
 
-Production should: check `stop_reason` to distinguish causes, return a 502 (the
-upstream produced something unusable — this is not the caller's fault), log the
-raw text for diagnosis, and **not** silently retry in a loop. `src/routes/triage.ts`
-does the first three. Note it returns 502 rather than 500 to signal an upstream
-problem specifically.
+Production should handle both paths:
+- **Null:** branch on `stop_reason`. `src/lib/missing-output.ts` returns 422 for
+  a refusal and 502 otherwise.
+- **Throw:** `src/lib/errors.ts` maps the parse error to 502
+  `unparseable_output`. That is upstream output, not this service's bug, so it
+  is not a 500.
+
+In both cases, log enough to diagnose and **do not** silently retry in a loop.
+One consequence to notice: on the throw path there is no response object, so
+`stop_reason` is not available. If telling truncation apart matters, raise
+`max_tokens` or call `messages.create()` and validate the text yourself, as
+`/v1/resolve` does.
 
 **Q2. What happens to the confidence gap?**
 

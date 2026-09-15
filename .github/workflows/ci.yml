@@ -157,11 +157,12 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci
-      # This is the whole point of the weekly cron. `claude-opus-5` is an
-      # alias, so the model can improve — or simply change — without anything
-      # in this repo changing. Running the tier matrix on a schedule means the
-      # delta shows up in a job summary on a Monday, rather than in a
-      # production incident on a Thursday that nobody can attribute.
+      # This is the whole point of the weekly cron. `claude-opus-5` and
+      # `claude-sonnet-5` are pinned snapshots, but `claude-haiku-4-5` is an
+      # alias with a retirement date, and the handbook and prompts change too.
+      # Running the tier matrix on a schedule means the delta shows up in a
+      # job summary on a Monday, rather than in a production incident on a
+      # Thursday that nobody can attribute.
       - name: tier matrix
         run: |
           {

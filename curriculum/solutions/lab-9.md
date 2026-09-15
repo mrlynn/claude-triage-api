@@ -156,15 +156,18 @@ If you want to actually establish it, in order:
 2. **Check which cases moved**, not how many. `eval:quick` prints
    `regressed:` and `newly passing:` by id. A drift in the model tends to move
    a *class* of cases; noise moves whichever case is marginal.
-3. **Compare against the pinned id.** Run the same set against a dated snapshot
-   and against the alias. If the pin scores as before and the alias does not,
-   you have your answer, and it took one command.
+3. **Rule out the model before blaming it.** On `claude-opus-5` and
+   `claude-sonnet-5` the id is a pinned snapshot, so the same id means the
+   same model. Only an alias, like `claude-haiku-4-5`, can resolve to
+   something new. The response's `model` field tells you what actually served
+   the request; log it. If it matches last week's, look at what did change:
+   the handbook, a prompt, a schema `.describe()`, the SDK version.
 
 **What you needed beforehand** is the part that matters:
 
 - A **checked-in baseline** recording passing case ids, not just a count.
-- A **dated pin** to compare against — you cannot retroactively obtain last
-  month's model.
+- **Explicit ids** for any tier still on an alias, and the response `model`
+  field recorded with every run, so "did the model change?" takes a grep.
 - A **scheduled run** so the drift shows up on a Monday in a job summary rather
   than in a Thursday incident. That is the `model-upgrade` cron.
 

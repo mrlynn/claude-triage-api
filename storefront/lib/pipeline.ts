@@ -246,12 +246,19 @@ export async function* runPipeline(
 
   if (!response.parsed_output) {
     yield { type: "stage", id: "parse", status: "failed", ms: mark() - s };
+    // Three different failures arrive as null. Say which one it was.
+    const refused = response.stop_reason === "refusal";
+    const truncated = response.stop_reason === "max_tokens";
     yield {
       type: "failure",
       id: "parse",
-      status: 502,
-      error: "unparseable_output",
-      detail: "The reply did not validate against the schema.",
+      status: refused ? 422 : 502,
+      error: refused ? "refused" : truncated ? "truncated_output" : "unparseable_output",
+      detail: refused
+        ? "The model declined this request."
+        : truncated
+          ? "Generation hit max_tokens before the JSON was complete."
+          : "The reply did not validate against the schema.",
     };
     return;
   }
@@ -263,7 +270,7 @@ export async function* runPipeline(
     ms: mark() - s,
     headline: "Validated against the schema",
     detail: {
-      why: "parsed_output is typed and can still be null — usually when generation was cut short. Production code checks it rather than asserting past it.",
+      why: "parsed_output is typed and can still be null — when the reply has no text to parse, most often a refusal. Text that does not validate makes parse() throw instead. Production code handles both rather than asserting past it.",
       category: response.parsed_output.category,
       confidence: response.parsed_output.confidence,
     },

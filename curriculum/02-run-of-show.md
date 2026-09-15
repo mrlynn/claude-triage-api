@@ -158,11 +158,12 @@ spend-capped.
 
 ### Lab 7 — the two beats that matter
 
-- **Make someone say the budget out loud.** $137/month against $4,000. Cost is
-  not the binding constraint, and the whole room arrived assuming it was.
-- **Put the `eval-04` row on screen.** Haiku returns the wrong answer on the
-  child-swallowed-plastic case at **0.95 confidence**. One cell, and it makes
-  the calibration argument better than any explanation.
+- **Make someone say the budget out loud.** About $111/month for Opus against
+  $4,000. Cost is not the binding constraint, and the whole room arrived
+  assuming it was.
+- **Put the `eval-04` row on screen.** Haiku 4.5, the dropped tier, returns the
+  wrong answer on the child-swallowed-plastic case at **0.98 confidence**. One
+  cell, and it makes the calibration argument better than any explanation.
 
 ### Lab 8 — the beat that matters
 

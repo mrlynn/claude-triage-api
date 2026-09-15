@@ -19,11 +19,13 @@ import { wrapUntrusted } from "./untrusted";
  * THREE THINGS MAKE THAT AFFORDABLE, and they are the reason this file is
  * worth reading rather than just running:
  *
- *   1. **A smaller model.** Haiku 4.5 is $1/$5 per MTok against Opus 5's
- *      $5/$25. The preview is a hint, not a verdict, and a hint that is
- *      occasionally wrong is a fair trade for one that arrives while you are
- *      still typing. The page shows you both, side by side, precisely so the
- *      trade is visible instead of asserted.
+ *   1. **The cheaper tier, with thinking off.** Sonnet 5 is $2/$10 per MTok
+ *      against Opus 5's $5/$25. (This was Haiku 4.5 until the fast tier was
+ *      dropped; Haiku retires no sooner than 2026-10-15.) The preview is a
+ *      hint, not a verdict, and a hint that is occasionally wrong is a fair
+ *      trade for one that arrives while you are still typing. The page shows
+ *      you both, side by side, precisely so the trade is visible instead of
+ *      asserted.
  *   2. **The same cached prefix.** The policy handbook is identical to the one
  *      the real classifier reads, carrying the same cache breakpoint. The
  *      cache is per-model, so the first preview of a session pays a write and
@@ -40,8 +42,8 @@ import { wrapUntrusted } from "./untrusted";
  * injection, not a reason to drop the defence.
  */
 
-/** Haiku, deliberately. See the header — this is a hint, not a verdict. */
-export const LIVE_MODEL = process.env.LIVE_MODEL ?? "claude-haiku-4-5";
+/** The cheaper tier, deliberately. See the header — this is a hint, not a verdict. */
+export const LIVE_MODEL = process.env.LIVE_MODEL ?? "claude-sonnet-5";
 
 /**
  * Five fields is about 60 output tokens. The real schema's `summary` alone is
@@ -120,6 +122,10 @@ export function streamLive(message: string, signal?: AbortSignal) {
     {
       model: LIVE_MODEL,
       max_tokens: MAX_LIVE_TOKENS,
+      // Sonnet 5 thinks by default, and thinking counts against the 300-token
+      // ceiling above. Five enum fields do not need it, and a preview that
+      // pauses to reason is already stale. Accepted on Haiku 4.5 too.
+      thinking: { type: "disabled" },
       // Same handbook, same breakpoint, same order as the real classifier.
       // The context block is deliberately empty: a draft has no product or
       // order attached yet, and inventing one would change the cached prefix.

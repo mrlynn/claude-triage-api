@@ -33,6 +33,7 @@ import { app } from "../../src/server.js";
 import { anthropic } from "../../src/anthropic.js";
 import { MAX_TOKENS, MODEL_TIERS } from "../../src/config.js";
 import { summarizeUsage } from "../../src/lib/usage.js";
+import { outputConfigFor } from "../../src/lib/requests.js";
 import type { EvalCase } from "./score.js";
 
 /**
@@ -108,7 +109,12 @@ export async function judgeDrafts(sample: EvalCase[]): Promise<JudgeResult[]> {
       model: JUDGE_MODEL,
       max_tokens: MAX_TOKENS.nonStreaming,
       system: JUDGE_SYSTEM,
-      output_config: { effort: "medium", format: zodOutputFormat(JudgeSchema) },
+      // Gated even though the judge is pinned to the flagship: if someone
+      // points JUDGE_MODEL at Haiku 4.5, `effort` would be a 400.
+      output_config: {
+        ...outputConfigFor(JUDGE_MODEL, "medium").config,
+        format: zodOutputFormat(JudgeSchema),
+      },
       messages: [
         {
           role: "user",
@@ -122,8 +128,10 @@ export async function judgeDrafts(sample: EvalCase[]): Promise<JudgeResult[]> {
       results.push({
         id: testCase.id,
         verdict: "fail",
-        rationale: "Judge output failed schema validation.",
-        broken_rules: ["judge_unparseable"],
+        rationale: `Judge produced no valid verdict (stop_reason: ${judged.stop_reason}).`,
+        broken_rules: [
+          judged.stop_reason === "refusal" ? "judge_refused" : "judge_unparseable",
+        ],
         cost_usd: summarizeUsage(judged.usage, judged.model).estimated_cost_usd,
       });
       continue;

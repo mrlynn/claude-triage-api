@@ -295,10 +295,20 @@ document you supplied, and the pointer comes from the API rather than from the
 model's memory — a stronger guarantee than any string comparison in
 `citations.ts`.
 
-It is not used here, and the reason is a trade rather than an oversight: the
-handbook lives in the **cached system prefix**, which is what makes a warm
-triage call $0.006 instead of $0.033. Citations wants that document in
-`messages`. This repo chose the cache.
+It is not used here, and the first reason is a hard constraint: **Citations
+and structured outputs cannot be combined.** Enable citations on any document
+block while also sending `output_config.format` and the API returns a 400,
+because citation blocks interleave with the text and a strict JSON schema has
+nowhere to put them. `/v1/resolve` returns a schema-validated `Resolution`, so
+turning Citations on means giving that up or making a second, unstructured call.
+
+The second reason is cost shape. The handbook lives in the **cached system
+prefix**, which is what makes a warm triage call $0.006 instead of $0.033.
+Citations needs it as a `document` block in `messages`. A document block can
+carry `cache_control` too, so the saving is not automatically lost, but the
+per-request context that currently sits after the system breakpoint would have
+to move behind the document, and the cache layout gets rebuilt. This repo kept
+structured output and the existing prefix, and paid for it with a weaker check.
 
 **Q8.** `cited_without_search` is computed, returned in `meta.guardrails`, and
 deliberately does *not* fail anything. Make the case for promoting it to a

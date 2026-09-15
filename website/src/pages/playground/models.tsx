@@ -8,7 +8,7 @@ export default function ModelsPage(): ReactNode {
   return (
     <Layout
       title="Model matrix"
-      description="The same twelve cases across three tiers. Accuracy is the least interesting column."
+      description="The same twelve cases across Opus 5, Sonnet 5, and the dropped Haiku tier. Accuracy is the least interesting column."
     >
       <main className="container margin-vert--lg">
         <Heading as="h1">Model matrix</Heading>

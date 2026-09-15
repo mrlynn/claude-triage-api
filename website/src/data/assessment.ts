@@ -136,7 +136,7 @@ export const DIAGNOSIS: ScoredQuestion[] = [
     ],
     answer: 1,
     explain:
-      "With no deploy, look for something that varies by wall-clock or by data rather than by code — an injected timestamp, a tool list rebuilt in nondeterministic order, a per-tenant block that moved ahead of the breakpoint. Traffic dropping is the second candidate and is worth eliminating with a request-rate check. The last option is not impossible without a deploy — the minimum is a property of the model, so a floating alias that rolled to a model with a higher minimum would do it — but it is the rarer path.",
+      "With no deploy, look for something that varies by wall-clock or by data rather than by code — an injected timestamp, a tool list rebuilt in nondeterministic order, a per-tenant block that moved ahead of the breakpoint. Traffic dropping is the second candidate and is worth eliminating with a request-rate check. The last option is not impossible without a deploy — the minimum is a property of the model, so an alias on an older model (current dateless ids like claude-opus-5 are pinned snapshots, but claude-haiku-4-5 is still an alias) resolving to a snapshot with a higher minimum would do it — but it is the rarer path.",
   },
   {
     id: "d2",

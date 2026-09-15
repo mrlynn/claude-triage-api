@@ -2,7 +2,7 @@
  * Capability gating, tested.
  *
  * TEACHING NOTE: this file exists because `supportsAdaptiveThinking` sat in
- * MODEL_CATALOG, fully populated for all three tiers, and was read by NOTHING.
+ * MODEL_CATALOG, fully populated for every model in it, and was read by NOTHING.
  * The flag documented a real constraint and no code consulted it, so
  * `/v1/draft` sent adaptive thinking to every model and returned
  * `adaptive thinking is not supported on this model` — a 400 — the moment

@@ -34,6 +34,7 @@ import { TicketInput } from "../schemas.js";
 import { buildTriageRequest } from "../lib/requests.js";
 import { summarizeUsage, sumUsage, type UsageReport } from "../lib/usage.js";
 import { toHttpError } from "../lib/errors.js";
+import { explainMissingOutput } from "../lib/missing-output.js";
 import { pickModel, ESCALATE_BELOW } from "../lib/route-model.js";
 import { MODEL_TIERS, MODEL_CATALOG, specFor } from "../config.js";
 
@@ -116,14 +117,9 @@ triageRoute.post("/", async (c) => {
       : null;
 
     if (!response.parsed_output) {
-      return c.json(
-        {
-          error: "unparseable_output",
-          detail: "The model response did not validate against the triage schema.",
-          stop_reason: response.stop_reason,
-        },
-        502,
-      );
+      // A refusal, a truncation, and a schema miss all arrive as null here.
+      const missing = explainMissingOutput(response);
+      return c.json(missing.body, missing.status);
     }
 
     return c.json({
