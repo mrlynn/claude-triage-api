@@ -384,4 +384,44 @@ a 30-day TTL — and the
 figure sourced from a database rather than from a constants file. A control is
 only worth building if something downstream acts on it.
 
+```mistake
+[
+  {
+    "id": "delimit-without-escape",
+    "wrong": "return `<${tag}>\\n${text}\\n</${tag}>`;",
+    "right": "const escaped = text.replace(/</g, \"&lt;\");\nreturn `<${tag}>\\n${escaped}\\n</${tag}>`;",
+    "symptom": "Ordinary tickets classify correctly. A message that closes the tag and opens its own `<system>` block is read as instructions.",
+    "why": "A delimiter is a convention the attacker can type too. Escaping `<` makes the tags you wrote the only real tags in the block."
+  },
+  {
+    "id": "strip-closing-tag",
+    "wrong": "const escaped = text.replaceAll(\"</customer_message>\", \"\");",
+    "right": "const escaped = text.replace(/</g, \"&lt;\");",
+    "symptom": "Blocks the exact attack you tested. `</Customer_Message>`, `</customer_message >`, or a tag split so that stripping reassembles it all still get through.",
+    "why": "Stripping known-bad strings is a deny-list, and there is always another spelling. Escaping the one character every tag needs closes the whole class."
+  },
+  {
+    "id": "authority-from-model-boolean",
+    "wrong": "if (validated.data.within_agent_authority) return c.json({ resolution: validated.data });",
+    "right": "const authority = enforceAuthority(validated.data, trace);\nreturn c.json({ resolution: authority.corrected, meta: { authority_allowed: authority.allowed } });",
+    "symptom": "Normal refunds work. A persuasive ticket gets a $900 refund marked within authority, because the model was talked into saying so.",
+    "why": "The boolean is the model's opinion about whether the model may act. Recompute it from the tool trace and the $200 limit, and let the recomputation win."
+  },
+  {
+    "id": "refund-history-from-reasoning",
+    "wrong": "const prior = Number(resolution.reasoning.match(/\\$(\\d+)/)?.[1] ?? 0);",
+    "right": "const prior = priorRefunds30d(trace);",
+    "symptom": "Usually the same number. When the ticket persuades the model to understate past refunds, the check reads the understated figure and approves.",
+    "why": "The reasoning is what the model says the back office said. The trace is what the back office actually returned."
+  },
+  {
+    "id": "citation-must-come-from-search",
+    "wrong": "unsupported: cited.filter((c) => !seen.has(c)),",
+    "right": "unsupported: cited.filter((c) => !REAL_CLAUSES.has(c)),\ncited_without_search: cited.filter((c) => REAL_CLAUSES.has(c) && !seen.has(c)),",
+    "symptom": "Real clauses like 2.7 are flagged as fabricated on every run, because the model read them in the cached handbook without calling `search_policy`.",
+    "why": "The whole handbook is in the system prompt, so 'not in a tool result' is not evidence of invention. The check that holds is whether the clause exists."
+  }
+]
+```
+
 **Answers:** [../solutions/lab-8.md](../solutions/lab-8.md)
