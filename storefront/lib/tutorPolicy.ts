@@ -22,9 +22,11 @@
  *      the third hint is the strongest one whatever the model thought it wrote,
  *      and there is no fourth;
  *   6. keeps a starter only if every defect in it is an authored mistake from
- *      the session's labs whose line is really in the code — and fails any
- *      criterion whose planted line is still in the attempt, whatever the
- *      review said.
+ *      the session's labs whose line is really in the code, and tells the
+ *      review which planted lines are still in the attempt. It does NOT fail
+ *      those criteria by itself: a correct fix can leave a planted line behind,
+ *      unused, and a substring check cannot tell dead code from a live bug.
+ *      That judgement is the model's, pointed at the exact line.
  *
  * Deliberately free of imports so it can be unit-tested from the root package
  * without Next, `server-only`, or the SDK. The website hand-mirrors the types
@@ -425,26 +427,13 @@ export function unfixed<M extends Pick<MistakeItem, "wrong">>(planted: readonly 
   return planted.filter((m) => attempt.includes(m.wrong.trim()));
 }
 
-export function validateReview(
-  review: Review,
-  known: ReadonlySet<string>,
-  /** Planted mistakes whose line is still in the attempt. Their criteria fail, whatever the model judged. */
-  stillPlanted: readonly (Pick<MistakeItem, "wrong"> & { criterion: number })[] = [],
-): Review {
-  const rubric = review.rubric.map((r, i) => {
-    const planted = stillPlanted.find((m) => m.criterion === i);
-    if (planted && r.met) {
-      return {
-        ...r,
-        met: false,
-        gap: "incorrect" as const,
-        note: `The starter's mistake is still in your code: \`${planted.wrong.trim()}\``,
-      };
-    }
+export function validateReview(review: Review, known: ReadonlySet<string>): Review {
+  const rubric = review.rubric.map((r) => ({
+    ...r,
     // A met criterion has no gap; an unmet one without a stated gap was at least not addressed.
-    return { ...r, gap: r.met ? null : (r.gap ?? "missing") };
-  });
-  const anyMissed = rubric.some((r) => !r.met) || stillPlanted.length > 0;
+    gap: r.met ? null : (r.gap ?? "missing"),
+  }));
+  const anyMissed = rubric.some((r) => !r.met);
   return {
     ...review,
     rightSoFar: review.rightSoFar.trim(),
