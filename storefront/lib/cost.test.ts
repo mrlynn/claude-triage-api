@@ -1,8 +1,7 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
-import { summarizeUsage } from "../../src/lib/usage";
 import { PRICING_BY_MODEL } from "./pricing.generated";
 import { TUTOR_FIELDS } from "./tutorPolicy";
 import {
@@ -32,7 +31,17 @@ const usage = {
   output_tokens: 2_222,
 };
 
-test("costMicros agrees with src/lib/usage.ts for every catalogued model", () => {
+/**
+ * Loaded by path at runtime, not imported: Vercel builds `storefront/` on its
+ * own, where `../src` does not exist, and `next build` type-checks this file.
+ * Skipped there; it runs wherever the whole repo is checked out.
+ */
+const usageModule = join(here, "..", "..", "src", "lib", "usage.ts");
+
+test("costMicros agrees with src/lib/usage.ts for every catalogued model", { skip: !existsSync(usageModule) }, async () => {
+  const { summarizeUsage } = (await import(usageModule)) as {
+    summarizeUsage: (usage: object, model: string) => { estimated_cost_usd: number; uncached_cost_usd: number };
+  };
   for (const model of Object.keys(PRICING_BY_MODEL)) {
     const report = summarizeUsage(usage, model);
     assert.equal(costMicros(usage, model) / 1e6, report.estimated_cost_usd, `${model} cached`);
