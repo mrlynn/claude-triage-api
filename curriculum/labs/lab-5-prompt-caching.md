@@ -288,8 +288,8 @@ signal?)
   },
   {
     "id": "breakpoint-on-volatile-block",
-    "wrong": "blocks.push({ type: \"text\", text: volatile, cache_control: { type: \"ephemeral\" } });",
-    "right": "// The breakpoint belongs on the frozen handbook block, not on per-request context.\nblocks.push({ type: \"text\", text: volatile });",
+    "wrong": "{ type: \"text\", text: volatile, cache_control: { type: \"ephemeral\" } },",
+    "right": "{ type: \"text\", text: `${roleText}\\n\\n---\\n\\n${POLICY_HANDBOOK}`, cache_control: { type: \"ephemeral\" } },\n{ type: \"text\", text: volatile },",
     "symptom": "Every call reports a large `cache_creation_input_tokens` and a `cache_read_input_tokens` of 0: the request pays the write premium each time and never reads.",
     "why": "The cached prefix runs up to the breakpoint. Put it after per-request text and the prefix is different on every call."
   },

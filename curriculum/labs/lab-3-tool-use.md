@@ -272,10 +272,10 @@ the number means.
   },
   {
     "id": "iteration-cap-unchecked",
-    "wrong": "return c.json({ resolution });",
-    "right": "const hitCap = usagePerTurn.length >= MAX_ITERATIONS;\n// When hitCap is true the loop was cut off, so the resolution may rest on lookups it never made.\nreturn c.json({ resolution, meta: { stop_reason: final.stop_reason, hit_iteration_cap: hitCap } });",
-    "symptom": "HTTP 200 and a schema-valid body, even when the loop stopped at the cap before it looked up the order.",
-    "why": "Hitting `max_iterations` is not an error. Nothing downstream can tell a finished answer from an interrupted one unless you check and say so."
+    "wrong": "hit_iteration_cap: false,",
+    "right": "hit_iteration_cap: turns >= MAX_ITERATIONS,",
+    "symptom": "HTTP 200 and a schema-valid body. The response always says the cap was not hit, including on runs that stopped at the cap before looking the order up.",
+    "why": "Hitting `max_iterations` is not an error. Nothing downstream can tell a finished answer from an interrupted one unless the code measures it and says so."
   }
 ]
 ```

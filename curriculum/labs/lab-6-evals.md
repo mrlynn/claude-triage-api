@@ -209,10 +209,10 @@ of times the judge preferred whichever came first. If that rate is far from
   },
   {
     "id": "confidence-single-mean",
-    "wrong": "console.log(`  mean confidence: ${mean(results.map((r) => r.confidence))}`);",
-    "right": "console.log(`  mean confidence on passes: ${fmtMetric(calibration.onPass)}`);\nconsole.log(`  mean confidence on fails:  ${fmtMetric(calibration.onFail)}`);",
-    "symptom": "Prints a healthy-looking 0.91 whether or not the wrong answers also score 0.91.",
-    "why": "A confidence score is useful only if it separates right answers from wrong ones. One mean hides the gap that decides whether you can route on it."
+    "wrong": "if (meanConfidence > 0.8) console.log(\"confidence is well calibrated\");",
+    "right": "const gap = calibration.onPass - calibration.onFail;\nconsole.log(`confidence gap between right and wrong answers: ${gap.toFixed(2)}`);",
+    "symptom": "Reports the score as calibrated whenever it is high, including when the wrong answers score just as high as the right ones.",
+    "why": "A confidence score is useful only if it separates right answers from wrong ones. A high mean says nothing about that gap, which is what decides whether you can route on it."
   }
 ]
 ```
