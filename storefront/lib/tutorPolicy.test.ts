@@ -5,6 +5,7 @@ import {
   TUTOR_LIMITS,
   assembleDrill,
   mistakeProblem,
+  composeExercise,
   nextHintLevel,
   resolveDefects,
   unfixed,
@@ -115,9 +116,10 @@ test("a pass with an unmet criterion is recorded as revise", () => {
   const review = validateReview(
     {
       verdict: "pass",
+      rightSoFar: "",
       rubric: [
-        { criterion: "sets max_tokens", met: true, note: "" },
-        { criterion: "reads stop_reason", met: false, note: "" },
+        { criterion: "sets max_tokens", met: true, gap: null, note: "" },
+        { criterion: "reads stop_reason", met: false, gap: null, note: "" },
       ],
       fixes: [{ issue: "i", why: "w", labRef: "lab-77" }],
       beforeNextLesson: "b",
@@ -130,7 +132,7 @@ test("a pass with an unmet criterion is recorded as revise", () => {
 
 test("a revise verdict with every criterion met stays revise", () => {
   const review = validateReview(
-    { verdict: "revise", rubric: [{ criterion: "c", met: true, note: "" }], fixes: [], beforeNextLesson: "" },
+    { verdict: "revise", rightSoFar: "", rubric: [{ criterion: "c", met: true, gap: null, note: "" }], fixes: [], beforeNextLesson: "" },
     known,
   );
   assert.equal(review.verdict, "revise");
@@ -311,9 +313,10 @@ test("a criterion whose planted mistake is still in the attempt fails, whatever 
   const review = validateReview(
     {
       verdict: "pass",
+      rightSoFar: "",
       rubric: [
-        { criterion: "narrows content", met: true, note: "Looks good." },
-        { criterion: "budget fits", met: true, note: "" },
+        { criterion: "narrows content", met: true, gap: null, note: "Looks good." },
+        { criterion: "budget fits", met: true, gap: null, note: "" },
       ],
       fixes: [],
       beforeNextLesson: "",
@@ -323,6 +326,64 @@ test("a criterion whose planted mistake is still in the attempt fails, whatever 
   );
   assert.equal(review.verdict, "revise");
   assert.equal(review.rubric[0]?.met, false);
+  // The line is there and wrong: that is incorrect work, not missing work.
+  assert.equal(review.rubric[0]?.gap, "incorrect");
   assert.match(review.rubric[0]?.note ?? "", /content\[0\]\.text/);
   assert.equal(review.rubric[1]?.met, true);
+  assert.equal(review.rubric[1]?.gap, null);
+});
+
+test("an unmet criterion always says whether it was missing or wrong, and a met one never does", () => {
+  const review = validateReview(
+    {
+      verdict: "revise",
+      rightSoFar: "  You correctly say the call succeeded. ",
+      rubric: [
+        { criterion: "a", met: false, gap: null, note: "" },
+        { criterion: "b", met: false, gap: "incorrect", note: "" },
+        { criterion: "c", met: true, gap: "missing", note: "" },
+      ],
+      fixes: [],
+      beforeNextLesson: "",
+    },
+    known,
+  );
+  assert.deepEqual(review.rubric.map((r) => r.gap), ["missing", "incorrect", null]);
+  assert.equal(review.rightSoFar, "You correctly say the call succeeded.");
+});
+
+test("the rubric is the deliverable's parts, in order, and nothing else", () => {
+  const { exercise, droppedParts } = composeExercise({
+    prompt: "p",
+    format: "Two or three sentences:",
+    parts: [
+      { ask: "explain why it is truncated despite HTTP 200.", criterion: "Says the call succeeded but hit the ceiling" },
+      { ask: "name the field and value that proves it", criterion: "Names stop_reason: \"max_tokens\"" },
+      { ask: " ", criterion: "An unasked-for check with no part" },
+      { ask: "state the one-line fix", criterion: "Says to raise max_tokens" },
+    ],
+  });
+  assert.equal(
+    exercise.deliverable,
+    "Two or three sentences: (1) explain why it is truncated despite HTTP 200; (2) name the field and value that proves it; (3) state the one-line fix.",
+  );
+  assert.deepEqual(exercise.rubric, [
+    "Says the call succeeded but hit the ceiling",
+    "Names stop_reason: \"max_tokens\"",
+    "Says to raise max_tokens",
+  ]);
+  assert.equal(droppedParts, 1);
+});
+
+test("a deliverable too long to echo loses whole parts, never half of one", () => {
+  const { exercise, droppedParts } = composeExercise({
+    prompt: "p",
+    format: "",
+    parts: Array.from({ length: 5 }, (_, i) => ({ ask: `${i} ${"x".repeat(200)}`, criterion: `c${i}` })),
+  });
+  assert.ok(exercise.deliverable.length <= TUTOR_FIELDS.deliverable);
+  assert.equal(exercise.rubric.length, 3);
+  assert.equal(droppedParts, 2);
+  // The last criterion kept is the last part shown.
+  assert.match(exercise.deliverable, /\(3\) 2 x+\.$/);
 });
