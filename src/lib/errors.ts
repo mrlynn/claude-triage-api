@@ -67,6 +67,25 @@ export function toHttpError(err: unknown): { status: number; body: ApiErrorBody 
       },
     };
   }
+  // `messages.parse()` THROWS when the text does not parse or validate — a
+  // truncated JSON body, or a value the schema rejects. It is not an HTTP
+  // error, so none of the branches above catch it, and without this it would
+  // surface as a 500 that blames this service. The SDK has no subclass for it,
+  // so this is the one place the rule above bends: the message prefix is the
+  // only signal the SDK gives.
+  if (
+    err instanceof Anthropic.AnthropicError &&
+    err.message.startsWith("Failed to parse structured output")
+  ) {
+    return {
+      status: 502,
+      body: {
+        error: "unparseable_output",
+        detail: err.message.slice(0, 500),
+        retryable: false,
+      },
+    };
+  }
   return {
     status: 500,
     body: {

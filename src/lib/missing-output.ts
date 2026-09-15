@@ -1,19 +1,26 @@
 /**
  * Why `parsed_output` is null, stated as an HTTP response.
  *
- * TEACHING NOTE: `messages.parse()` gives you `parsed_output: null` for several
- * different reasons, and they are not the same failure. Reporting all of them
- * as "unparseable" is how a refusal ends up in a dashboard as a schema bug.
+ * TEACHING NOTE: know which failure arrives which way. In this SDK,
+ * `messages.parse()` does two different things when the output is unusable:
  *
- *  - `refusal`     The model declined. The output may not match the schema,
- *                  and `stop_details` says why. Not an upstream fault: 422.
+ *  - It THROWS `AnthropicError("Failed to parse structured output…")` when
+ *    there IS text but it does not parse or validate: truncated JSON, or a
+ *    value the zod schema rejects (including a `.min()`/`.max()` bound, which
+ *    the SDK checks client-side because the API does not enforce it). That
+ *    path has no response object, so `toHttpError` maps it to 502.
+ *  - It returns `parsed_output: null` when there is NO text block to parse,
+ *    most often a refusal. That path has the response, so branch on
+ *    `stop_reason` here.
+ *
+ * The tool runner and the Batches API have no `parse()`: you validate the
+ * text yourself, so every case lands here, and `stop_reason` tells them apart:
+ *
+ *  - `refusal`     The model declined; `stop_details` says why. Not an
+ *                  upstream fault: 422.
  *  - `max_tokens`  Generation hit the ceiling mid-JSON. Thinking counts
  *                  against `max_tokens`, so this is a config problem: 502.
- *  - anything else The response ended normally and still did not validate
- *                  (for example a `.min()`/`.max()` bound the SDK checks
- *                  client-side, because the API does not enforce them): 502.
- *
- * Branch on `stop_reason` first. It is on every response and costs nothing.
+ *  - anything else The response ended normally and did not validate: 502.
  */
 /**
  * Structural rather than `Anthropic.Message`, so the beta tool runner's

@@ -11,7 +11,7 @@ from dataclasses import dataclass
 MODEL_TIERS = {
     "flagship": "claude-opus-5",
     "balanced": "claude-sonnet-5",
-    "fast": "claude-haiku-4-5",
+    # No "fast" tier: Haiku 4.5 was dropped (see MODEL_TIERS in src/config.ts).
 }
 
 MODEL = os.environ.get("TRIAGE_MODEL", MODEL_TIERS["flagship"])

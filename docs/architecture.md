@@ -240,8 +240,10 @@ against policy and is where a wrong answer costs real money. Putting these in
 one constant makes "what does quality cost here?" a one-line diff, which is
 exactly the experiment Lab 5 asks learners to run.
 
-One wrinkle that only appears once you tier models: **`effort` is not universal.**
-Haiku 4.5 rejects `output_config.effort` with a 400. `buildTriageRequest`
+One wrinkle that only appears once you compare models: **`effort` is not universal.**
+Haiku 4.5 rejects `output_config.effort` with a 400. It is no longer a tier here
+(the tiers are Opus 5 and Sonnet 5), but it stays in the catalog so the matrix
+can include it with `--models`. `buildTriageRequest`
 consults `supportsEffort` in the catalog and drops the field rather than making
 every caller remember, and `outputConfigFor` returns whether it applied so a
 comparison can say so out loud. A matrix that silently omitted this would be

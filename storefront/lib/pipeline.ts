@@ -270,7 +270,7 @@ export async function* runPipeline(
     ms: mark() - s,
     headline: "Validated against the schema",
     detail: {
-      why: "parsed_output is typed and can still be null — when generation was cut short, when the model refused, or when a bound the SDK checks client-side failed. Production code branches on stop_reason rather than asserting past it.",
+      why: "parsed_output is typed and can still be null — when the reply has no text to parse, most often a refusal. Text that does not validate makes parse() throw instead. Production code handles both rather than asserting past it.",
       category: response.parsed_output.category,
       confidence: response.parsed_output.confidence,
     },

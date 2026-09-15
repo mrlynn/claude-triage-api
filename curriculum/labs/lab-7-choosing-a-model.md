@@ -60,34 +60,39 @@ flowchart LR
 ## Step 1 — run the matrix
 
 ```bash
-npm run eval:models -- --no-judge
+npm run eval:models -- --models claude-opus-5,claude-sonnet-5,claude-haiku-4-5 --no-judge
 ```
 
-Three models, twelve cases, four in flight. About ninety seconds and $0.19.
+The default is two tiers, Opus 5 as flagship and Sonnet 5 as the cheap tier.
+This command adds Haiku 4.5 back on purpose, because the reasons it is no longer
+a tier are the most useful thing in this lab. Three models, twelve cases, four
+in flight. About ninety seconds and $0.22.
 
-> **A date on the `fast` row.** `claude-haiku-4-5` is an alias for
-> `claude-haiku-4-5-20251001`, and Anthropic commits to serving Haiku 4.5
-> only until **no sooner than October 15, 2026**. `claude-opus-5` and
-> `claude-sonnet-5` are pinned snapshots with retirement dates in 2027. A tier
-> choice includes how long you get to keep it. Check the
+> **Why there is no `fast` tier.** This repo used to route short tickets to
+> `claude-haiku-4-5`. It was dropped for three measured reasons you will
+> reproduce below: it cannot cache this prefix, it rejects `effort`, and its
+> wrong answers come back at high confidence. There is also a date on it:
+> `claude-haiku-4-5` is an alias for `claude-haiku-4-5-20251001`, and Anthropic
+> commits to serving Haiku 4.5 only until **no sooner than October 15, 2026**.
+> `claude-opus-5` and `claude-sonnet-5` are pinned snapshots with retirement
+> dates in 2027. A tier choice includes how long you get to keep it; see the
 > [model deprecations](https://platform.claude.com/docs/en/about-claude/model-deprecations)
-> page before you write the decision in Step 6.
+> page.
 
-Read the table top to bottom before you read any single column. The measured
-result on this repo, across four runs:
+Read the table top to bottom before you read any single column. One run on
+this repo, 2026-09-15, checked in as
+[`website/src/data/model-matrix.json`](../../website/src/data/model-matrix.json):
 
-| model | accuracy | p50 | p95 | $/mo @ 4,100/wk | calibration gap | prefix cached? |
-|---|---|---|---|---|---|---|
-| `claude-opus-5` | 10–12 / 12 | 17.8s | 22.4s | ~$137 | 0.35–0.41 | yes |
-| `claude-sonnet-5` | 7–9 / 12 | 15.7s | 18.2s | ~$70–98 † | 0.20–0.30 | yes |
-| `claude-haiku-4-5` | 6–8 / 12 | 9.1s | 9.7s | ~$67–74 | −0.06 to +0.13 | **no** |
+| model | effort | accuracy | p50 | p95 | $/ticket | $/mo @ 4,100/wk | calibration gap | prefix cached? |
+|---|---|---|---|---|---|---|---|---|
+| `claude-opus-5` | low | 11 / 12 | 3.3s | 5.5s | $0.0074 | ~$132 | 0.44 | yes |
+| `claude-sonnet-5` | low | 9 / 12 | 2.7s | 4.4s | $0.0068 | ~$121 | 0.05 | yes |
+| `claude-haiku-4-5` (dropped) | n/a | 8 / 12 | 3.7s | 4.2s | $0.0040 | ~$71 | 0.22 | **no** |
 
-† The Sonnet projection was measured while `MODEL_CATALOG` encoded $3/$15 for
-Sonnet 5. That rate has since been corrected to **$2/$10**, so a re-run lands
-roughly a third lower. The `$/mo` column is computed from `specFor()` at run
-time, not hardcoded, so `npm run eval:models` gives you the current figure — and
-the fact that a stale rate in one file silently propagated into a printed table
-in another is the same lesson this step is already about.
+One run is one sample. This set moves by up to two cases run-to-run with
+nothing changed, and the calibration gap moves more than that: across four
+earlier runs Opus ranged 0.35–0.41, Sonnet 0.20–0.30, and Haiku −0.06 to
++0.13. Read the gaps as "large, small, unreliable", not as three-digit facts.
 
 The latency columns come from the same run and almost nobody reads them either.
 Two things about how they were measured, because a latency number without its
@@ -98,10 +103,10 @@ are also whole-request times through the local route, not time-to-first-token �
 `/v1/triage` does not stream, and for a classifier that is the number that
 matters.
 
-### The cost column is lying to you, and Lab 5 told you how
+### The cost column is lying to you, twice
 
-Haiku is roughly half the wall clock of Opus and appears to cost about half as
-much. Stop on that second number, because it does not survive five seconds of
+Start with Haiku, the dropped tier. It appears to cost about half as much as
+Opus. Stop on that number, because it does not survive five seconds of
 arithmetic. Haiku 4.5 is **$1/$5** per MTok against Opus 5's **$5/$25** — five
 times cheaper per token. A tier that is five times cheaper per token is not
 half the price unless something else is going on.
@@ -113,7 +118,7 @@ curl -s localhost:8787/v1/estimate -H 'content-type: application/json' \
   -d '{"message":"test","role":"triage"}' | jq '{tokens, meta}'
 ```
 
-Now point the whole service at the cheap tier and run the smoke test, which
+Now point the whole service at Haiku and run the smoke test, which
 makes two identical-prefix calls and asserts on `cache_hit`:
 
 ```bash
@@ -169,7 +174,7 @@ on a model under its minimum, smoke fails if a hit ever *does* appear, since
 that would mean `src/config.ts` is stale and this lab's cost table needs
 re-deriving.
 
-Start the server on the cheap tier and watch what it says before you send it
+Start the server on Haiku and watch what it says before you send it
 anything:
 
 ```bash
@@ -201,33 +206,40 @@ That is Lab 5's silent cache miss, sitting inside a cost table in a different
 lab, wearing a tier comparison as a disguise — and it was in this table for
 some time before anyone divided $5 by $1 and asked why the answer was not five.
 
-The checked-in run in
-[`website/src/data/model-matrix.json`](../../website/src/data/model-matrix.json)
-settles it without needing a new run. Read `cost_per_ticket`:
+Now the second lie, and it is in the row you would actually ship. Read
+`cost_per_ticket` in the checked-in run:
 
-| model | $/ticket, measured |
-|---|---|
-| `claude-opus-5` | 0.0076 |
-| `claude-sonnet-5` | 0.0039 |
-| `claude-haiku-4-5` | 0.0038 |
+| model | $/ticket, 12-case run | $/ticket, warm single call |
+|---|---|---|
+| `claude-opus-5` | 0.0074 | 0.0062 |
+| `claude-sonnet-5` | 0.0068 | 0.0027 |
+| `claude-haiku-4-5` | 0.0040 | 0.0043 |
 
-Sonnet and Haiku cost **the same per ticket**, to two significant figures,
-while Sonnet's per-token rate is double Haiku's. There is no version of that
-which is a coincidence. Sonnet's prefix is cached and Haiku's is not; the
-discount and the rate difference happen to cancel. Two rows agreeing is the
-kind of result that should stop you, and for a while it did not stop anyone.
+In the matrix, Sonnet costs **almost the same as Opus** per ticket while its
+per-token rate is less than half. There is no version of that which is a
+coincidence. Open the run's JSON in `evals/results/` and read the per-case
+costs: Sonnet's first four cases cost about $0.014 each and the next eight
+about $0.0025–0.004. Four in flight against a cold cache means four requests
+race to write the same prefix, and each pays the 1.25× write rate on ~5,000
+tokens. Opus had been run minutes earlier, so its entry was already warm. A
+twelve-case run is short enough that four cold writes dominate the average.
+
+Warm, one call at a time, the order flips: **cached Sonnet is cheaper per
+ticket than uncached Haiku**, despite a rate card that is double. That single
+row is most of why the fast tier went away.
 
 > **The transferable habit:** when a cost measurement disagrees with the rate
 > card, believe neither until you can explain the gap. The explanation is
 > almost always a discount you assumed you were getting.
 
-**Q1a.** The savings you would get from switching to Haiku are roughly $63 a
-month as measured, or $117 if the cache worked. Both are noise against a $4,000
-budget. So does this discovery change the tier decision at all? Say what it
-changes and what it does not — they are not the same thing.
+**Q1a.** At warm rates, moving triage from Opus to Sonnet saves about $63 a
+month, and fixing Haiku's cache would have made it cheaper still. Both are
+noise against a $4,000 budget. So do these two cost discoveries change the tier
+decision at all? Say what they change and what they do not — they are not the
+same thing.
 
 **Q1.** Priya's budget is $4,000 a month. Every row above fits inside it with
-between thirty and sixty times the headroom. What does that do to the argument
+at least thirty times the headroom. What does that do to the argument
 for moving down a tier?
 
 ## Step 2 — read the disagreement matrix, not the score
@@ -235,10 +247,11 @@ for moving down a tier?
 The score tells you how many. The matrix tells you which, and which is the
 question you can act on.
 
-Two patterns reproduce across runs. `eval-04` — the safety case, a customer
-reporting that a child swallowed part of a product — fails on Haiku in three
-runs out of four and never fails on Opus. And `eval-10`, delivered-not-received
-under clause 3.4, fails on both cheap tiers nearly every time.
+Two patterns reproduce across runs. `eval-10`, delivered-not-received under
+clause 3.4, fails on both cheaper models in this run and nearly every earlier
+one. And `eval-04` — the safety case, a customer reporting that a child
+swallowed part of a product — fails on Haiku in this run and in three of four
+earlier ones, and has never failed on Opus. Sonnet passed it here.
 
 Neither is random. Both are cases where the correct answer requires holding two
 handbook rules at once and preferring the one that is not the obvious reading.
@@ -250,16 +263,18 @@ properly?
 
 ## Step 3 — the column nobody reads
 
-Look at the calibration gap again. Opus separates its wrong answers from its
-right ones by about 0.38. Haiku separates them by roughly **zero**, and in two
-of four runs the gap came out *negative* — it was more confident on the cases
-it got wrong than on the ones it got right.
+Look at the calibration gap again. Opus separates its wrong answer from its
+right ones by about 0.44. Sonnet, in this run, separates them by **0.05**: it
+was wrong on `eval-08` at 0.90 confidence and on `eval-10` at 0.70, which is
+where most of its right answers sit too. Earlier runs put Sonnet's gap at
+0.20–0.30, so treat this run as a warning rather than a verdict, and treat the
+spread itself as the finding: on twelve cases, the cheap tier's calibration is
+not stable enough to build on without more data.
 
-One row makes the point better than the aggregate does. On `eval-04` — the
-safety case, a customer reporting that a child swallowed part of a product —
-Haiku returns the wrong classification at **0.95 confidence**. Not hedged, not
-borderline: the highest score it gave any case in the run, on the case where
-being wrong is most expensive.
+Haiku makes the point without needing an aggregate. On `eval-04`, the safety
+case, it returns the wrong classification at **0.98 confidence** — the highest
+score it gave any case in the run, on the case where being wrong is most
+expensive. It did the same at 0.95 in an earlier run.
 
 Now consider what that does to the escalation mechanism you are about to build.
 `?escalate=true` re-runs on the flagship when confidence falls below 0.7. That
@@ -285,12 +300,12 @@ to your bill in that case?
   {
     "question": "Why does `evals/compare-models.ts` pin JUDGE_MODEL instead of judging with the model under test?",
     "options": [
-      "Cost — the flagship judge is cheaper than running three judges",
+      "Cost — one flagship judge is cheaper than a judge per tier",
       "Because a moved score would then have two possible causes and you could not tell them apart",
       "Because cheaper models cannot produce structured output"
     ],
     "answer": 1,
-    "explain": "If the ruler changes at the same time as the thing being measured, a difference in the result is unattributable: did the tier get worse, or did the grader get more lenient? Pinning the judge makes the comparison single-variable. The run prints both the judge id and a hash of the judge prompt so that two runs graded differently can be detected rather than silently compared. Option 3 is false — all three tiers produce valid structured output; that was checked before this lab was written.",
+    "explain": "If the ruler changes at the same time as the thing being measured, a difference in the result is unattributable: did the tier get worse, or did the grader get more lenient? Pinning the judge makes the comparison single-variable. The run prints both the judge id and a hash of the judge prompt so that two runs graded differently can be detected rather than silently compared. Option 3 is false — every model in the matrix supports structured outputs. (Haiku did throw one schema-validation error on `eval-06` in the 2026-09-15 run, which `/v1/triage` now reports as a 502 `unparseable_output`; that is a failure to count, not a missing capability.)",
     "note": "The same discipline applies to the gold set: change the cases or change the model, never both at once."
   }
 ]
@@ -300,8 +315,8 @@ to your bill in that case?
 
 Read [`src/lib/route-model.ts`](../../src/lib/route-model.ts). `pickModel`
 inspects the message before spending anything: high-stakes language goes to the
-flagship, short messages go to the cheap tier, everything else lands in the
-middle.
+flagship, and everything else goes to the cheap tier. (When there was a Haiku
+tier, short messages went there and long ones to Sonnet.)
 
 ```bash
 curl -s 'localhost:8787/v1/triage?tier=auto' -H 'content-type: application/json' \
@@ -338,9 +353,10 @@ call — the same trap `/v1/resolve` documents for tool loops, arriving in a
 different disguise.
 
 **Q5.** Escalation fires on the cases the cheap model is unsure about. Step 3
-established that on Haiku those are not reliably the cases it gets wrong. So
-what is `?escalate=true` worth on the cheap tier, and on which tier is it
-actually worth something?
+established that on a model with a small calibration gap those are not
+reliably the cases it gets wrong. So what is `?escalate=true` worth on Sonnet,
+given one run at 0.05 and four earlier runs at 0.20–0.30, and what would you
+measure before trusting it?
 
 ## Step 6 — write the decision down
 
@@ -366,7 +382,8 @@ You should be able to answer, without looking anything up:
 - [ ] What does a calibration gap near zero do to confidence-based routing?
 - [ ] Why must the judge be pinned when the model under test varies?
 - [ ] Where does `?tier=auto` read untrusted input, and what follows from that?
-- [ ] Which tier silently loses prompt caching, and how would you have caught it from the cost column alone?
+- [ ] Which model silently loses prompt caching, and how would you have caught it from the cost column alone?
+- [ ] Why can a twelve-case run make a cheap tier look as expensive as the flagship?
 
 ---
 

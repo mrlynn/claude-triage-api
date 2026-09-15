@@ -388,10 +388,12 @@ loudly as a successful attack. ~$0.40. See
 npm run eval:models
 ```
 
-The tier matrix: the same twelve cases against Opus, Sonnet, and Haiku, with a
-**pinned** judge and a per-case disagreement grid. `--emit-site` writes the
+The tier matrix: the same twelve cases against the two tiers, Opus 5 and
+Sonnet 5 (add `--models claude-opus-5,claude-sonnet-5,claude-haiku-4-5` to
+include the dropped Haiku tier), with a **pinned** judge and a per-case
+disagreement grid. `--emit-site` writes the
 summary the course site renders, so the published numbers trace to a command.
-About 90 seconds and $0.19. See [Lab 7](curriculum/labs/lab-7-choosing-a-model.md).
+About 90 seconds and $0.20. See [Lab 7](curriculum/labs/lab-7-choosing-a-model.md).
 
 ```bash
 npm run eval
@@ -486,43 +488,48 @@ Rank the defences by kind. Escaping `<` and comparing `$900 > $200` hold by
 construction. Prompt instructions hold by probability. Never let a probability
 be the only thing between an attacker and money.
 
-**Model tiering** — measured across four runs of `npm run eval:models`:
+**Model tiering** — one run of `npm run eval:models` with Haiku 4.5 added back
+for comparison, 2026-09-15:
 
-| model | accuracy | p50 | p95 | $/mo @ 4,100/wk | calibration gap |
-|---|---|---|---|---|---|
-| `claude-opus-5` | 10–12 / 12 | 17.8s | 22.4s | ~$137 | 0.35–0.41 |
-| `claude-sonnet-5` | 7–9 / 12 | 15.7s | 18.2s | ~$70–98 | 0.20–0.30 |
-| `claude-haiku-4-5` | 6–8 / 12 | 9.1s | 9.7s | ~$67–74 | −0.06 to +0.13 |
+| model | accuracy | p50 | p95 | $/ticket (12-case run) | $/ticket (warm) | calibration gap |
+|---|---|---|---|---|---|---|
+| `claude-opus-5` | 11 / 12 | 3.3s | 5.5s | $0.0074 | $0.0062 | 0.44 |
+| `claude-sonnet-5` | 9 / 12 | 2.7s | 4.4s | $0.0068 | $0.0027 | 0.05 |
+| `claude-haiku-4-5` (dropped) | 8 / 12 | 3.7s | 4.2s | $0.0040 | $0.0043 | 0.22 |
 
 Latency is whole-request through the local route, four cases in flight, models
 run sequentially so one tier never queues behind another. Not
-time-to-first-token — `/v1/triage` does not stream.
+time-to-first-token — `/v1/triage` does not stream. One run is one sample: this
+set moves by up to two cases run-to-run, and across four earlier runs the gaps
+ranged 0.35–0.41 (Opus), 0.20–0.30 (Sonnet) and −0.06 to +0.13 (Haiku).
 
 Four findings, none of which the accuracy column alone would give you.
 
-Every tier lands **30–60× under Priya's $4,000 budget**, so cost is not a
-binding constraint at this volume and the usual "move down a tier to save
-money" reflex buys ~$65/month at the price of three to five cases in twelve.
+Every tier lands **more than 30× under Priya's $4,000 budget**, so cost is not a
+binding constraint at this volume. The usual "move down a tier to save money"
+reflex buys about $63/month at warm rates, at the price of one to three cases
+in twelve.
 
-Latency is not a constraint here either, and it is worth saying so out loud
-rather than quietly not mentioning it. Haiku is half the wall clock of Opus,
-and nothing in Northwind's queue is waiting on a human — the tickets are
-classified faster than they arrive at every tier. A real, measured, printed
-column can still be irrelevant to the decision, and knowing which of your
-columns binds is most of the skill. It flips the moment a person is watching:
-[Lab 7](curriculum/labs/lab-7-choosing-a-model.md) Q7.
+The twelve-case cost column is itself misleading, twice. Haiku looks half the
+price of Opus despite a fivefold cheaper rate card, because its 4,096-token
+cache minimum means this prefix is never cached. And Sonnet looks barely
+cheaper than Opus because its first four in-flight cases each paid a cold cache
+write. Warm, cached Sonnet is cheaper per ticket than uncached Haiku. That, plus
+Haiku's missing `effort` support and its retirement date (no sooner than
+2026-10-15), is why the `fast` tier was dropped.
 
 The cheap tiers do not fail randomly. They fail where two handbook rules
-interact — `eval-10` (delivered-not-received) nearly every run, and `eval-04`,
-the safety case, on Haiku in three runs of four.
+interact — `eval-10` (delivered-not-received) on both cheaper models nearly
+every run, and `eval-04`, the safety case, on Haiku in this run and three of
+four earlier ones.
 
-And the calibration gap degrades faster than accuracy does. Haiku's hovers
-around zero, meaning its confidence score carries almost no information about
-whether it is right — it returns the wrong answer on `eval-04` at **0.95
-confidence**. Any control built on that score (threshold routing, escalation,
-auto-resolve) silently stops working while continuing to report numbers. That
-is why `/v1/triage?tier=auto` routes on *input* signals rather than trusting the
-cheap tier to know when it is unsure.
+And the calibration gap degrades faster than accuracy does, and is unstable on
+the cheaper models. Haiku returns the wrong answer on `eval-04` at **0.98
+confidence**, and Sonnet's gap came out at 0.05 in this run. Any control built
+on that score (threshold routing, escalation, auto-resolve) can silently stop
+working while continuing to report numbers. That is why `/v1/triage?tier=auto`
+routes on *input* signals rather than trusting the cheap tier to know when it
+is unsure.
 
 **Prompt caching** — two identical-prefix calls to `/v1/triage`:
 

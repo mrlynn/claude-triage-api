@@ -8,13 +8,18 @@
  */
 
 /**
- * The three tiers we actually compare in Lab 7. Named rather than inlined so
- * the eval matrix and the router refer to the same strings the config does.
+ * The tiers we compare in Lab 7. Named rather than inlined so the eval matrix
+ * and the router refer to the same strings the config does.
+ *
+ * There used to be a third, `fast: "claude-haiku-4-5"`. It was dropped
+ * because Haiku 4.5 retires no sooner than 2026-10-15, rejects `effort`, and
+ * never cached this repo's ~2.7K-token prefix (its minimum is 4096). Haiku
+ * stays in MODEL_CATALOG below, so `?model=claude-haiku-4-5` and
+ * `--models claude-haiku-4-5` still work for comparison.
  */
 export const MODEL_TIERS = {
   flagship: "claude-opus-5",
   balanced: "claude-sonnet-5",
-  fast: "claude-haiku-4-5",
 } as const;
 
 export type Tier = keyof typeof MODEL_TIERS;
@@ -32,7 +37,7 @@ export const MODEL = process.env.TRIAGE_MODEL ?? MODEL_TIERS.flagship;
  * is an alias that resolves to `claude-haiku-4-5-20251001`.
  *
  * So what actually moves a model under you?
- *  - an alias on a pre-4.6 model, like the `fast` tier here;
+ *  - an alias on a pre-4.6 model, like `claude-haiku-4-5` if you set it;
  *  - a retirement date, which forces a change to a new id on someone else's
  *    schedule (Haiku 4.5: not sooner than 2026-10-15);
  *  - you, changing the id — which is a migration, and should be run against
@@ -46,7 +51,7 @@ export const MODEL = process.env.TRIAGE_MODEL ?? MODEL_TIERS.flagship;
  * Empty by default. Check `client.models.list()` for the exact ids.
  */
 export const MODEL_PINS: Record<string, string> = {
-  // fast: "claude-haiku-4-5-20251001",
+  // triage: "claude-haiku-4-5-20251001",
 };
 
 /** The explicit id for a role, or the configured default when nothing is set. */
@@ -223,7 +228,7 @@ export function pricingFor(model: string): ModelPricing {
  *
  * TEACHING NOTE: call this instead of hardcoding a number. The minimum moved
  * twice in one model generation and it differs by a factor of eight across the
- * three tiers this course compares, so a literal in your code is a claim that
+ * models this course compares, so a literal in your code is a claim that
  * goes stale silently — which is the same failure mode as the cache bug it is
  * supposed to protect you from.
  */

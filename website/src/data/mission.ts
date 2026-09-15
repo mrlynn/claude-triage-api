@@ -32,7 +32,7 @@ export const MILESTONES = [
 const MODELS: Record<ModelTier, { label: string; cost: number; p50: string; p95: string; quality: string; evidence: string }> = {
   opus: { label: "Opus 5", cost: 0.025, p50: "5.1s", p95: "8.6s", quality: "Highest-quality baseline", evidence: "/playground/models" },
   sonnet: { label: "Sonnet 5", cost: 0.014, p50: "2.7s", p95: "4.8s", quality: "Balanced tier; validate against your cases", evidence: "/playground/models" },
-  haiku: { label: "Haiku 4.5", cost: 0.005, p50: "1.3s", p95: "2.4s", quality: "Fast tier; adaptive effort is unavailable", evidence: "/playground/models" },
+  haiku: { label: "Haiku 4.5", cost: 0.005, p50: "1.3s", p95: "2.4s", quality: "Dropped tier: no effort control, prefix never cached, retires no sooner than 2026-10-15", evidence: "/playground/models" },
 };
 
 export type Outcome = {

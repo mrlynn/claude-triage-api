@@ -87,7 +87,7 @@ const TOOLS = [
     to: "/playground/models",
     title: "Model matrix",
     blurb:
-      "The same twelve cases across three tiers. The accuracy column is the one that misleads you; the calibration gap is the one that decides anything.",
+      "The same twelve cases across Opus 5, Sonnet 5, and the dropped Haiku tier. The accuracy column is the one that misleads you; the calibration gap is the one that decides anything.",
     lab: "Lab 7",
   },
   {

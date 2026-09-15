@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-20T12:26:57.713Z",
+  "generated_at": "2026-09-15T06:41:25.780Z",
   "generated_by": "npm run eval:models -- --emit-site",
   "judge_model": "claude-opus-5",
   "judge_prompt_sha": "47ddcecf",
@@ -63,20 +63,20 @@
       "accuracy": 0.9166666666666666,
       "passed": 11,
       "total": 12,
-      "latency_p50": 17791,
-      "latency_p95": 22443,
-      "cost_per_ticket": 0.0076185,
-      "monthly_projection": 135.35535000000002,
+      "latency_p50": 3317,
+      "latency_p95": 5547,
+      "cost_per_ticket": 0.007413083333333334,
+      "monthly_projection": 131.70578055555558,
       "calibration": {
-        "onPass": 0.8563636363636363,
+        "onPass": 0.8872727272727274,
         "onFail": 0.45,
-        "gap": 0.4063636363636363
+        "gap": 0.4372727272727274
       },
       "per_case": [
         {
           "id": "eval-01",
           "passed": true,
-          "confidence": 0.9
+          "confidence": 0.92
         },
         {
           "id": "eval-02",
@@ -86,12 +86,12 @@
         {
           "id": "eval-03",
           "passed": true,
-          "confidence": 0.72
+          "confidence": 0.82
         },
         {
           "id": "eval-04",
           "passed": true,
-          "confidence": 0.95
+          "confidence": 0.96
         },
         {
           "id": "eval-05",
@@ -101,12 +101,12 @@
         {
           "id": "eval-06",
           "passed": true,
-          "confidence": 0.72
+          "confidence": 0.82
         },
         {
           "id": "eval-07",
           "passed": true,
-          "confidence": 0.9
+          "confidence": 0.92
         },
         {
           "id": "eval-08",
@@ -121,7 +121,7 @@
         {
           "id": "eval-10",
           "passed": true,
-          "confidence": 0.82
+          "confidence": 0.85
         },
         {
           "id": "eval-11",
@@ -131,24 +131,24 @@
         {
           "id": "eval-12",
           "passed": true,
-          "confidence": 0.66
+          "confidence": 0.72
         }
       ]
     },
     {
       "model": "claude-sonnet-5",
       "effort_applied": true,
-      "accuracy": 0.5833333333333334,
-      "passed": 7,
+      "accuracy": 0.75,
+      "passed": 9,
       "total": 12,
-      "latency_p50": 15669,
-      "latency_p95": 18207,
-      "cost_per_ticket": 0.0038722500000000003,
-      "monthly_projection": 68.796975,
+      "latency_p50": 2668,
+      "latency_p95": 4390,
+      "cost_per_ticket": 0.006822666666666668,
+      "monthly_projection": 121.21604444444445,
       "calibration": {
-        "onPass": 0.8499999999999999,
-        "onFail": 0.55,
-        "gap": 0.2999999999999998
+        "onPass": 0.8,
+        "onFail": 0.75,
+        "gap": 0.050000000000000044
       },
       "per_case": [
         {
@@ -174,12 +174,12 @@
         {
           "id": "eval-05",
           "passed": true,
-          "confidence": 0.9
+          "confidence": 0.95
         },
         {
           "id": "eval-06",
-          "passed": false,
-          "confidence": 0
+          "passed": true,
+          "confidence": 0.65
         },
         {
           "id": "eval-07",
@@ -199,16 +199,16 @@
         {
           "id": "eval-10",
           "passed": false,
-          "confidence": 0.6
+          "confidence": 0.7
         },
         {
           "id": "eval-11",
           "passed": true,
-          "confidence": 0.6
+          "confidence": 0.55
         },
         {
           "id": "eval-12",
-          "passed": false,
+          "passed": true,
           "confidence": 0.6
         }
       ]
@@ -216,17 +216,17 @@
     {
       "model": "claude-haiku-4-5",
       "effort_applied": false,
-      "accuracy": 0.5,
-      "passed": 6,
+      "accuracy": 0.6666666666666666,
+      "passed": 8,
       "total": 12,
-      "latency_p50": 9065,
-      "latency_p95": 9661,
-      "cost_per_ticket": 0.003797249999999999,
-      "monthly_projection": 67.46447499999998,
+      "latency_p50": 3667,
+      "latency_p95": 4198,
+      "cost_per_ticket": 0.003995583333333333,
+      "monthly_projection": 70.98819722222221,
       "calibration": {
-        "onPass": 0.895,
-        "onFail": 0.765,
-        "gap": 0.13
+        "onPass": 0.8974999999999999,
+        "onFail": 0.6799999999999999,
+        "gap": 0.21749999999999992
       },
       "per_case": [
         {
@@ -242,17 +242,17 @@
         {
           "id": "eval-03",
           "passed": false,
-          "confidence": 0.92
+          "confidence": 0.82
         },
         {
           "id": "eval-04",
           "passed": false,
-          "confidence": 0.95
+          "confidence": 0.98
         },
         {
           "id": "eval-05",
           "passed": true,
-          "confidence": 0.98
+          "confidence": 0.95
         },
         {
           "id": "eval-06",
@@ -262,22 +262,22 @@
         {
           "id": "eval-07",
           "passed": true,
-          "confidence": 0.95
-        },
-        {
-          "id": "eval-08",
-          "passed": false,
           "confidence": 0.98
         },
         {
+          "id": "eval-08",
+          "passed": true,
+          "confidence": 0.99
+        },
+        {
           "id": "eval-09",
-          "passed": false,
+          "passed": true,
           "confidence": 0.92
         },
         {
           "id": "eval-10",
           "passed": false,
-          "confidence": 0.82
+          "confidence": 0.92
         },
         {
           "id": "eval-11",
@@ -287,7 +287,7 @@
         {
           "id": "eval-12",
           "passed": true,
-          "confidence": 0.82
+          "confidence": 0.72
         }
       ]
     }

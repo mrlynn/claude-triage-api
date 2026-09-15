@@ -26,7 +26,7 @@ const response = await anthropic.messages.parse({
 const triage = response.parsed_output; // TriageResult | null
 ```
 
-When `parsed_output` is `null`, check `response.stop_reason` before calling it a parse failure: `"max_tokens"` means the JSON was truncated, and `"refusal"` means the model declined (read `response.stop_details`).
+Handle both ways this can fail. `messages.parse()` **throws** an `AnthropicError` ("Failed to parse structured output") when the reply has text that does not parse or validate, such as JSON cut off by `max_tokens` or a value the schema rejects. It returns `parsed_output: null` when there is no text to parse, most often a refusal: check `response.stop_reason` and read `response.stop_details`.
 
 Two limits worth knowing. The API constrains generation to the schema's *structure*, but it does not support numeric bounds like `.min(0).max(1)`; the SDK helper moves those into the description and checks them on your side after the response arrives. And discriminated unions via `anyOf`, recursive schemas, and string length constraints are not supported by the API's schema compiler.
 
