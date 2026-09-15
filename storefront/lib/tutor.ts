@@ -254,7 +254,9 @@ const LessonOutput = z.object({
         z.object({
           ask: z
             .string()
-            .describe("One thing the submission must contain, as the learner reads it, e.g. 'name the field and value that proves it'. Under 90 characters."),
+            .describe(
+              "One thing the submission must contain, as the learner reads it, e.g. 'name the field and value that proves it'. Under 90 characters. It says what to deliver, never what the answer is: 'fix how the script decides a call hit the cache', not 'use cache_read_input_tokens instead of input_tokens'.",
+            ),
           criterion: z
             .string()
             .describe("The pass/fail check for this part and nothing more. It may not require anything the ask does not."),
@@ -289,7 +291,11 @@ function starterInstructions(labIds: readonly string[], level: Intake["level"]):
   if (offered.length === 0) return "Set starter to null: there are no authored mistakes for these documents.";
   return [
     "Starter code. If the exercise is about writing or fixing code, the editor can open with a short program for the learner to fix instead of a blank page. Build it around one or two of the authored mistakes below — no others. Copy each planted `wrong` line into the code exactly as written. Everything else in the starter must be correct, and nothing in it may point at the mistakes: no comments like \"bug here\". Every planted mistake needs its own exercise part, whose ask is to fix it and whose criterion is met when it is fixed.",
-    "When you use a starter, the exercise prompt should say the code runs but has problems and describe what the learner would observe, without naming the fix. Do not repeat the starter code in the prompt: the editor already shows it.",
+    "The starter must be able to show its problems when it is run, and the fixed version must show them gone. Never stand in for something that behaviour depends on with a placeholder: a caching demo whose prompt is a few words sits below the model's minimum cacheable prefix and cannot show a hit, fixed or not. Where something is too long to inline, load the course's real file the documents name (for example `readFileSync(\"data/policies.md\", \"utf8\")` for the handbook) or pick a scenario that does not need it. A stand-in the behaviour does not depend on is fine.",
+    "When you use a starter, the exercise prompt should say the code runs but has problems and describe what the learner would observe, without naming the fix. Base that description on each planted mistake's authored symptom below, and do not predict printed values the symptom does not state: a live Lab 5 lesson said the script printed `cacheHit: false` when running it printed `true`. Do not repeat the starter code in the prompt: the editor already shows it.",
+    // The rule used to cover only the prompt, and a live Lab 5 lesson put the answer in part 2 instead:
+    // "based on the correct usage field(s), not input_tokens". The parts are what the learner reads last.
+    "The same rule covers the exercise parts. An ask may name the symptom or the behaviour to fix. It may not name the line, field or value that is wrong, or what to use instead: that is the exercise. The criteria may be specific, because they grade.",
     level === "shipped"
       ? "This learner has shipped on the API. Prefer null unless finding the bug is the point: writing it from a blank editor is the practice."
       : "Set starter to null if no mistake below fits the exercise.",
