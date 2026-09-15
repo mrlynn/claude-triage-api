@@ -309,6 +309,9 @@ function starterInstructions(labIds: readonly string[], level: Intake["level"]):
   return [
     "Starter code. If the exercise is about writing or fixing code, the editor can open with a short program for the learner to fix instead of a blank page. Build it around one or two of the authored mistakes below — no others. Copy each planted `wrong` line into the code exactly as written. If a line does not fit your scenario, change the scenario, not the line: declare the names it uses, in the shape it expects. A line that is not in the code exactly is dropped, and the bug it was meant to plant goes ungraded. Everything else in the starter must be correct, and nothing in it may point at the mistakes: no comments like \"bug here\". Every planted mistake needs its own exercise part, whose ask is to fix it and whose criterion is met when it is fixed.",
     "The starter must be able to show its problems when it is run, and the fixed version must show them gone. Never stand in for something that behaviour depends on with a placeholder: a caching demo whose prompt is a few words sits below the model's minimum cacheable prefix and cannot show a hit, fixed or not. Where something is too long to inline, load the course's real file the documents name (for example `readFileSync(\"data/policies.md\", \"utf8\")` for the handbook) or pick a scenario that does not need it. A stand-in the behaviour does not depend on is fine.",
+    // "Runnable" alone pushed a live Lab 9 starter to call the real API once per ticket for a 1,200-ticket queue:
+    // running it as the exercise invites would cost the learner tens of dollars and real 429s.
+    "Running the starter must be cheap and safe. If the problem only shows up under volume, failures or rate limits, stand in for the API with a small mock that produces them (for example a fake client that returns a 429 above a few requests in flight), and never write a starter that makes more than two real API calls when run.",
     "When you use a starter, the exercise prompt should say the code runs but has problems and describe what the learner would observe, without naming the fix. Base that description on each planted mistake's authored symptom below, and do not predict printed values the symptom does not state: a live Lab 5 lesson said the script printed `cacheHit: false` when running it printed `true`. Do not repeat the starter code in the prompt: the editor already shows it.",
     // The rule used to cover only the prompt, and a live Lab 5 lesson put the answer in part 2 instead:
     // "based on the correct usage field(s), not input_tokens". The parts are what the learner reads last.
@@ -436,10 +439,12 @@ export async function reviewAttempt(input: {
           `Exercise:\n${exercise.prompt}`,
           `Deliverable: ${exercise.deliverable}`,
           `Rubric:\n${exercise.rubric.map((r, i) => `${i + 1}. ${r}`).join("\n")}`,
-          "Judge strictly against the rubric and the course documents, and grade only the rubric: nothing the deliverable does not ask for. Write to the learner as 'you'. Be direct about what is missing or wrong, and do not pad with praise — but when an attempt is close, say so plainly in rightSoFar, because a learner who is one sentence away needs to know that.",
+          "Judge strictly against the rubric and the course documents, and grade only the rubric: nothing the deliverable does not ask for. Criterion n grades part n of the deliverable. If a criterion demands more than its part asks, grade to the part: a learner who does exactly what the part says has met it, and the note may mention the extra as advice. Write to the learner as 'you'. Be direct about what is missing or wrong, and do not pad with praise — but when an attempt is close, say so plainly in rightSoFar, because a learner who is one sentence away needs to know that.",
           planted.length
-            ? `The learner started from code with these mistakes planted in it. A criterion tied to one is met only if the mistake no longer affects what the code does:\n${planted
-                .map((m) => `- criterion ${m.criterion + 1}: \`${m.wrong.trim()}\` — ${m.why} The fix looks like:\n${m.right}`)
+            ? // The authored fix used to read as the required answer. A live Lab 9 review failed a correct exponential backoff
+              // because the authored fix also halves concurrency and reads retry-after, which part 2 never asked for.
+              `The learner started from code with these mistakes planted in it. A criterion tied to one is met when the mistake no longer affects what the code does, in the way its part asks. The fix shown is one correct fix, not the required one: a different change that does what the part asks meets the criterion, and anything more the shown fix does can go in the note as advice.\n${planted
+                .map((m) => `- criterion ${m.criterion + 1}: \`${m.wrong.trim()}\` — ${m.why} One correct fix:\n${m.right}`)
                 .join("\n")}`
             : "",
           // A present line is evidence, not a verdict. A live Lab 7 lesson showed a correct fix that computed the cost
