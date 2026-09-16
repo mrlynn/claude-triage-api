@@ -33,7 +33,7 @@ const { getDb } = await import("../lib/mongo");
 const { estimateMicros } = await import("../lib/cost");
 const { reserveTrial, reserveHouse, adjustTrial } = await import("../lib/ledger");
 const { createSession, upsertUser, destroySession, SESSION_COOKIE } = await import("../lib/identity");
-const { guardAi, settle, keyError, storeKey, accountFor, noteUsage, reserveMore, AiGateError } = await import("../lib/funding");
+const { guardAi, settle, keyError, storeKey, setKeyLimit, accountFor, noteUsage, reserveMore, AiGateError } = await import("../lib/funding");
 const { houseClient } = await import("../lib/anthropicClient");
 const { seal, sha256 } = await import("../lib/secrets");
 const { APIError } = await import("@anthropic-ai/sdk");
@@ -201,7 +201,7 @@ test("enforce: a learner who can afford one draft gets the lesson, and the retry
   assert.equal((await db.collection("users").findOne({ _id: user._id as never }))?.spentMicros, 70_000);
 });
 
-test("byok: a retry needs no reservation", async () => {
+test("byok with no limit: a retry always runs", async () => {
   mode("enforce");
   const { user, token } = await signedIn();
   const sessionHash = sha256(token);
@@ -284,6 +284,57 @@ test("byok: a 401 from Anthropic deletes the key and never falls back to the hou
   const trial = await guardAi(requestWith(await createSession(user._id)), "tutor", "tutor_hint");
   assert.equal(await keyError(trial, new APIError(401, {}, "x", new Headers())), null, "house-key errors are not the learner's to fix");
   await settle(trial, 0);
+});
+
+test("byok limit: concurrent calls cannot jointly pass the learner's own limit", async () => {
+  mode("enforce");
+  const { user, token } = await signedIn();
+  const sessionHash = sha256(token);
+  const est = estimateMicros("tutor_hint");
+  await storeKey(sessionHash, user._id, seal("sk-ant-limit-" + "l".repeat(30), sessionHash), "llll", est * 3);
+
+  const results = await Promise.allSettled(
+    Array.from({ length: 10 }, () => guardAi(requestWith(token), "tutor", "tutor_hint")),
+  );
+  const allowed = results.filter((r) => r.status === "fulfilled");
+  const refused = results.filter(
+    (r) => r.status === "rejected" && r.reason instanceof AiGateError && r.reason.code === "key_limit",
+  );
+  assert.equal(allowed.length, 3);
+  assert.equal(refused.length, 7);
+  const key = await db.collection("byok_keys").findOne({ _id: sessionHash as never });
+  assert.equal(key?.sessionSpentMicros, est * 3);
+  for (const r of allowed) await settle((r as PromiseFulfilledResult<Awaited<ReturnType<typeof guardAi>>>).value, 0);
+});
+
+test("byok limit: reaching it refuses with the meter, and settle counts real cost, not the reservation", async () => {
+  mode("enforce");
+  const { user, token } = await signedIn();
+  const sessionHash = sha256(token);
+  const est = estimateMicros("tutor_lesson");
+  await storeKey(sessionHash, user._id, seal("sk-ant-limit-" + "m".repeat(30), sessionHash), "mmmm", est + 50_000);
+
+  const first = await guardAi(requestWith(token), "tutor", "tutor_lesson");
+  assert.equal(first.kind, "byok");
+  assert.equal(await reserveMore(first), false, "a second draft would pass the limit, so the retry is skipped");
+  const meter = await settle(first, 60_000);
+  assert.equal(meter?.key?.sessionSpentUsd, 0.06, "the reservation became the real cost");
+  assert.equal(meter?.key?.limitUsd, (est + 50_000) / 1e6);
+
+  // $0.06 spent: one more lesson draft no longer fits under the limit.
+  await assert.rejects(
+    guardAi(requestWith(token), "tutor", "tutor_lesson"),
+    (e) => e instanceof AiGateError && e.code === "key_limit" && e.status === 402 && e.meter?.key?.last4 === "mmmm",
+  );
+  assert.equal((await db.collection("users").findOne({ _id: user._id as never }))?.spentMicros, 0, "free credit untouched");
+
+  await setKeyLimit(sessionHash, null);
+  const unlimited = await guardAi(requestWith(token), "tutor", "tutor_lesson");
+  assert.equal(unlimited.kind, "byok", "clearing the limit lets calls through again");
+  await settle(unlimited, 0);
+
+  await setKeyLimit(sessionHash, 1);
+  await assert.rejects(guardAi(requestWith(token), "tutor", "tutor_hint"), (e) => e instanceof AiGateError && e.code === "key_limit");
 });
 
 test("sign-out deletes the session and the key sealed to it", async () => {

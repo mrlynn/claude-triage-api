@@ -136,6 +136,48 @@ html[data-theme="dark"] .primary { background: var(--nw-spruce); color: #0d1a15;
 
 .points li + li { margin-top: 0.15rem; }
 
+.limitRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.form .limitRow label,
+.limitRow label { display: inline; font-weight: 700; white-space: nowrap; }
+
+.form .limitRow input,
+.limitRow input {
+  width: 4.5rem;
+  margin: 0;
+  padding: 0.25rem 0.45rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 0.4rem;
+  background: var(--ifm-background-surface-color);
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.8125rem;
+}
+
+.limitRow span { font-size: 0.75rem; color: var(--ifm-color-emphasis-700); }
+
+.limitRow .link { margin-top: 0; }
+
+.limitRow .error { width: 100%; }
+
+.small {
+  padding: 0.25rem 0.6rem;
+  border: 0;
+  border-radius: 0.4rem;
+  background: var(--nw-pine);
+  color: var(--nw-bone);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .more {
   display: block;
   margin-top: 0.6rem;

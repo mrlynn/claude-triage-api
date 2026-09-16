@@ -205,8 +205,8 @@ export default function Credit(): ReactNode {
           <h2>Bringing your own Anthropic key</h2>
           <p>
             When your credit runs out, or any time before, open the meter in the corner of any page and choose{" "}
-            <strong>Use your own Anthropic key</strong>. From then on your requests run on your key, with no limit
-            from this site.
+            <strong>Use your own Anthropic key</strong>. From then on your requests run on your key, up to a spending
+            limit you choose.
           </p>
           <p>There are good reasons to do it even before the $2 is gone:</p>
           <ul>
@@ -215,8 +215,8 @@ export default function Credit(): ReactNode {
               your key.
             </li>
             <li>
-              <strong>No worst-case reservation.</strong> Nothing is refused for credit; you pay what a call actually
-              costs, directly to Anthropic.
+              <strong>You set the limit, not us.</strong> Nothing is refused for free credit; you pay what a call
+              actually costs, directly to Anthropic, up to whatever limit you give the key.
             </li>
             <li>
               <strong>You see the real bill.</strong> Your spend shows up in the Anthropic Console, which is a useful
@@ -239,8 +239,38 @@ export default function Credit(): ReactNode {
               Set a monthly spend limit for your organization in the Console. Anthropic does not offer limits per key,
               so the organization limit is the ceiling on what any key of yours can cost.
             </li>
-            <li>Paste the key into the meter. It is checked with Anthropic, at no cost, before it is saved.</li>
+            <li>
+              Paste the key into the meter, and choose how much this site may spend with it: the field starts at $5,
+              about a whole course with room to spare. It is checked with Anthropic, at no cost, before it is saved.
+            </li>
           </ol>
+
+          <h3>Your limit on this site</h3>
+          <p>
+            The limit counts everything spent with your key while it is stored here, and the meter shows how much of it
+            you have used. You can raise it, lower it or remove it at any time from the meter.
+          </p>
+          <ul>
+            <li>
+              <strong>It works like the free credit.</strong> Before each request, the most that request could cost is
+              set aside, and it only runs if that fits under your limit; the unused part comes straight back. So a
+              request is never cut off halfway, and several running at once cannot slip past the limit together.
+            </li>
+            <li>
+              <strong>Reaching it stops requests, not your work.</strong> You are told why, and the meter opens so you
+              can raise the limit or stop there.
+            </li>
+            <li>
+              <strong>It starts again with the key.</strong> Remove the key, or let it expire, and a key added later
+              starts from zero.
+            </li>
+          </ul>
+          <p>
+            <strong>What it does not replace:</strong> this limit is enforced by this site&rsquo;s own code. It stops
+            this site spending more than you intended, from a long session or a bug. It cannot stop someone who had
+            taken over the site, who would not go through that code, which is why the Console organization limit above
+            still matters.
+          </p>
         </section>
 
         <section>
@@ -293,6 +323,13 @@ export default function Credit(): ReactNode {
                   <td>
                     It is deleted, and you are told. The site does not switch to its own key and carry on, so it is
                     always clear whose account a request was billed to.
+                  </td>
+                </tr>
+                <tr>
+                  <td>This site spent more than you meant it to</td>
+                  <td>
+                    It stops at the limit you set in the meter. Each request&rsquo;s worst case is set aside before it
+                    runs, so even requests running at once cannot go past it together.
                   </td>
                 </tr>
                 <tr>
