@@ -10,6 +10,7 @@ import {
   resolveDefects,
   unfixed,
   sessionCount,
+  starterDrops,
   validateLesson,
   validateHint,
   validatePlan,
@@ -385,4 +386,22 @@ test("a deliverable too long to echo loses whole parts, never half of one", () =
   assert.equal(droppedParts, 2);
   // The last criterion kept is the last part shown.
   assert.match(exercise.deliverable, /\(3\) 2 x+\.$/);
+});
+
+test("a lesson is redrafted when its starter lost a planted mistake or the whole starter", () => {
+  assert.deepEqual(starterDrops(["lab-4b", "2 drill item(s)"]), { defects: 0, whole: false });
+  assert.deepEqual(starterDrops(["starter defect stream-error-not-sent"]), { defects: 1, whole: false });
+  // The reasons validateStarter really writes, not strings written for the test.
+  const tooLong = validateLesson(
+    exerciseLesson({ code: `${starterCode}\n${"// pad\n".repeat(TUTOR_FIELDS.starterLines)}`, defects: [{ mistakeId: "content-index-zero", criterion: 0 }] }),
+    known,
+    [indexZero],
+  );
+  assert.deepEqual(starterDrops(tooLong.dropped), { defects: 0, whole: true });
+  const noneLeft = validateLesson(
+    exerciseLesson({ code: "const text = 1;", defects: [{ mistakeId: "content-index-zero", criterion: 0 }] }),
+    known,
+    [indexZero],
+  );
+  assert.deepEqual(starterDrops(noneLeft.dropped), { defects: 1, whole: true });
 });

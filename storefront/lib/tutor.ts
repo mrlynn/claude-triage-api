@@ -4,7 +4,7 @@ import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 import corpus from "@/data/tutor-corpus.json";
 import { houseClient } from "./anthropicClient";
-import { TUTOR_MAX_TOKENS, TUTOR_MODEL } from "./callLimits";
+import { LESSON_ATTEMPTS, TUTOR_MAX_TOKENS, TUTOR_MODEL } from "./callLimits";
 import { costMicros, microsToUsd } from "./cost";
 import { PRICING_BY_MODEL } from "./pricing.generated";
 import { recordSpend } from "./telemetry";
@@ -14,6 +14,7 @@ import {
   resolveDefects,
   composeExercise,
   sessionCount,
+  starterDrops,
   unfixed,
   validateLesson,
   validatePlan,
@@ -28,6 +29,7 @@ import {
   type PlanSession,
   type Review,
   type StarterDefect,
+  TUTOR_FIELDS,
 } from "./tutorPolicy";
 
 /**
@@ -173,6 +175,33 @@ function spend(
   };
 }
 
+/**
+ * `messages.parse()` without the throw. When the JSON does not parse — which is exactly what a turn cut off at
+ * `max_tokens` produces — the SDK throws, and the thrown error carries no usage. So a truncated lesson reached the
+ * learner as "could not complete" instead of "ran out of room", and the tokens it burned never reached `onSpend`:
+ * the house paid for a call the credit meter never saw. Create the message, let `spend` record it, then parse.
+ */
+async function parseCall<P extends Parameters<Anthropic["messages"]["parse"]>[0]>(
+  client: Anthropic,
+  params: P,
+): Promise<Anthropic.Message & { parsed_output: ParsedOutput<P> | null }> {
+  const message = await client.messages.create({ ...params, stream: false });
+  const text = message.content.find((block) => block.type === "text")?.text;
+  let parsed: ParsedOutput<P> | null = null;
+  if (text !== undefined && message.stop_reason !== "max_tokens") {
+    try {
+      // The param type widens the format to plain JSON Schema; every call here passes zodOutputFormat, which parses.
+      const format = params.output_config?.format as unknown as { parse(content: string): unknown } | undefined;
+      parsed = (format?.parse(text) ?? null) as ParsedOutput<P> | null;
+    } catch {
+      /* requireParsed turns a null into the right TutorError */
+    }
+  }
+  return { ...message, parsed_output: parsed };
+}
+
+type ParsedOutput<P> = P extends { output_config?: { format?: { parse(content: string): infer T } | null } | null } ? T : never;
+
 /** `parsed_output` is typed and can still be null — usually a truncated turn. */
 function requireParsed<T>(response: { parsed_output: T | null; stop_reason: string | null }): T {
   if (!response.parsed_output) {
@@ -216,7 +245,7 @@ export async function buildPlan(
   const count = sessionCount(intake);
   const focus = intake.focus.filter((id) => KNOWN_IDS.has(id));
 
-  const response = await client.messages.parse({
+  const response = await parseCall(client, {
     model: TUTOR_MODEL,
     max_tokens: TUTOR_MAX_TOKENS.plan,
     system: planSystem(),
@@ -298,7 +327,11 @@ const LessonOutput = z.object({
   }),
   starter: z
     .object({
-      code: z.string().describe("The code the editor opens with. Runs, is otherwise correct, and contains each planted line exactly."),
+      code: z
+        .string()
+        .describe(
+          `The code the editor opens with. Runs, is otherwise correct, and contains each planted line exactly. At most ${TUTOR_FIELDS.starterLines} lines and ${TUTOR_FIELDS.starterCode} characters: a longer starter is thrown away, so keep any mock to the smallest thing that produces the problem.`,
+        ),
       defects: z
         .array(
           z.object({
@@ -354,7 +387,7 @@ export async function prepareLesson(
   const labIds = session.labIds.filter((id) => KNOWN_IDS.has(id));
   const weak = input.weakSpots.filter((id) => KNOWN_IDS.has(id));
 
-  const response = await client.messages.parse({
+  const request = {
     model: TUTOR_MODEL,
     max_tokens: TUTOR_MAX_TOKENS.lesson,
     system: system(),
@@ -380,17 +413,47 @@ export async function prepareLesson(
           .join("\n\n"),
       },
     ],
-  });
-  const spent = spend(response, onSpend);
+  } satisfies Parameters<Anthropic["messages"]["parse"]>[0];
 
-  const draft = requireParsed(response);
-  const { exercise, droppedParts } = composeExercise(draft.exercise);
-  const { lesson, dropped } = validateLesson(
-    { sessionN: session.n, title: session.title, brief: draft.brief, exercise, starter: draft.starter },
-    KNOWN_IDS,
-    [...MISTAKES.values()].filter((m) => labIds.includes(m.labId)),
-  );
-  if (droppedParts) dropped.push(`${droppedParts} exercise part(s)`);
+  const labMistakes = [...MISTAKES.values()].filter((m) => labIds.includes(m.labId));
+  const draftOnce = async () => {
+    const response = await parseCall(client, request);
+    const spent = spend(response, onSpend);
+    const draft = requireParsed(response);
+    const { exercise, droppedParts } = composeExercise(draft.exercise);
+    const { lesson, dropped } = validateLesson(
+      { sessionN: session.n, title: session.title, brief: draft.brief, exercise, starter: draft.starter },
+      KNOWN_IDS,
+      labMistakes,
+    );
+    if (droppedParts) dropped.push(`${droppedParts} exercise part(s)`);
+    return { draft, lesson, dropped, spent };
+  };
+
+  // Fewer lost mistakes wins; a lesson that kept its starter beats one that did not.
+  const score = (d: readonly string[]) => {
+    const { defects, whole } = starterDrops(d);
+    return (whole ? 100 : 0) + defects;
+  };
+
+  const attempts = [await draftOnce()];
+  while (attempts.length < LESSON_ATTEMPTS && score(attempts.at(-1)!.dropped) > 0) {
+    try {
+      attempts.push(await draftOnce());
+    } catch (error) {
+      // A retry that fails outright should not cost the learner the draft they already have.
+      if (!(error instanceof TutorError)) throw error;
+      break;
+    }
+  }
+  const best = attempts.reduce((a, b) => (score(b.dropped) < score(a.dropped) ? b : a));
+  const { draft, lesson, dropped } = best;
+
+  // A dropped starter leaves a prompt written around code the learner does not have. Serving that teaches them the
+  // exercise is broken; saying so and letting them try again does not.
+  if (starterDrops(dropped).whole) {
+    throw new TutorError("The tutor could not build working starter code for that session. Try again.");
+  }
   // An exercise with no prompt has nothing to review, and the review route
   // would reject it after the learner had already written an attempt.
   if (!lesson.exercise.prompt) throw new TutorError("The tutor did not produce an exercise for that session. Try again.");
@@ -400,6 +463,11 @@ export async function prepareLesson(
     draft.drill.map((d) => ({ ...d, source: "generated" as const })),
     KNOWN_IDS,
   );
+  const spent = {
+    model: best.spent.model,
+    costUsd: attempts.reduce((sum, a) => sum + a.spent.costUsd, 0),
+    cacheReadTokens: attempts.reduce((sum, a) => sum + a.spent.cacheReadTokens, 0),
+  };
   return {
     lesson: { ...lesson, drill: drill.drill },
     meta: { ...spent, dropped: drill.dropped ? [...dropped, `${drill.dropped} drill item(s)`] : dropped },
@@ -452,7 +520,7 @@ export async function reviewAttempt(
   const planted = resolveDefects(input.defects, MISTAKES, exercise.rubric.length);
   const stillThere = unfixed(planted, input.attempt);
 
-  const response = await client.messages.parse({
+  const response = await parseCall(client, {
     model: TUTOR_MODEL,
     max_tokens: TUTOR_MAX_TOKENS.review,
     system: system(),
@@ -537,7 +605,7 @@ export async function hintForAttempt(
   // Which planted lines are still in the draft is known without asking the model. Whether each is still live is not.
   const broken = unfixed(resolveDefects(input.defects, MISTAKES, exercise.rubric.length), input.attempt);
 
-  const response = await client.messages.parse({
+  const response = await parseCall(client, {
     model: TUTOR_MODEL,
     max_tokens: TUTOR_MAX_TOKENS.hint,
     system: system(),

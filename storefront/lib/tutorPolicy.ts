@@ -71,7 +71,8 @@ export const TUTOR_FIELDS = {
   lookFor: 160,
   /** Well under maxAttemptChars, so a learner can fix a starter without deleting to make room. */
   starterCode: 3_000,
-  starterLines: 60,
+  /** Mocks for volume and rate limits cost lines: a live Lab 9 starter reached 53 of the old 60. */
+  starterLines: 80,
   mistakeId: 60,
 } as const;
 
@@ -411,6 +412,18 @@ function validateStarter(
  * Turns defects the page echoed back into the authored mistakes they name,
  * dropping any id the corpus does not have or criterion the rubric does not.
  */
+/**
+ * What `validateLesson` dropped from the starter. A dropped defect may leave its bug in the code with nothing tracking
+ * it; a dropped starter leaves a prompt written around code the learner will not get. Either is worth a second draft.
+ * Reads the reasons `validateStarter` writes, in this file.
+ */
+export function starterDrops(dropped: readonly string[]): { defects: number; whole: boolean } {
+  return {
+    defects: dropped.filter((d) => d.startsWith("starter defect ")).length,
+    whole: dropped.some((d) => d.startsWith("starter (")),
+  };
+}
+
 export function resolveDefects(
   defects: readonly StarterDefect[],
   catalog: ReadonlyMap<string, MistakeItem>,

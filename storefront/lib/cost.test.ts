@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
+import { LESSON_ATTEMPTS, TUTOR_MAX_TOKENS } from "./callLimits";
 import { PRICING_BY_MODEL } from "./pricing.generated";
 import { TUTOR_FIELDS } from "./tutorPolicy";
 import {
@@ -151,4 +152,10 @@ test("Ask Northwind's fixed prompt and tool text fit their ceiling", () => {
     literalChars(read("assistantAgent.ts")) + literalChars(read("assistantJourney.ts")) + literalChars(read("assistantPolicy.ts"));
   const tokens = tokensOf(chars);
   assert.ok(tokens <= OWN_TEXT_TOKENS.assistantFixed, `${tokens} > ${OWN_TEXT_TOKENS.assistantFixed}`);
+});
+
+test("a lesson reserves credit for every draft it may make, each at the full output budget", () => {
+  const { inputTokensPerRequest, maxOutputTokens } = SURFACE_CEILINGS.tutor_lesson;
+  assert.equal(inputTokensPerRequest.length, LESSON_ATTEMPTS);
+  assert.equal(maxOutputTokens, TUTOR_MAX_TOKENS.lesson);
 });
