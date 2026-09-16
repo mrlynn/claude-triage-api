@@ -15,6 +15,7 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test src/lib/*.test.ts storefront/lib/*.test.ts",
     "check:snippets": "tsx scripts/check-snippets.ts",
+    "check:starters": "tsx scripts/check-starters.ts",
     "eval": "tsx evals/run-eval.ts",
     "eval:quick": "tsx evals/quick.ts",
     "eval:models": "tsx evals/compare-models.ts",
