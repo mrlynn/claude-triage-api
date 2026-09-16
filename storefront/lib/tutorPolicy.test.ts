@@ -6,6 +6,7 @@ import {
   assembleDrill,
   mistakeProblem,
   composeExercise,
+  draftScore,
   nextHintLevel,
   resolveDefects,
   unfixed,
@@ -404,4 +405,16 @@ test("a lesson is redrafted when its starter lost a planted mistake or the whole
     [indexZero],
   );
   assert.deepEqual(starterDrops(noneLeft.dropped), { defects: 1, whole: true });
+});
+
+test("drafts rank: a lost starter, then a starter that contradicts its prompt, then a lost mistake", () => {
+  const lostStarter = draftScore(["starter (empty or too long)"], "unchecked");
+  const contradicts = draftScore([], "inconsistent");
+  const lostMistake = draftScore(["starter defect content-index-zero"], "consistent");
+  const clean = draftScore([], "consistent");
+  assert.ok(lostStarter > contradicts && contradicts > lostMistake && lostMistake > clean);
+  assert.equal(clean, 0);
+  // Verification off or unavailable scores like a pass, so lessons are chosen exactly as they were without it.
+  assert.equal(draftScore([], "unchecked"), 0);
+  assert.equal(draftScore(["starter defect x"], "unchecked"), draftScore(["starter defect x"], "consistent"));
 });

@@ -11,6 +11,7 @@ import {
   TUTOR_MAX_TOKENS,
   TUTOR_MODEL,
 } from "./callLimits";
+import { RUN_OUTPUT_CAP, STARTER_JUDGE_MAX_TOKENS } from "./starterVerdict";
 import { TUTOR_FIELDS, TUTOR_LIMITS } from "./tutorPolicy";
 
 /**
@@ -112,6 +113,11 @@ export interface Ceiling {
   /** Input tokens on each request of the call, in order. One entry per model request. */
   inputTokensPerRequest: readonly number[];
   maxOutputTokens: number;
+  /**
+   * `max_tokens` for each request, in the same order, when they differ. A lesson draft is followed by a starter
+   * verdict capped far lower; pricing the verdict at the lesson's 16,000 would reserve five times what it can cost.
+   */
+  maxOutputTokensPerRequest?: readonly number[];
 }
 
 const once = (model: string, input: number, output: number): Ceiling => ({
@@ -153,17 +159,23 @@ export const SURFACE_CEILINGS = {
     OWN_TEXT_TOKENS.tutorIndex + OWN_TEXT_TOKENS.perCallOverhead,
     TUTOR_MAX_TOKENS.plan,
   ),
-  // ONE lesson draft. A lesson may draft up to LESSON_ATTEMPTS times, but a retry reserves its own draft before it
-  // runs (`reserveMore` in funding.ts), so a learner who can afford the one draft most lessons need is not refused.
-  tutor_lesson: once(
-    TUTOR_MODEL,
-    OWN_TEXT_TOKENS.tutorCorpus +
-      OWN_TEXT_TOKENS.tutorMistakes +
-      TUTOR_FIELDS.title +
-      TUTOR_FIELDS.objectives * TUTOR_FIELDS.objective +
-      OWN_TEXT_TOKENS.perCallOverhead,
-    TUTOR_MAX_TOKENS.lesson,
-  ),
+  // ONE lesson draft, and the verdict on its starter. A lesson may draft up to LESSON_ATTEMPTS times, but a retry
+  // reserves its own draft before it runs (`reserveMore` in funding.ts), so a learner who can afford the one draft most
+  // lessons need is not refused.
+  tutor_lesson: {
+    model: TUTOR_MODEL,
+    inputTokensPerRequest: [
+      OWN_TEXT_TOKENS.tutorCorpus +
+        OWN_TEXT_TOKENS.tutorMistakes +
+        TUTOR_FIELDS.title +
+        TUTOR_FIELDS.objectives * TUTOR_FIELDS.objective +
+        OWN_TEXT_TOKENS.perCallOverhead,
+      // The verdict reads model-written text and program output, so one token per character, like a visitor's.
+      TUTOR_FIELDS.prompt + TUTOR_FIELDS.starterCode + 2 * RUN_OUTPUT_CAP + OWN_TEXT_TOKENS.perCallOverhead,
+    ],
+    maxOutputTokens: TUTOR_MAX_TOKENS.lesson,
+    maxOutputTokensPerRequest: [TUTOR_MAX_TOKENS.lesson, STARTER_JUDGE_MAX_TOKENS],
+  },
   tutor_review: once(
     TUTOR_MODEL,
     OWN_TEXT_TOKENS.tutorCorpus + OWN_TEXT_TOKENS.tutorMistakes + exerciseChars + TUTOR_LIMITS.maxAttemptChars +
@@ -195,7 +207,7 @@ export function ceilingMicros(ceiling: Ceiling): Micros {
   const p = pricingFor(ceiling.model);
   const inputRate = p.inputPerMTok * Math.max(1, p.cacheWriteMultiplier);
   const perRequest = ceiling.inputTokensPerRequest.map(
-    (input) => input * inputRate + ceiling.maxOutputTokens * p.outputPerMTok,
+    (input, i) => input * inputRate + (ceiling.maxOutputTokensPerRequest?.[i] ?? ceiling.maxOutputTokens) * p.outputPerMTok,
   );
   return Math.ceil(perRequest.reduce((a, b) => a + b, 0));
 }

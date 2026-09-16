@@ -52,11 +52,20 @@ export const TUTOR_MAX_TOKENS = {
 } as const;
 
 /**
- * A lesson whose starter lost a planted mistake is drafted once more: the model reformats an authored line often
- * enough (a one-line catch split over three lines) that one retry recovers most of them. Two, not more — each
- * attempt is a full lesson call. Credit is reserved one draft at a time: a retry runs only if its own draft fits.
+ * A lesson is drafted again when its starter lost a planted mistake, or when running the starter did not show what its
+ * prompt claims. Measured across repeated check:starters runs, about a third of starters fail one of those; three
+ * drafts clear most lessons, and a lesson none of them clears is served from the best. Each attempt is a full lesson
+ * call plus a verdict. Credit is reserved one draft at a time: a retry runs only if its own draft fits.
  */
-export const LESSON_ATTEMPTS = 2;
+export const LESSON_ATTEMPTS = 3;
+
+/**
+ * Another draft starts only if one as slow as the slowest so far would still finish inside this. The lesson route's
+ * maxDuration is 300s. A live Lab 4 lesson spent 5.0 minutes on two drafts; another, budgeted against its last draft
+ * (84s) at 240s, started a third that took 130s and finished at 279s. Drafts vary that much, so the budget is lower
+ * and measured against the slowest.
+ */
+export const LESSON_TIME_BUDGET_MS = 200_000;
 
 // ---- Ask Northwind --------------------------------------------------------------
 

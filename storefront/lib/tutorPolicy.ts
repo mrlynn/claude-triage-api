@@ -69,10 +69,14 @@ export const TUTOR_FIELDS = {
   rubric: 8,
   hint: 1_500,
   lookFor: 160,
-  /** Well under maxAttemptChars, so a learner can fix a starter without deleting to make room. */
-  starterCode: 3_000,
-  /** Mocks for volume and rate limits cost lines: a live Lab 9 starter reached 53 of the old 60. */
-  starterLines: 80,
+  /**
+   * Under maxAttemptChars, so a learner can fix a starter without deleting to make room. Raised from 3,000 when
+   * starters stopped calling the API: a Lab 4 starter now needs a mock stream, a route and a client, and every Lab 4
+   * draft in a live run was thrown away as too long.
+   */
+  starterCode: 4_500,
+  /** Mocks cost lines: a live Lab 9 starter reached 53 of the old 60, and Lab 4 starters overran 80. */
+  starterLines: 110,
   mistakeId: 60,
 } as const;
 
@@ -422,6 +426,24 @@ export function starterDrops(dropped: readonly string[]): { defects: number; who
     defects: dropped.filter((d) => d.startsWith("starter defect ")).length,
     whole: dropped.some((d) => d.startsWith("starter (")),
   };
+}
+
+/**
+ * What running a starter before serving it found. "unchecked" means nothing ran — no starter, no sandbox, or the
+ * sandbox itself failed — and scores like a pass, so a lesson with verification off is chosen exactly as before.
+ */
+export type StarterCheck = "consistent" | "inconsistent" | "unchecked";
+
+/**
+ * Lower is better; 0 is a draft worth serving without trying again.
+ *
+ * A dropped starter is worst: its prompt describes code the learner does not get. A starter whose run contradicts its
+ * prompt is next — the learner is told to look for output that never appears — and it outranks losing one planted
+ * mistake, whose bug is usually still in the code, graded by the review instead of by a line match.
+ */
+export function draftScore(dropped: readonly string[], check: StarterCheck): number {
+  const { defects, whole } = starterDrops(dropped);
+  return (whole ? 1_000 : 0) + (check === "inconsistent" ? 50 : 0) + defects * 10;
 }
 
 export function resolveDefects(
