@@ -325,6 +325,9 @@ function starterInstructions(labIds: readonly string[], level: Intake["level"]):
     // "Runnable" alone pushed a live Lab 9 starter to call the real API once per ticket for a 1,200-ticket queue:
     // running it as the exercise invites would cost the learner tens of dollars and real 429s.
     "Running the starter must be cheap and safe. If the problem only shows up under volume, failures or rate limits, stand in for the API with a small mock that produces them (for example a fake client that returns a 429 above a few requests in flight), and never write a starter that makes more than two real API calls when run.",
+    // A live Lab 1 starter set max_tokens: 30 to force a truncation. At that budget the response has no text block
+    // at all, so a learner who correctly fixed the content-block narrowing still saw nothing printed.
+    "A limit or budget that makes the bug visible must still leave room for the fixed behaviour to show. If it cannot do both — a token budget low enough to truncate is too low to print a reply — either raise it and trigger the bug another way, or make raising it one of the parts, and say in the prompt what the learner should see once each part is fixed.",
     "When you use a starter, the exercise prompt should say the code runs but has problems and describe what the learner would observe, without naming the fix. Base that description on each planted mistake's authored symptom below, and do not predict printed values the symptom does not state: a live Lab 5 lesson said the script printed `cacheHit: false` when running it printed `true`. Do not repeat the starter code in the prompt: the editor already shows it.",
     // The rule used to cover only the prompt, and a live Lab 5 lesson put the answer in part 2 instead:
     // "based on the correct usage field(s), not input_tokens". The parts are what the learner reads last.
