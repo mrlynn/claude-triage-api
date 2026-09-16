@@ -126,6 +126,25 @@ html[data-theme="dark"] .primary { background: var(--nw-spruce); color: #0d1a15;
   font-size: 0.8125rem;
 }
 
+.points {
+  margin: 0.4rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.points li + li { margin-top: 0.15rem; }
+
+.more {
+  display: block;
+  margin-top: 0.6rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: inherit;
+  text-decoration: underline;
+}
+
 .error { margin-top: 0.4rem !important; font-size: 0.75rem; font-weight: 700; color: var(--nw-ember); }
 
 .footer {

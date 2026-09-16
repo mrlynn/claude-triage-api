@@ -9,6 +9,7 @@ import {
   type Account,
   type GateBody,
 } from "@/lib/accountClient";
+import { labs } from "@/lib/links";
 
 /**
  * The credit meter: a pill in the corner, a panel when opened.
@@ -226,6 +227,9 @@ export default function AccountMeter({ api = "" }: { api?: string }) {
               >
                 Sign in with GitHub
               </button>
+              <a href={labs("/credit")} className="mt-2 block text-center text-[13px] underline">
+                How free credit works
+              </a>
             </>
           ) : (
             <>
@@ -290,14 +294,20 @@ export default function AccountMeter({ api = "" }: { api?: string }) {
                       placeholder="sk-ant-…"
                       className="mt-1 w-full rounded-md border border-pine/20 bg-white px-2.5 py-1.5 font-mono text-[13px]"
                     />
-                    <p className="mt-1.5 text-[12px] leading-snug text-pine/60">
-                      Get one at{" "}
-                      <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer" className="underline">
-                        console.anthropic.com
-                      </a>
-                      . Encrypted on our server, used only for your requests, never shown back, and deleted after 24 hours unused
-                      or when you sign out. A key with a spend limit is a good idea.
-                    </p>
+                    <ul className="mt-1.5 list-disc space-y-0.5 pl-4 text-[12px] leading-snug text-pine/60">
+                      <li>
+                        Use a key made just for this course, from{" "}
+                        <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer" className="underline">
+                          console.anthropic.com
+                        </a>
+                        .
+                      </li>
+                      <li>Only its last four characters are ever shown again. It is deleted after 24 hours unused.</li>
+                      <li>Remove it here, or disable it in the Console, any time.</li>
+                    </ul>
+                    <a href={labs("/credit#is-my-key-safe")} className="mt-1.5 block text-[12px] underline">
+                      Is my key safe?
+                    </a>
                     {keyError && <p className="mt-1.5 text-[12px] font-semibold text-ember">{keyError}</p>}
                     <button
                       type="submit"
@@ -314,7 +324,12 @@ export default function AccountMeter({ api = "" }: { api?: string }) {
                 ))}
 
               <p className="mt-4 flex items-center justify-between border-t border-pine/10 pt-3 text-[12px] text-pine/60">
-                <span>Signed in as {account.login}</span>
+                <span>
+                  Signed in as {account.login} ·{" "}
+                  <a href={labs("/credit")} className="underline">
+                    How credit works
+                  </a>
+                </span>
                 <button onClick={signOut} disabled={busy} className="font-semibold underline disabled:opacity-50">
                   Sign out
                 </button>
