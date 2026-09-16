@@ -154,8 +154,10 @@ test("Ask Northwind's fixed prompt and tool text fit their ceiling", () => {
   assert.ok(tokens <= OWN_TEXT_TOKENS.assistantFixed, `${tokens} > ${OWN_TEXT_TOKENS.assistantFixed}`);
 });
 
-test("a lesson reserves credit for every draft it may make, each at the full output budget", () => {
+test("a lesson reserves one draft at the full output budget; a retry reserves its own", () => {
   const { inputTokensPerRequest, maxOutputTokens } = SURFACE_CEILINGS.tutor_lesson;
-  assert.equal(inputTokensPerRequest.length, LESSON_ATTEMPTS);
+  // Retries are covered by reserveMore in funding.ts, one draft at a time, never up front.
+  assert.ok(LESSON_ATTEMPTS > 1, "if lessons stop retrying, reserveMore has no caller");
+  assert.equal(inputTokensPerRequest.length, 1);
   assert.equal(maxOutputTokens, TUTOR_MAX_TOKENS.lesson);
 });

@@ -108,7 +108,7 @@ Modules added beyond the table in §3: `callLimits.ts` (every model id and token
 | `classify` | $0.085 |
 | `tutor_hint` | $0.20 |
 | `tutor_review` | $0.22 |
-| `tutor_lesson` | $0.23 |
+| `tutor_lesson` (one draft) | $0.31 |
 | `assistant_turn` | $0.81 |
 
 ### 3.3 `secrets.ts`
@@ -202,7 +202,9 @@ export async function accountFor(request: Request): Promise<Account>;
 - **BYOK:** adds to `sessionSpentMicros` and `byokSpentMicros`, and extends the key's TTL.
 - **Always:** records `funding.<kind>`, and returns the meter built from the updated documents.
 
-The `settled` flag makes it safe to call from both a success path and a `finally`. How each surface reports its spend:
+The `settled` flag makes it safe to call from both a success path and a `finally`.
+
+**Retries reserve their own credit.** A Tutor lesson may draft twice when the first draft loses a planted mistake. The gate reserves one draft; before a second, `reserveMore(funding)` makes the same conditional reservation against the learner's credit and the house budget. If it fails, the retry is skipped and the lesson is served from the first draft, rather than refusing a lesson to anyone who could not afford two. Each house reservation remembers its UTC day, and settling refunds each on the day it was taken. How each surface reports its spend:
 
 | Surface | How it reports spend |
 |---|---|
