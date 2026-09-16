@@ -416,11 +416,11 @@ mode of a written retention policy is not that it is wrong, it is that the job
 implementing it was disabled in an incident eighteen months ago and nobody
 noticed.
 
-Ten collections carry one: `rate_limits`, `escalations`, `usage_daily`,
+Eleven collections carry one: `rate_limits`, `escalations`, `usage_daily`,
 `assistant_sessions`, `assistant_proposals`, and — since the storefront started
 asking who pays for a call (Decision 12) — `users`, `auth_sessions` and
 `byok_keys`, and — since the owner started reading who uses it (Decision 13) —
-`ai_calls` and `tutor_reviews`. Everything the storefront stores that derives from a person
+`ai_calls`, `tutor_reviews` and `feedback`. Everything the storefront stores that derives from a person
 deletes itself, including a learner's encrypted API key, a day after its last
 use.
 
@@ -619,6 +619,9 @@ flowchart LR
     Reduce --> Reviews["tutor_reviews<br/>TTL 90 days"]
     Calls --> Admin["/admin<br/>ADMIN_GITHUB_IDS"]
     Reviews --> Admin
+    Rate["👍 / 👎 · comment"] --> Scrub["redactPII · scrubComment"]
+    Scrub --> Feedback["feedback<br/>TTL 90 days"]
+    Feedback --> Admin
 ```
 
 - **`ai_calls` is metadata with no text field.** Surface, model, token counts,
@@ -638,15 +641,26 @@ flowchart LR
 - **Refusals are counted, not logged.** A request the gate turns away increments
   `usage_daily.gate.<code>`. The question is how often people hit the wall, and
   an anonymous refusal has nobody to attribute it to.
-- **Both logs expire after 90 days**, by TTL index, and the privacy page lists
-  both. A telemetry change that is not in the privacy policy is a promise broken
+- **Feedback is the one place a person's own words are kept.** Pages, Tutor
+  lessons, hints and reviews, and assistant replies carry a thumbs up or down,
+  and `/feedback` takes a longer note. The rating is stored on the click and a
+  comment amends that same record, once, within an hour, through an
+  unguessable id — so a reader who closes the tab still counts, and one reader
+  is one row. What was rated is never sent: a thumbs-down on a reply records
+  the surface, not the reply. A comment passes `redactPII` and `scrubComment`
+  (emails, phone numbers, API keys) before storage. Anyone can send feedback,
+  behind a per-IP window; a signed-in learner's carries their id.
+- **All three expire after 90 days**, by TTL index, and the privacy page lists
+  them. A telemetry change that is not in the privacy policy is a promise broken
   quietly.
 
 The console at `/admin` is the first real authorisation check in the
 storefront. It reuses GitHub sign-in and allows numeric ids listed in
 `ADMIN_GITHUB_IDS`. Logins are not accepted, because a login can be renamed and
 then registered by someone else. Every failure is a 404, an unset list admits
-nobody, and each page checks for itself rather than trusting its layout.
+nobody, and each page checks for itself rather than trusting its layout. Its
+one write, resolving feedback, is a server action that checks again: a server
+action is a public endpoint whatever page rendered its button.
 
 ---
 

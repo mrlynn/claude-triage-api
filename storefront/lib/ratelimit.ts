@@ -66,6 +66,10 @@ const SCOPES = {
   // Anthropic that says whether a key is valid — a route with no ceiling here
   // is a free key-checking oracle.
   key: Number(process.env.KEY_IP_LIMIT ?? 10),
+  // Feedback. Spends nothing, so no daily cap; the window is a floor under a
+  // script filling the admin console, generous enough for a reader rating
+  // every page of a lab and then adding comments.
+  feedback: Number(process.env.FEEDBACK_IP_LIMIT ?? 30),
 } as const;
 
 export type LimitScope = keyof typeof SCOPES;

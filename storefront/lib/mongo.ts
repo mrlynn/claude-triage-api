@@ -156,6 +156,15 @@ export async function ensureIndexes(): Promise<void> {
         .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, name: "ttl" }),
       db.collection("tutor_reviews").createIndex({ at: -1 }, { name: "recent" }),
       db.collection("tutor_reviews").createIndex({ userId: 1, at: -1 }, { name: "user" }),
+      // Feedback: the admin inbox reads newest first, optionally by status, and
+      // a learner's page reads theirs. The one collection here that holds text a
+      // person typed, which is why it expires on the same 90 days.
+      db
+        .collection("feedback")
+        .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, name: "ttl" }),
+      db.collection("feedback").createIndex({ status: 1, createdAt: -1 }, { name: "inbox" }),
+      db.collection("feedback").createIndex({ createdAt: -1 }, { name: "recent" }),
+      db.collection("feedback").createIndex({ userId: 1, createdAt: -1 }, { name: "user" }),
       // The users table sorts by last activity.
       db.collection("users").createIndex({ lastSeenAt: -1 }, { name: "recent" }),
     ]);
