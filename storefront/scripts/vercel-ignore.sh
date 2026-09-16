@@ -17,6 +17,15 @@ if ! git cat-file -e "${prev}^{commit}" 2>/dev/null; then
   exit 1
 fi
 
+# Building the commit that is already deployed is a deliberate redeploy, most
+# often to pick up a changed environment variable. Diffing a commit against
+# itself finds nothing, so without this every redeploy was silently skipped
+# and new variables never reached the running site.
+if [ "$(git rev-parse "$prev")" = "$(git rev-parse HEAD)" ]; then
+  echo "vercel-ignore-storefront: redeploy of the deployed commit — building"
+  exit 1
+fi
+
 if git diff --quiet "$prev" HEAD -- storefront/; then
   echo "vercel-ignore-storefront: no changes under storefront/ — skipping"
   exit 0
