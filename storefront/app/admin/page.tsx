@@ -16,6 +16,7 @@ const GATE_LABEL: Record<string, string> = {
   rate_limited: "Rate limited",
   key_invalid: "Key rejected",
   key_quota: "Key over quota",
+  key_limit: "Key at learner's own limit",
   store_error: "Store unavailable",
   unconfigured: "Unconfigured",
 };

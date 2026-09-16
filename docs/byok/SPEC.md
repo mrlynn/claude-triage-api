@@ -214,6 +214,15 @@ The `settled` flag makes it safe to call from both a success path and a `finally
 | Live preview | Settles with the usage from the last `message_start`/`message_delta`, so a cancelled preview still pays for what it generated. |
 | Assistant | `runAssistant` reports the whole run's summed usage through `onSpend`. The route settles before `done`, and again (a no-op) in `finally` for the crash path. |
 
+### 6.2a A learner's own limit
+
+A learner may set a dollar limit on a stored key (`byok_keys.limitMicros`, null for none). It is counted over `sessionSpentMicros`, so it covers everything spent while the key is stored and starts again with a new key.
+
+- **Enforced the same way as the trial.** In the BYOK branch, `reserveKey(sessionHash, est)` reserves the call's worst case with the condition in the filter: no limit, or `sessionSpentMicros + est ≤ limitMicros`. If nothing matches and the key still exists, the gate refuses with `key_limit` (402) and the meter. `settle` turns the reservation into the real cost; `reserveMore` reserves a lesson retry against the same limit.
+- **Set when adding a key** (`POST /api/account/key` with `limitUsd`, $0.10–$1,000 or null) or **changed later** (`PATCH /api/account/key` with `limitUsd`). A limit below what has already been spent is allowed and simply stops further calls.
+- **Meter:** `key.limitUsd`. The key form pre-fills $5; the BYOK panel shows spend against the limit with a bar, and a `key_limit` refusal opens the limit editor.
+- **Honest scope:** the limit is enforced by this site's code. It bounds this site's own spending, not an attacker who controls the site; the Console organization limit remains the backstop, and `/credit` says so.
+
 ### 6.3 Errors from a learner's key
 
 `keyError()` matches on the shape of the error (a numeric `status`), not `instanceof APIError`. Two copies of the SDK in a bundle would make `instanceof` fail silently.
@@ -242,7 +251,8 @@ A 403 does not delete the key: it usually means the organization lacks access to
 | GET | `/api/auth/github/callback` | 302 → `returnTo?signin=ok`, sets `nw_session` | 302 → `returnTo?signin=failed\|cancelled` |
 | POST | `/api/auth/signout` | 204, clears cookie | 403 `bad_origin` |
 | GET | `/api/account` | 200 `Account` (anonymous is valid) | 503 `store_error` |
-| POST | `/api/account/key` `{ apiKey }` | 200 `Account` | 403 `bad_origin`, 503 `unconfigured`, 401 `sign_in_required`, 429 `rate_limited`, 400 `key_malformed`, 402 `key_invalid`, 502 (Anthropic unreachable), 503 `store_error` |
+| POST | `/api/account/key` `{ apiKey, limitUsd? }` | 200 `Account` | 403 `bad_origin`, 503 `unconfigured`, 401 `sign_in_required`, 429 `rate_limited`, 400 `key_malformed`, 402 `key_invalid`, 502 (Anthropic unreachable), 503 `store_error` |
+| PATCH | `/api/account/key` `{ limitUsd }` | 200 `Account` | 400 `limit_invalid`, 404 `no_key`, plus the POST preamble errors |
 | DELETE | `/api/account/key` | 200 `Account` | as above |
 
 Verification uses `models.list({ limit: 1 })` with no retries and an 8-second timeout. The response is the account; the key is never echoed.

@@ -2,10 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState, type SyntheticEvent } from "react";
 import {
+  LIMIT_HINT,
+  SUGGESTED_LIMIT_USD,
   atLeast,
   crossedThreshold,
   onGate,
   onMeter,
+  parseLimit,
   type Account,
   type GateBody,
 } from "@/lib/accountClient";
@@ -47,6 +50,9 @@ export default function AccountMeter({ api = "" }: { api?: string }) {
   const [keyInput, setKeyInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [keyError, setKeyError] = useState<string | null>(null);
+  const [limitInput, setLimitInput] = useState(String(SUGGESTED_LIMIT_USD));
+  const [limitOpen, setLimitOpen] = useState(false);
+  const [limitError, setLimitError] = useState<string | null>(null);
   const panel = useRef<HTMLDivElement | null>(null);
   // Event handlers read the latest account from here, so a state updater never has to carry side effects.
   const current = useRef<Account | null>(null);
@@ -101,6 +107,7 @@ export default function AccountMeter({ api = "" }: { api?: string }) {
     const offGate = onGate((body: GateBody, shouldOpen) => {
       setNotice(body.detail ?? null);
       if (body.error === "trial_exhausted" || body.error === "key_invalid" || body.error === "house_budget") setKeyOpen(true);
+      if (body.error === "key_limit") setLimitOpen(true);
       if (shouldOpen) setOpen(true);
       void refresh();
     });
@@ -148,6 +155,11 @@ export default function AccountMeter({ api = "" }: { api?: string }) {
 
   async function saveKey(e: SyntheticEvent) {
     e.preventDefault();
+    const limitUsd = parseLimit(limitInput);
+    if (limitUsd === undefined) {
+      setKeyError(`That limit is not a dollar amount the site accepts. ${LIMIT_HINT}`);
+      return;
+    }
     setBusy(true);
     setKeyError(null);
     // Out of React state the moment it is sent. Nothing on the page holds it after this.
@@ -158,7 +170,7 @@ export default function AccountMeter({ api = "" }: { api?: string }) {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ apiKey }),
+        body: JSON.stringify({ apiKey, limitUsd }),
       });
       const body = await res.json().catch(() => null);
       if (!res.ok) {
@@ -175,6 +187,37 @@ export default function AccountMeter({ api = "" }: { api?: string }) {
     }
   }
 
+  async function saveLimit(e: SyntheticEvent, clear = false) {
+    e.preventDefault();
+    const limitUsd = clear ? null : parseLimit(limitInput);
+    if (limitUsd === undefined) {
+      setLimitError(LIMIT_HINT);
+      return;
+    }
+    setBusy(true);
+    setLimitError(null);
+    try {
+      const res = await fetch(`${api}/api/account/key`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ limitUsd }),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        setLimitError(body?.detail ?? "That limit could not be saved.");
+        return;
+      }
+      setAccount(body as Account);
+      setLimitOpen(false);
+      setNotice(limitUsd === null ? "Limit removed. Your Console organization limit still applies." : `Limit set to ${formatUsd(limitUsd)}.`);
+    } catch {
+      setLimitError("Could not reach the server. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function removeKey() {
     setBusy(true);
     try {
@@ -186,6 +229,8 @@ export default function AccountMeter({ api = "" }: { api?: string }) {
     }
   }
 
+  const keyFraction =
+    account.key && account.key.limitUsd ? account.key.sessionSpentUsd / account.key.limitUsd : 0;
   const trial = account.trial;
   const fractionLeft = trial && trial.grantUsd > 0 ? trial.remainingUsd / trial.grantUsd : 0;
   // "At least", because every estimate is a worst case.
@@ -236,10 +281,57 @@ export default function AccountMeter({ api = "" }: { api?: string }) {
               {account.mode === "byok" && account.key ? (
                 <div>
                   <p className="font-semibold">Using your Anthropic key ••••{account.key.last4}</p>
-                  <p className="mt-1 text-[13px] text-pine/70">
-                    {formatUsd(account.key.sessionSpentUsd)} spent this session. No limit from us; forgotten after 24 hours
-                    unused or when you sign out.
-                  </p>
+                  {account.key.limitUsd !== null ? (
+                    <>
+                      <p className="mt-1 text-[13px] text-pine/70">
+                        {formatUsd(account.key.sessionSpentUsd)} of your {formatUsd(account.key.limitUsd)} limit used.
+                      </p>
+                      <div className="mt-2 h-2 overflow-hidden rounded-full bg-pine/10" aria-hidden="true">
+                        <div
+                          className={`h-full ${keyFraction > 0.8 ? "bg-ember" : keyFraction > 0.5 ? "bg-amber-600" : "bg-sky-800"}`}
+                          style={{ width: `${Math.round(Math.min(1, keyFraction) * 100)}%` }}
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <p className="mt-1 text-[13px] text-pine/70">
+                      {formatUsd(account.key.sessionSpentUsd)} spent with this key. No limit set on this site.
+                    </p>
+                  )}
+                  <p className="mt-1 text-[12px] text-pine/60">Forgotten after 24 hours unused or when you sign out.</p>
+                  {limitOpen ? (
+                    <form onSubmit={(e) => saveLimit(e)} className="mt-2 flex flex-wrap items-center gap-2">
+                      <label htmlFor="nw-key-limit" className="whitespace-nowrap text-[13px] font-semibold">
+                        Stop at $
+                      </label>
+                      <input
+                        id="nw-key-limit"
+                        inputMode="decimal"
+                        value={limitInput}
+                        onChange={(e) => setLimitInput(e.target.value)}
+                        className="w-16 shrink-0 rounded-md border border-pine/20 bg-white px-2 py-1 text-[13px]"
+                      />
+                      <button type="submit" disabled={busy} className="rounded-md bg-pine px-2.5 py-1 text-[13px] font-semibold text-bone disabled:opacity-50">
+                        Save
+                      </button>
+                      {account.key.limitUsd !== null && (
+                        <button type="button" onClick={(e) => saveLimit(e, true)} disabled={busy} className="text-[13px] underline disabled:opacity-50">
+                          No limit
+                        </button>
+                      )}
+                      {limitError && <p className="w-full text-[12px] font-semibold text-ember">{limitError}</p>}
+                    </form>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setLimitInput(String(account.key?.limitUsd ?? SUGGESTED_LIMIT_USD));
+                        setLimitOpen(true);
+                      }}
+                      className="mt-2 mr-4 text-[13px] font-semibold underline"
+                    >
+                      {account.key.limitUsd !== null ? "Change limit" : "Set a limit"}
+                    </button>
+                  )}
                   <button
                     onClick={removeKey}
                     disabled={busy}
@@ -294,6 +386,19 @@ export default function AccountMeter({ api = "" }: { api?: string }) {
                       placeholder="sk-ant-…"
                       className="mt-1 w-full rounded-md border border-pine/20 bg-white px-2.5 py-1.5 font-mono text-[13px]"
                     />
+                    <div className="mt-2 flex items-center gap-2">
+                      <label htmlFor="nw-new-key-limit" className="whitespace-nowrap text-[13px] font-semibold">
+                        Stop at $
+                      </label>
+                      <input
+                        id="nw-new-key-limit"
+                        inputMode="decimal"
+                        value={limitInput}
+                        onChange={(e) => setLimitInput(e.target.value)}
+                        className="w-16 shrink-0 rounded-md border border-pine/20 bg-white px-2 py-1 text-[13px]"
+                      />
+                      <span className="text-[12px] leading-tight text-pine/60">on this site. Empty for none.</span>
+                    </div>
                     <ul className="mt-1.5 list-disc space-y-0.5 pl-4 text-[12px] leading-snug text-pine/60">
                       <li>
                         Use a key made just for this course, from{" "}

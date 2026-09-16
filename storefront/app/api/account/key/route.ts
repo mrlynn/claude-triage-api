@@ -2,7 +2,7 @@ import { z } from "zod";
 import { cors } from "@/lib/assistant";
 import { clientForKey } from "@/lib/anthropicClient";
 import { byokMode } from "@/lib/byokConfig";
-import { accountFor, storeKey } from "@/lib/funding";
+import { accountFor, setKeyLimit, storeKey } from "@/lib/funding";
 import { deleteKey, lookupSession } from "@/lib/identity";
 import { HAS_MONGO } from "@/lib/mongo";
 import { isTrustedOrigin } from "@/lib/origins";
@@ -20,14 +20,22 @@ import { canSeal, looksLikeApiKey, redactSecrets, seal } from "@/lib/secrets";
 export const runtime = "nodejs";
 export const maxDuration = 15;
 
-const Body = z.object({ apiKey: z.string().trim().max(256) });
+/**
+ * The learner's own spending limit, in dollars. Null or absent for none. Bounded so a typo cannot store something
+ * meaningless: under ten cents no call fits, and over $1,000 the Console organization limit is the tool to reach for.
+ */
+const LimitUsd = z.number().min(0.1).max(1_000).nullable().optional();
+const usdToMicros = (usd: number | null | undefined) => (typeof usd === "number" ? Math.round(usd * 1_000_000) : null);
+
+const Body = z.object({ apiKey: z.string().trim().max(256), limitUsd: LimitUsd });
+const LimitBody = z.object({ limitUsd: LimitUsd });
 
 export async function OPTIONS(request: Request) {
   return cors(
     request,
     new Response(null, {
       status: 204,
-      headers: { "Access-Control-Allow-Headers": "content-type", "Access-Control-Allow-Methods": "POST, DELETE, OPTIONS" },
+      headers: { "Access-Control-Allow-Headers": "content-type", "Access-Control-Allow-Methods": "POST, PATCH, DELETE, OPTIONS" },
     }),
   );
 }
@@ -60,6 +68,9 @@ export async function POST(request: Request) {
     }
 
     const parsed = Body.safeParse(await request.json().catch(() => null));
+    if (!parsed.success && parsed.error.issues.some((i) => i.path[0] === "limitUsd")) {
+      return reply(request, { error: "limit_invalid", detail: "A limit must be between $0.10 and $1,000, or left empty for none." }, 400);
+    }
     const apiKey = parsed.success ? parsed.data.apiKey : "";
     if (!looksLikeApiKey(apiKey)) {
       return reply(request, { error: "key_malformed", detail: "That does not look like an Anthropic API key. They start with sk-ant-." }, 400);
@@ -84,11 +95,35 @@ export async function POST(request: Request) {
       );
     }
 
-    await storeKey(pre.session.sessionHash, pre.session.userId, seal(apiKey, pre.session.sessionHash), apiKey.slice(-4));
+    await storeKey(
+      pre.session.sessionHash,
+      pre.session.userId,
+      seal(apiKey, pre.session.sessionHash),
+      apiKey.slice(-4),
+      usdToMicros(parsed.data?.limitUsd),
+    );
     return reply(request, await accountFor(request));
   } catch (error) {
     console.error("storing a key failed", redactSecrets(error));
     return reply(request, { error: "store_error", detail: "Your key could not be saved. Nothing was stored." }, 503);
+  }
+}
+
+/** Set, change or clear the limit on the key in use. No call to Anthropic, so no rate limit beyond the session. */
+export async function PATCH(request: Request) {
+  try {
+    const pre = await preamble(request);
+    if ("error" in pre) return pre.error;
+    const parsed = LimitBody.safeParse(await request.json().catch(() => null));
+    if (!parsed.success) {
+      return reply(request, { error: "limit_invalid", detail: "A limit must be between $0.10 and $1,000, or left empty for none." }, 400);
+    }
+    const key = await setKeyLimit(pre.session.sessionHash, usdToMicros(parsed.data.limitUsd));
+    if (!key) return reply(request, { error: "no_key", detail: "There is no key to set a limit on. Add one first." }, 404);
+    return reply(request, await accountFor(request));
+  } catch (error) {
+    console.error("changing a key limit failed", redactSecrets(error));
+    return reply(request, { error: "store_error", detail: "Your limit could not be saved. Try again." }, 503);
   }
 }
 

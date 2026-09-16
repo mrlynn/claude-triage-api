@@ -99,17 +99,43 @@ export async function adjustHouse(dayId: string, delta: number): Promise<void> {
   await db.collection<HouseDoc>("rate_limits").updateOne({ _id: dayId }, { $inc: { spentMicros: delta } });
 }
 
-/** BYOK spend is metered for the learner's own information and never limits anything. */
+/**
+ * Reserves `est` against the limit a learner set on their own key: the same
+ * condition-in-the-filter as `reserveTrial`, so concurrent calls cannot jointly
+ * pass it. A key with no limit always matches. Null when the key would exceed
+ * its limit, or no longer exists.
+ */
+export async function reserveKey(sessionHash: string, est: number): Promise<KeyDoc | null> {
+  const db = await getDb();
+  return db.collection<KeyDoc>("byok_keys").findOneAndUpdate(
+    {
+      _id: sessionHash,
+      $or: [
+        { limitMicros: null },
+        { limitMicros: { $exists: false } },
+        { $expr: { $lte: [{ $add: ["$sessionSpentMicros", est] }, "$limitMicros"] } },
+      ],
+    },
+    { $inc: { sessionSpentMicros: est }, $set: { expiresAt: keyExpiry() } },
+    { returnDocument: "after" },
+  );
+}
+
+/**
+ * Settles a call on a learner's own key: the key's reservation becomes the real
+ * cost, and the user's lifetime BYOK total grows by it.
+ */
 export async function recordByokSpend(
   sessionHash: string,
   userId: string,
   micros: number,
+  reservedMicros: number,
 ): Promise<{ key: KeyDoc | null; user: UserDoc | null }> {
   const db = await getDb();
   const [key, user] = await Promise.all([
     db.collection<KeyDoc>("byok_keys").findOneAndUpdate(
       { _id: sessionHash },
-      { $inc: { sessionSpentMicros: micros }, $set: { expiresAt: keyExpiry() } },
+      { $inc: { sessionSpentMicros: micros - reservedMicros }, $set: { expiresAt: keyExpiry() } },
       { returnDocument: "after" },
     ),
     db

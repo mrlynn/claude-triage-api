@@ -7,7 +7,7 @@ import { logCall, recordGate } from "./activity";
 import { errorCode } from "./adminPolicy";
 import { SURFACE_CEILINGS, estimateMicros, microsToUsd, type Surface, type UsageLike } from "./cost";
 import { deleteKey, getKeyDoc, getUser, keyExpiry, lookupSession, type KeyDoc, type UserDoc } from "./identity";
-import { adjustHouse, adjustTrial, forceReserveTrial, recordByokSpend, reserveHouse, reserveTrial } from "./ledger";
+import { adjustHouse, adjustTrial, forceReserveTrial, recordByokSpend, reserveHouse, reserveKey, reserveTrial } from "./ledger";
 import { ensureIndexes, getDb, HAS_MONGO } from "./mongo";
 import { checkLimits, clientIp, type LimitScope, type LimitVerdict } from "./ratelimit";
 import { redactSecrets, unseal, type Sealed } from "./secrets";
@@ -56,7 +56,13 @@ export type Funding = {
       /** Each reservation against the house budget, on the UTC day it was taken, so a refund lands on that day. */
       houseReserved: { day: string; micros: number }[];
     }
-  | { kind: "byok"; userId: string; sessionHash: string }
+  | {
+      kind: "byok";
+      userId: string;
+      sessionHash: string;
+      /** Reserved on the key against the learner's own limit; settled to the real cost like the trial. */
+      reserved: number;
+    }
 );
 
 export type GateCode =
@@ -66,13 +72,14 @@ export type GateCode =
   | "house_budget"
   | "key_invalid"
   | "key_quota"
+  | "key_limit"
   | "unconfigured"
   | "store_error";
 
 export interface Meter {
   mode: "trial" | "exhausted" | "byok";
   trial: { grantUsd: number; spentUsd: number; remainingUsd: number } | null;
-  key: { last4: string; sessionSpentUsd: number; expiresAt: string } | null;
+  key: { last4: string; sessionSpentUsd: number; limitUsd: number | null; expiresAt: string } | null;
 }
 
 export interface Account {
@@ -109,6 +116,7 @@ const DETAIL: Record<GateCode, string> = {
   house_budget: "Today's free credit for everyone has run out. It resets at midnight UTC, or add your own key now.",
   key_invalid: "Anthropic rejected your API key, so it has been removed. Add a working key to keep going.",
   key_quota: "Your Anthropic key was refused for this request.",
+  key_limit: "This would go past the spending limit you set for your key. Raise the limit or remove it to keep going.",
   unconfigured: "The AI features are not configured on this deployment.",
   store_error: "We cannot check your credit right now, so nothing was spent. Try again shortly.",
 };
@@ -149,7 +157,12 @@ export function meterFor(user: UserDoc | null, key: KeyDoc | null): Meter {
         }
       : null,
     key: key
-      ? { last4: key.last4, sessionSpentUsd: microsToUsd(key.sessionSpentMicros), expiresAt: key.expiresAt.toISOString() }
+      ? {
+          last4: key.last4,
+          sessionSpentUsd: microsToUsd(key.sessionSpentMicros),
+          limitUsd: typeof key.limitMicros === "number" ? microsToUsd(key.limitMicros) : null,
+          expiresAt: key.expiresAt.toISOString(),
+        }
       : null,
   };
 }
@@ -236,17 +249,27 @@ async function decide(request: Request, scope: LimitScope, surface: Surface): Pr
     if (keyDoc) {
       const apiKey = unseal(keyDoc, session.sessionHash);
       if (apiKey) {
-        return {
-          kind: "byok",
-          ...base(scope, surface),
-          client: clientForKey(apiKey),
-          userId: session.userId,
-          sessionHash: session.sessionHash,
-        };
+        const est = estimateMicros(surface);
+        const reservedKey = await reserveKey(session.sessionHash, est);
+        if (!reservedKey) {
+          const [current, user] = await Promise.all([getKeyDoc(session.sessionHash), getUser(session.userId)]);
+          if (current) throw gate("key_limit", 402, { meter: meterFor(user, current) });
+          // Removed between the two reads, from another tab: fall through to the trial.
+        } else {
+          return {
+            kind: "byok",
+            ...base(scope, surface),
+            client: clientForKey(apiKey),
+            userId: session.userId,
+            sessionHash: session.sessionHash,
+            reserved: est,
+          };
+        }
+      } else {
+        // Sealed under a master key that has since been rotated away, or
+        // tampered with. Either way it is not usable, and keeping it is not kind.
+        await deleteKey(session.sessionHash);
       }
-      // Sealed under a master key that has since been rotated away, or
-      // tampered with. Either way it is not usable, and keeping it is not kind.
-      await deleteKey(session.sessionHash);
     }
 
     const est = estimateMicros(surface);
@@ -289,12 +312,24 @@ async function decide(request: Request, scope: LimitScope, surface: Surface): Pr
  *
  * True when the retry may run. False when the credit or the house budget
  * cannot cover it, or when credit cannot be checked: the caller keeps what it
- * already has rather than spending what nobody reserved. Always true for
- * BYOK and for unmetered calls, which have nothing to reserve.
+ * already has rather than spending what nobody reserved. On a learner's own
+ * key it reserves against the limit they set, if any. Always true for
+ * unmetered calls, which have nothing to reserve.
  */
 export async function reserveMore(funding: Funding): Promise<boolean> {
   if (funding.settled) return false;
-  if (funding.kind !== "trial") return true;
+  if (funding.kind === "house") return true;
+  if (funding.kind === "byok") {
+    const est = estimateMicros(funding.surface);
+    try {
+      if (!(await reserveKey(funding.sessionHash, est))) return false;
+      funding.reserved += est;
+      return true;
+    } catch (error) {
+      console.error("reserving a retry failed; skipping it", redactSecrets(error));
+      return false;
+    }
+  }
   const enforce = byokMode() === "enforce";
   const est = estimateMicros(funding.surface);
   try {
@@ -362,7 +397,7 @@ export async function settle(funding: Funding, spentMicros: number, error?: unkn
       ]);
       return meterFor(user, null);
     }
-    const { key, user } = await recordByokSpend(funding.sessionHash, funding.userId, spentMicros);
+    const { key, user } = await recordByokSpend(funding.sessionHash, funding.userId, spentMicros, funding.reserved);
     return meterFor(user, key);
   } catch (error) {
     console.error("settling a call failed (ignored)", redactSecrets(error));
@@ -430,13 +465,31 @@ export async function accountFor(request: Request): Promise<Account> {
   return { ...base, ...meter, enforced, signedIn: true, login: user.login };
 }
 
-/** Store a verified key, sealed to this session. */
-export async function storeKey(sessionHash: string, userId: string, sealed: Sealed, last4: string): Promise<void> {
+/**
+ * Changes the limit on a stored key. A limit below what the key has already
+ * spent is allowed: it simply stops further calls, which is what someone
+ * lowering their limit wants. Null when there is no key to change.
+ */
+export async function setKeyLimit(sessionHash: string, limitMicros: number | null): Promise<KeyDoc | null> {
+  const db = await getDb();
+  return db
+    .collection<KeyDoc>("byok_keys")
+    .findOneAndUpdate({ _id: sessionHash }, { $set: { limitMicros } }, { returnDocument: "after" });
+}
+
+/** Store a verified key, sealed to this session, with the learner's own spending limit (null for none). */
+export async function storeKey(
+  sessionHash: string,
+  userId: string,
+  sealed: Sealed,
+  last4: string,
+  limitMicros: number | null = null,
+): Promise<void> {
   const db = await getDb();
   await db.collection<KeyDoc>("byok_keys").updateOne(
     { _id: sessionHash },
     {
-      $set: { userId, ...sealed, last4, verifiedAt: new Date(), expiresAt: keyExpiry() },
+      $set: { userId, ...sealed, last4, limitMicros, verifiedAt: new Date(), expiresAt: keyExpiry() },
       $setOnInsert: { sessionSpentMicros: 0 },
     },
     { upsert: true },

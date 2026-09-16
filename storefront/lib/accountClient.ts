@@ -17,7 +17,7 @@
 export interface Meter {
   mode: "trial" | "exhausted" | "byok";
   trial: { grantUsd: number; spentUsd: number; remainingUsd: number } | null;
-  key: { last4: string; sessionSpentUsd: number; expiresAt: string } | null;
+  key: { last4: string; sessionSpentUsd: number; limitUsd: number | null; expiresAt: string } | null;
 }
 
 export interface Account extends Omit<Meter, "mode"> {
@@ -35,7 +35,7 @@ export interface GateBody {
   meter?: Meter;
 }
 
-const GATE_CODES = new Set(["sign_in_required", "trial_exhausted", "house_budget", "key_invalid", "key_quota"]);
+const GATE_CODES = new Set(["sign_in_required", "trial_exhausted", "house_budget", "key_invalid", "key_quota", "key_limit"]);
 
 const METER_EVENT = "nw:meter";
 const GATE_EVENT = "nw:gate";
@@ -105,3 +105,19 @@ export function crossedThreshold(login: string, fractionUsed: number): number | 
 export function atLeast(remainingUsd: number, perCallUsd: number | undefined): number {
   return perCallUsd && perCallUsd > 0 ? Math.floor(remainingUsd / perCallUsd) : 0;
 }
+
+/** The limit field suggests this much: about a whole course on the API, with room to spare. */
+export const SUGGESTED_LIMIT_USD = 5;
+
+/**
+ * What the learner typed in a limit field. Empty means no limit (null); anything else must be a dollar amount the
+ * server accepts, or this returns undefined and the form says so before sending anything.
+ */
+export function parseLimit(text: string): number | null | undefined {
+  const trimmed = text.trim().replace(/^\$/, "");
+  if (trimmed === "") return null;
+  const n = Number(trimmed);
+  return Number.isFinite(n) && n >= 0.1 && n <= 1_000 ? Math.round(n * 100) / 100 : undefined;
+}
+
+export const LIMIT_HINT = "Between $0.10 and $1,000, or leave it empty for no limit.";

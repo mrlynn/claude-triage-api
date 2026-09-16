@@ -127,6 +127,7 @@ spend it without limit on everyone.
 | F10 | A learner can add a key (verified before storage), see its last four characters, and remove it. | J4, J5 |
 | F11 | BYOK calls use only the learner's key. Key failures are reported as `key_invalid` or `key_quota`, with no fallback. | J4 |
 | F12 | A house-wide daily dollar budget refuses trial calls once reached. BYOK calls are exempt. | — |
+| F13 | A learner can set a dollar limit on what the site spends with their key while it is stored (suggested $5, optional), change or clear it from the meter, and is refused with `key_limit` before a call would pass it. | J4 |
 
 ### Non-functional
 

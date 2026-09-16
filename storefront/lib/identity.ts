@@ -52,7 +52,13 @@ export interface KeyDoc {
   kv: string;
   last4: string;
   verifiedAt: Date;
+  /** Spent on this key while stored, including reservations for calls still running. */
   sessionSpentMicros: number;
+  /**
+   * The learner's own ceiling on `sessionSpentMicros`, or null for none. Enforced by this site's code, so it guards
+   * against the site overspending, not against a compromised site; the Console organization limit covers that.
+   */
+  limitMicros?: number | null;
   expiresAt: Date;
 }
 
