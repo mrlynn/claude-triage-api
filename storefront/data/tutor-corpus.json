@@ -229,7 +229,7 @@
         "id": "stream-error-not-sent",
         "wrong": "} catch (err) { console.error(\"draft stream failed\", err); }",
         "right": "} catch (err) {\n  console.error(\"draft stream failed\", err);\n  // The status is already 200, so the failure has to travel in-band.\n  send(\"error\", toHttpError(err).body);\n}",
-        "symptom": "The client sees HTTP 200, half a reply, and the stream closing. It shows the half reply as if it were finished.",
+        "symptom": "The client sees HTTP 200, half a reply, and the stream closing. It shows the half reply as if it were finished. To show any Lab 4 mistake without the API, a mock route must enqueue bytes, not strings: encode each event with a `TextEncoder` (`controller.enqueue(encoder.encode(sseEvent(event, data)))`, as `src/routes/draft.ts` does). A client reading `res.body` and calling `TextDecoder.decode()` throws on a string chunk before anything is shown. And do not open a fixed port: call the handler in-process with a `Request`, or `listen(0)` and read the port the OS assigns. Port 8787 is the course API's own port, so a learner following the labs usually has it taken.",
         "why": "By the time generation starts the status line has been sent. A mid-stream failure can only reach the client as an event it explicitly handles."
       },
       {
