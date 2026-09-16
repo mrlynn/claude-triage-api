@@ -3,7 +3,9 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { cors } from "./assistant";
 import { clientForKey, houseClient } from "./anthropicClient";
 import { byokMode, byokSettings, type ByokMode } from "./byokConfig";
-import { SURFACE_CEILINGS, estimateMicros, microsToUsd, type Surface } from "./cost";
+import { logCall, recordGate } from "./activity";
+import { errorCode } from "./adminPolicy";
+import { SURFACE_CEILINGS, estimateMicros, microsToUsd, type Surface, type UsageLike } from "./cost";
 import { deleteKey, getKeyDoc, getUser, keyExpiry, lookupSession, type KeyDoc, type UserDoc } from "./identity";
 import { adjustHouse, adjustTrial, forceReserveTrial, recordByokSpend, reserveHouse, reserveTrial } from "./ledger";
 import { ensureIndexes, getDb, HAS_MONGO } from "./mongo";
@@ -25,9 +27,23 @@ import { recordFunding } from "./telemetry";
  * broken" into "the site is free" for anyone who pastes garbage.
  */
 
+/** What the model was asked and answered, accumulated by `noteUsage` for the call log. */
+export interface CallTrace {
+  model: string | null;
+  requests: number;
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number;
+  cacheWriteTokens: number;
+  stopReason: string | null;
+}
+
 export type Funding = {
   surface: Surface;
+  scope: LimitScope;
   client: Anthropic;
+  startedAt: number;
+  trace: CallTrace;
   /** Set once `settle` has run, so a finally block and a catch cannot both settle. */
   settled?: boolean;
 } & (
@@ -131,13 +147,54 @@ export function meterFor(user: UserDoc | null, key: KeyDoc | null): Meter {
   };
 }
 
-const house = (surface: Surface): Funding => ({ kind: "house", surface, client: houseClient() });
+const newTrace = (): CallTrace => ({
+  model: null,
+  requests: 0,
+  inputTokens: 0,
+  outputTokens: 0,
+  cacheReadTokens: 0,
+  cacheWriteTokens: 0,
+  stopReason: null,
+});
+
+const base = (scope: LimitScope, surface: Surface) => ({ surface, scope, startedAt: Date.now(), trace: newTrace() });
+
+const house = (scope: LimitScope, surface: Surface): Funding => ({ kind: "house", ...base(scope, surface), client: houseClient() });
+
+/**
+ * Tells the call log what a response used. Called wherever `costMicros` is,
+ * with the same usage. `requests` is more than 1 only for the assistant, which
+ * reports its whole agent loop at once.
+ */
+export function noteUsage(
+  funding: Funding,
+  response: { usage: UsageLike; model: string; stop_reason?: string | null },
+  requests = 1,
+): void {
+  const t = funding.trace;
+  t.model = response.model;
+  t.requests += requests;
+  t.inputTokens += response.usage.input_tokens;
+  t.outputTokens += response.usage.output_tokens;
+  t.cacheReadTokens += response.usage.cache_read_input_tokens ?? 0;
+  t.cacheWriteTokens += response.usage.cache_creation_input_tokens ?? 0;
+  if (response.stop_reason !== undefined) t.stopReason = response.stop_reason;
+}
 
 /**
  * Decides who pays for one call on `surface`, reserving credit if it is the
  * trial. Throws `AiGateError` when nobody will.
  */
 export async function guardAi(request: Request, scope: LimitScope, surface: Surface): Promise<Funding> {
+  try {
+    return await decide(request, scope, surface);
+  } catch (error) {
+    if (error instanceof AiGateError) recordGate(error.code);
+    throw error;
+  }
+}
+
+async function decide(request: Request, scope: LimitScope, surface: Surface): Promise<Funding> {
   const mode: ByokMode = byokMode();
   const ip = clientIp(request.headers);
 
@@ -146,7 +203,7 @@ export async function guardAi(request: Request, scope: LimitScope, surface: Surf
     // already decides what that means: open in development, closed in production.
     const verdict = await checkLimits(ip, scope);
     if (!verdict.ok) throw limitError(verdict);
-    return house(surface);
+    return house(scope, surface);
   }
 
   const enforce = mode === "enforce";
@@ -165,14 +222,20 @@ export async function guardAi(request: Request, scope: LimitScope, surface: Surf
 
     if (!session) {
       if (enforce) throw gate("sign_in_required", 401);
-      return house(surface);
+      return house(scope, surface);
     }
 
     const keyDoc = await getKeyDoc(session.sessionHash);
     if (keyDoc) {
       const apiKey = unseal(keyDoc, session.sessionHash);
       if (apiKey) {
-        return { kind: "byok", surface, client: clientForKey(apiKey), userId: session.userId, sessionHash: session.sessionHash };
+        return {
+          kind: "byok",
+          ...base(scope, surface),
+          client: clientForKey(apiKey),
+          userId: session.userId,
+          sessionHash: session.sessionHash,
+        };
       }
       // Sealed under a master key that has since been rotated away, or
       // tampered with. Either way it is not usable, and keeping it is not kind.
@@ -194,12 +257,12 @@ export async function guardAi(request: Request, scope: LimitScope, surface: Surf
       await adjustTrial(session.userId, -est);
       throw gate("house_budget", 503, { retryAfterSec: secondsToUtcMidnight(), meter: meterFor(user, null) });
     }
-    return { kind: "trial", surface, client: houseClient(), userId: session.userId, reserved: est, houseDay };
+    return { kind: "trial", ...base(scope, surface), client: houseClient(), userId: session.userId, reserved: est, houseDay };
   } catch (error) {
     if (error instanceof AiGateError) throw error;
     // The same stance as the limiter: if credit cannot be checked, nothing is spent.
     console.error("funding check failed", redactSecrets(error));
-    if (process.env.NODE_ENV === "development") return house(surface);
+    if (process.env.NODE_ENV === "development") return house(scope, surface);
     throw gate("store_error", 503, { retryAfterSec: 60 });
   }
 }
@@ -209,10 +272,24 @@ export async function guardAi(request: Request, scope: LimitScope, surface: Surf
  * `spentMicros` is 0 for a call that never reached billing, which refunds the
  * whole reservation. Never throws: by the time this runs the visitor's answer
  * exists, and accounting must not be what loses it.
+ *
+ * `error` is whatever failed, if anything; only `errorCode(error)` is kept.
+ * Latency is from the gate to here, so it includes the funding check itself —
+ * which is what the learner waited for.
  */
-export async function settle(funding: Funding, spentMicros: number): Promise<Meter | null> {
+export async function settle(funding: Funding, spentMicros: number, error?: unknown): Promise<Meter | null> {
   if (funding.settled) return null;
   funding.settled = true;
+  logCall({
+    surface: funding.surface,
+    scope: funding.scope,
+    funding: funding.kind,
+    userId: funding.kind === "house" ? null : funding.userId,
+    ...funding.trace,
+    costMicros: spentMicros,
+    latencyMs: Date.now() - funding.startedAt,
+    error: error === undefined ? null : errorCode(error),
+  });
   try {
     recordFunding(funding.kind, spentMicros);
     if (funding.kind === "house") return null;

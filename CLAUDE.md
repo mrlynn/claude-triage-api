@@ -42,7 +42,8 @@ reading a counter and writing it back, stop.
 
 **2. Retention is a TTL index.** Every collection holding anything user-derived
 carries `expireAfterSeconds` — `rate_limits`, `escalations`, `usage_daily`,
-`assistant_sessions`, `assistant_proposals`. This is the mechanism behind
+`assistant_sessions`, `assistant_proposals`, `users`, `auth_sessions`,
+`byok_keys`, `ai_calls`, `tutor_reviews`. This is the mechanism behind
 Decision 8 in [`docs/architecture.md`](docs/architecture.md): the only retention
 policy that survives contact with a busy team is one the database applies
 without being asked. A new collection that stores anything derived from a person

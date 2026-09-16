@@ -2,7 +2,7 @@ import { z } from "zod";
 import { cors, sessionId } from "@/lib/assistant";
 import { runAssistant } from "@/lib/assistantAgent";
 import { ASSISTANT_LIMITS } from "@/lib/callLimits";
-import { AiGateError, gateResponse, guardAi, keyError, settle } from "@/lib/funding";
+import { AiGateError, gateResponse, guardAi, keyError, noteUsage, settle } from "@/lib/funding";
 
 /**
  * One exchange with Ask Northwind, streamed.
@@ -75,13 +75,16 @@ export async function POST(request: Request) {
   const body = new ReadableStream<Uint8Array>({
     async start(controller) {
       let spent = 0;
+      // The error event's code, if the run ended in one. `runAssistant` turns its own failures into events.
+      let failure: string | undefined;
       try {
         const run = runAssistant({
           sessionId: id,
           ...parsed.data,
           client: funding.client,
-          onSpend: (micros) => {
+          onSpend: (micros, { requests, ...response }) => {
             spent = micros;
+            noteUsage(funding, response, requests);
           },
           onError: async (error) => {
             const refused = await keyError(funding, error);
@@ -89,6 +92,7 @@ export async function POST(request: Request) {
           },
         });
         for await (const event of run) {
+          if (event.type === "error") failure = event.code ?? "error";
           // Settle before `done`, so the meter lands while the page is still listening.
           if (event.type === "done") {
             const meter = await settle(funding, spent);
@@ -97,7 +101,7 @@ export async function POST(request: Request) {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
         }
         // A run that ended in an error never yields `done`.
-        const meter = await settle(funding, spent);
+        const meter = await settle(funding, spent, failure);
         if (meter) controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "meter", meter })}\n\n`));
       } catch (error) {
         // `runAssistant` already converts its own failures into an error event.
@@ -112,7 +116,7 @@ export async function POST(request: Request) {
       } finally {
         // Idempotent: a no-op when the loop above already settled. Here for the
         // crash path, which would otherwise leave the whole reservation taken.
-        await settle(funding, spent);
+        await settle(funding, spent, failure ?? "crashed");
         controller.close();
       }
     },

@@ -142,6 +142,22 @@ export async function ensureIndexes(): Promise<void> {
       db
         .collection("byok_keys")
         .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, name: "ttl" }),
+
+      // The admin console (Decision 13). One row per AI call and one per Tutor
+      // review, metadata and outcomes only, each deleting itself after 90 days.
+      // The console reads by time and by learner, so those are the indexes.
+      db
+        .collection("ai_calls")
+        .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, name: "ttl" }),
+      db.collection("ai_calls").createIndex({ at: -1 }, { name: "recent" }),
+      db.collection("ai_calls").createIndex({ userId: 1, at: -1 }, { name: "user" }),
+      db
+        .collection("tutor_reviews")
+        .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, name: "ttl" }),
+      db.collection("tutor_reviews").createIndex({ at: -1 }, { name: "recent" }),
+      db.collection("tutor_reviews").createIndex({ userId: 1, at: -1 }, { name: "user" }),
+      // The users table sorts by last activity.
+      db.collection("users").createIndex({ lastSeenAt: -1 }, { name: "recent" }),
     ]);
   })();
   await indexReady;

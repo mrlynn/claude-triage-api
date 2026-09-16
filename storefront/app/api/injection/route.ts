@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { AiGateError, gateBody, guardAi, keyError, settle } from "@/lib/funding";
+import { AiGateError, gateBody, guardAi, keyError, noteUsage, settle } from "@/lib/funding";
 import { redactSecrets } from "@/lib/secrets";
 import { buildSystem, callClaude, MAX_MESSAGE_CHARS } from "@/lib/triage";
 import { wrapUntrusted, redactPII } from "@/lib/untrusted";
@@ -64,6 +64,7 @@ export async function POST(request: Request) {
     const response = await callClaude(buildSystem({}), safeMessage, { defended, client: funding.client });
     // Before any early return: a refusal or an unparseable reply was still billed.
     const micros = costMicros(response.usage, response.model);
+    noteUsage(funding, response);
     recordSpend("injection", micros);
     const meter = await settle(funding, micros);
     const triage = response.parsed_output;
@@ -94,7 +95,7 @@ export async function POST(request: Request) {
       ...(meter ? { meter } : {}),
     });
   } catch (err) {
-    await settle(funding, 0);
+    await settle(funding, 0, err);
     const refused = await keyError(funding, err);
     if (refused) return NextResponse.json(gateBody(refused), { status: refused.status });
     console.error("injection playground call failed", redactSecrets(err));

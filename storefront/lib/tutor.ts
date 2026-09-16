@@ -60,10 +60,12 @@ export { TUTOR_MODEL };
 export interface CallOptions {
   client?: Anthropic;
   /** Told what the call cost as soon as it returns, before validation can throw. The route settles credit with it. */
-  onSpend?: (micros: number) => void;
+  onSpend?: (micros: number, response: { usage: Anthropic.Usage; model: string; stop_reason: string | null }) => void;
 }
 
 export const CORPUS = corpus;
+/** The lab an authored mistake belongs to, or undefined for an id the Tutor never planted. */
+export const mistakeLab = (id: string): string | undefined => MISTAKES.get(id)?.labId;
 export const KNOWN_IDS: ReadonlySet<string> = new Set(corpus.map((d) => d.id));
 
 /**
@@ -160,12 +162,12 @@ export interface CallMeta {
  * counter should say so.
  */
 function spend(
-  response: { usage: Anthropic.Usage; model: string },
-  onSpend?: (micros: number) => void,
+  response: { usage: Anthropic.Usage; model: string; stop_reason: string | null },
+  onSpend?: CallOptions["onSpend"],
 ): Omit<CallMeta, "dropped"> {
   const micros = costMicros(response.usage, response.model);
   recordSpend("tutor", micros);
-  onSpend?.(micros);
+  onSpend?.(micros, response);
   return {
     model: response.model,
     costUsd: microsToUsd(micros),

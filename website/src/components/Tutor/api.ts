@@ -3,7 +3,7 @@ import { reportAi } from "@site/src/components/Account/accountClient";
 import type { CallMeta, DocRef, Hint, Intake, Lesson, Level, Plan, PlanSession, Review } from "./types";
 
 /**
- * The four Tutor calls. The storefront holds the key and stores nothing; this
+ * The four Tutor calls. The storefront holds the key and stores no text; this
  * page holds the plan and sends back only the part each call needs.
  *
  * Credentials are sent because the storefront decides who pays for each call —
@@ -50,6 +50,8 @@ export const tutorApi = {
       lesson: { title: lesson.title, exercise: lesson.exercise },
       attempt,
       defects: lesson.starter?.defects ?? [],
+      // Which labs this lesson teaches, so the owner can see pass rates per lab. Ids only.
+      labIds: [...new Set(lesson.brief.map((b) => b.labId))],
     }),
   hint: (lesson: Lesson, attempt: string, question: string, previous: Hint[]) =>
     post<{ hint: Hint; meta: CallMeta }>("hint", {

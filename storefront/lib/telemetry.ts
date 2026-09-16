@@ -17,6 +17,11 @@ import type { Micros } from "./cost";
  * reconstruct an individual request from this, which is the property that
  * makes it safe to keep.
  *
+ * FOR SIGNED-IN LEARNERS THERE IS NOW A ROW PER CALL, in `activity.ts`: metadata
+ * only, 90-day TTL, read by the owner's /admin console (Decision 13). These
+ * counters stay what /ops reads, and still cover anonymous traffic whose calls
+ * carry no identity.
+ *
  * WHY THIS EXISTS AT ALL, given /ops already had numbers: those were measured
  * once and checked into `opsData.ts`. This is the same accounting over real
  * traffic — Lab 5's subject at the scale where it starts to matter, and the
