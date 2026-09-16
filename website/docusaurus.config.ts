@@ -294,6 +294,7 @@ const config: Config = {
             { label: "Privacy policy", to: "/privacy" },
             { label: "Terms of service", to: "/terms" },
             { label: "Cookie policy", to: "/cookies" },
+            { label: "Free credit and API keys", to: "/credit" },
           ],
         },
       ],

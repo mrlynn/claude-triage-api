@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type SyntheticEvent } from "react";
+import useBaseUrl from "@docusaurus/useBaseUrl";
 import { storefrontApi } from "@site/src/urls";
 import { atLeast, crossedThreshold, onGate, onMeter, type Account, type GateBody } from "./accountClient";
 import styles from "./styles.module.css";
@@ -37,6 +38,7 @@ async function fetchAccount(api: string): Promise<Account | null> {
 }
 
 export default function AccountMeter() {
+  const howItWorks = useBaseUrl("/credit");
   const [account, setAccount] = useState<Account | null>(null);
   const [open, setOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -214,6 +216,9 @@ export default function AccountMeter() {
               <button onClick={signIn} className={styles.primary}>
                 Sign in with GitHub
               </button>
+              <a href={howItWorks} className={styles.more}>
+                How free credit works
+              </a>
             </>
           ) : (
             <>
@@ -268,14 +273,20 @@ export default function AccountMeter() {
                       onChange={(e) => setKeyInput(e.target.value)}
                       placeholder="sk-ant-…"
                     />
-                    <p className={styles.muted}>
-                      Get one at{" "}
-                      <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer">
-                        console.anthropic.com
-                      </a>
-                      . Encrypted on our server, used only for your requests, never shown back, and deleted after 24 hours
-                      unused or when you sign out. A key with a spend limit is a good idea.
-                    </p>
+                    <ul className={styles.points}>
+                      <li>
+                        Use a key made just for this course, from{" "}
+                        <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer">
+                          console.anthropic.com
+                        </a>
+                        .
+                      </li>
+                      <li>Only its last four characters are ever shown again. It is deleted after 24 hours unused.</li>
+                      <li>Remove it here, or disable it in the Console, any time.</li>
+                    </ul>
+                    <a href={`${howItWorks}#is-my-key-safe`} className={styles.more}>
+                      Is my key safe?
+                    </a>
                     {keyError && <p className={styles.error}>{keyError}</p>}
                     <button type="submit" disabled={busy || keyInput.trim().length === 0} className={styles.primary}>
                       {busy ? "Checking with Anthropic…" : "Use this key"}
@@ -288,7 +299,9 @@ export default function AccountMeter() {
                 ))}
 
               <p className={styles.footer}>
-                <span>Signed in as {account.login}</span>
+                <span>
+                  Signed in as {account.login} · <a href={howItWorks}>How credit works</a>
+                </span>
                 <button onClick={signOut} disabled={busy} className={styles.link}>
                   Sign out
                 </button>
