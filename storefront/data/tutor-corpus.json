@@ -595,7 +595,7 @@
         "id": "rate-limit-tight-retry",
         "wrong": "if (isRateLimit(err)) continue;",
         "right": "if (!isRateLimit(err)) throw err;\nthis.throttleEvents++;\nthis.width = Math.max(1, Math.floor(this.width / 2));\nawait sleep((rateLimitsFromError(err)?.retry_after ?? 2) * 1000);\ncontinue;",
-        "symptom": "A 429 turns into a burst of immediate retries at the same concurrency, which draws more 429s.",
+        "symptom": "A 429 turns into a burst of immediate retries at the same concurrency, which draws more 429s. To show this with a mock, the mock needs two things or the script hangs instead of retrying: check the limit before counting the call, so a rejected call never holds a slot (`if (inFlight >= LIMIT) { ... throw } inFlight++;`), and wait a tick before throwing (`await new Promise((r) => setTimeout(r, 1))`). Without the first, rejected calls keep the count over the limit and nothing ever gets through; without the second, the `continue` loop spins on promise callbacks and no timer ever fires.",
         "why": "The SDK has already retried by the time a 429 gets here. What is left to do is send less: narrow the width and wait out `retry-after`."
       },
       {
