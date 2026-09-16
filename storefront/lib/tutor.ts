@@ -63,6 +63,11 @@ export interface CallOptions {
   client?: Anthropic;
   /** Told what the call cost as soon as it returns, before validation can throw. The route settles credit with it. */
   onSpend?: (micros: number, response: { usage: Anthropic.Usage; model: string; stop_reason: string | null }) => void;
+  /**
+   * Asked before a lesson drafts a second time. Credit is reserved one draft at a time, so a retry needs its own;
+   * false means it could not be covered, and the lesson is served from the draft it already has.
+   */
+  reserveRetry?: () => Promise<boolean>;
 }
 
 export const CORPUS = corpus;
@@ -383,7 +388,7 @@ export async function prepareLesson(
     level: Intake["level"];
     weakSpots: string[];
   },
-  { client = houseClient(), onSpend }: CallOptions = {},
+  { client = houseClient(), onSpend, reserveRetry }: CallOptions = {},
 ): Promise<{ lesson: Lesson; meta: CallMeta }> {
   const { session } = input;
   const labIds = session.labIds.filter((id) => KNOWN_IDS.has(id));
@@ -440,6 +445,8 @@ export async function prepareLesson(
 
   const attempts = [await draftOnce()];
   while (attempts.length < LESSON_ATTEMPTS && score(attempts.at(-1)!.dropped) > 0) {
+    // Out of credit for another draft: the first one, with a mistake or two missing, beats refusing the lesson.
+    if (reserveRetry && !(await reserveRetry())) break;
     try {
       attempts.push(await draftOnce());
     } catch (error) {

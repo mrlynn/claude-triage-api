@@ -33,7 +33,7 @@ const { getDb } = await import("../lib/mongo");
 const { estimateMicros } = await import("../lib/cost");
 const { reserveTrial, reserveHouse, adjustTrial } = await import("../lib/ledger");
 const { createSession, upsertUser, destroySession, SESSION_COOKIE } = await import("../lib/identity");
-const { guardAi, settle, keyError, storeKey, accountFor, noteUsage, AiGateError } = await import("../lib/funding");
+const { guardAi, settle, keyError, storeKey, accountFor, noteUsage, reserveMore, AiGateError } = await import("../lib/funding");
 const { houseClient } = await import("../lib/anthropicClient");
 const { seal, sha256 } = await import("../lib/secrets");
 const { APIError } = await import("@anthropic-ai/sdk");
@@ -159,6 +159,57 @@ test("enforce: the house budget refuses trial calls and gives the learner's rese
   assert.equal((await db.collection("users").findOne({ _id: user._id as never }))?.spentMicros, 0);
   process.env.HOUSE_DAILY_BUDGET_USD = "1000";
   await db.collection("rate_limits").deleteMany({ _id: { $regex: /^house:/ } as never });
+});
+
+const houseSpent = async () =>
+  ((await db.collection("rate_limits").findOne({ _id: `house:$:${new Date().toISOString().slice(0, 10)}` as never }))
+    ?.spentMicros as number | undefined) ?? 0;
+
+test("enforce: a lesson reserves one draft, a retry reserves its own, and settle refunds both", async () => {
+  mode("enforce");
+  const { user, token } = await signedIn();
+  const draft = estimateMicros("tutor_lesson");
+  await db.collection("users").updateOne({ _id: user._id as never }, { $set: { grantMicros: draft * 2 + 1 } });
+  const houseBefore = await houseSpent();
+
+  const funding = await guardAi(requestWith(token), "tutor", "tutor_lesson");
+  assert.equal(funding.kind, "trial");
+  assert.equal((await db.collection("users").findOne({ _id: user._id as never }))?.spentMicros, draft, "one draft up front");
+
+  assert.equal(await reserveMore(funding), true);
+  assert.equal((await db.collection("users").findOne({ _id: user._id as never }))?.spentMicros, draft * 2);
+  assert.equal(await houseSpent(), houseBefore + draft * 2);
+
+  await settle(funding, 90_000);
+  assert.equal((await db.collection("users").findOne({ _id: user._id as never }))?.spentMicros, 90_000);
+  assert.equal(await houseSpent(), houseBefore + 90_000, "the house budget is refunded for both drafts");
+  assert.equal(await reserveMore(funding), false, "a settled call cannot reserve more");
+});
+
+test("enforce: a learner who can afford one draft gets the lesson, and the retry is skipped", async () => {
+  mode("enforce");
+  const { user, token } = await signedIn();
+  const draft = estimateMicros("tutor_lesson");
+  await db.collection("users").updateOne({ _id: user._id as never }, { $set: { grantMicros: draft + 1 } });
+
+  const funding = await guardAi(requestWith(token), "tutor", "tutor_lesson");
+  assert.equal(funding.kind, "trial", "one draft fits, so the lesson is not refused");
+  assert.equal(await reserveMore(funding), false, "a second draft does not fit");
+  assert.equal((await db.collection("users").findOne({ _id: user._id as never }))?.spentMicros, draft, "nothing extra taken");
+
+  await settle(funding, 70_000);
+  assert.equal((await db.collection("users").findOne({ _id: user._id as never }))?.spentMicros, 70_000);
+});
+
+test("byok: a retry needs no reservation", async () => {
+  mode("enforce");
+  const { user, token } = await signedIn();
+  const sessionHash = sha256(token);
+  await storeKey(sessionHash, user._id, seal("sk-ant-retry-" + "t".repeat(30), sessionHash), "tttt");
+  const funding = await guardAi(requestWith(token), "tutor", "tutor_lesson");
+  assert.equal(funding.kind, "byok");
+  assert.equal(await reserveMore(funding), true);
+  await settle(funding, 0);
 });
 
 test("shadow: nobody is refused, but spend is still recorded", async () => {

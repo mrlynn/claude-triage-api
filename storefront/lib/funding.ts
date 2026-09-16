@@ -48,7 +48,14 @@ export type Funding = {
   settled?: boolean;
 } & (
   | { kind: "house" }
-  | { kind: "trial"; userId: string; reserved: number; houseDay: string | null }
+  | {
+      kind: "trial";
+      userId: string;
+      /** Everything reserved from the learner's credit so far: the gate's reservation plus any `reserveMore`. */
+      reserved: number;
+      /** Each reservation against the house budget, on the UTC day it was taken, so a refund lands on that day. */
+      houseReserved: { day: string; micros: number }[];
+    }
   | { kind: "byok"; userId: string; sessionHash: string }
 );
 
@@ -257,7 +264,14 @@ async function decide(request: Request, scope: LimitScope, surface: Surface): Pr
       await adjustTrial(session.userId, -est);
       throw gate("house_budget", 503, { retryAfterSec: secondsToUtcMidnight(), meter: meterFor(user, null) });
     }
-    return { kind: "trial", ...base(scope, surface), client: houseClient(), userId: session.userId, reserved: est, houseDay };
+    return {
+      kind: "trial",
+      ...base(scope, surface),
+      client: houseClient(),
+      userId: session.userId,
+      reserved: est,
+      houseReserved: houseDay ? [{ day: houseDay, micros: est }] : [],
+    };
   } catch (error) {
     if (error instanceof AiGateError) throw error;
     // The same stance as the limiter: if credit cannot be checked, nothing is spent.
@@ -265,6 +279,54 @@ async function decide(request: Request, scope: LimitScope, surface: Surface): Pr
     if (process.env.NODE_ENV === "development") return house(scope, surface);
     throw gate("store_error", 503, { retryAfterSec: 60 });
   }
+}
+
+/**
+ * Reserves credit for one more request on the same surface, for a call that
+ * decides mid-way to try again — a Tutor lesson whose first draft lost a
+ * planted mistake. Reserving every possible attempt up front would refuse a
+ * lesson to anyone who could afford the one draft most lessons need.
+ *
+ * True when the retry may run. False when the credit or the house budget
+ * cannot cover it, or when credit cannot be checked: the caller keeps what it
+ * already has rather than spending what nobody reserved. Always true for
+ * BYOK and for unmetered calls, which have nothing to reserve.
+ */
+export async function reserveMore(funding: Funding): Promise<boolean> {
+  if (funding.settled) return false;
+  if (funding.kind !== "trial") return true;
+  const enforce = byokMode() === "enforce";
+  const est = estimateMicros(funding.surface);
+  try {
+    const user = enforce ? await reserveTrial(funding.userId, est) : await forceReserveTrial(funding.userId, est);
+    if (!user) return false;
+    const houseDay = await reserveHouse(est);
+    if (!houseDay && enforce) {
+      await adjustTrial(funding.userId, -est);
+      return false;
+    }
+    funding.reserved += est;
+    if (houseDay) funding.houseReserved.push({ day: houseDay, micros: est });
+    return true;
+  } catch (error) {
+    console.error("reserving a retry failed; skipping it", redactSecrets(error));
+    return false;
+  }
+}
+
+/**
+ * Settles the house budget: the whole cost lands on the latest day reserved,
+ * and every reservation is given back on the day it was taken. Almost always
+ * that is one day and one update.
+ */
+async function settleHouse(reserved: { day: string; micros: number }[], spentMicros: number): Promise<void> {
+  if (reserved.length === 0) return;
+  const byDay = new Map<string, number>();
+  for (const r of reserved) byDay.set(r.day, (byDay.get(r.day) ?? 0) + r.micros);
+  const lastDay = reserved.at(-1)!.day;
+  await Promise.all(
+    [...byDay].map(([day, micros]) => adjustHouse(day, (day === lastDay ? spentMicros : 0) - micros)),
+  );
 }
 
 /**
@@ -294,10 +356,9 @@ export async function settle(funding: Funding, spentMicros: number, error?: unkn
     recordFunding(funding.kind, spentMicros);
     if (funding.kind === "house") return null;
     if (funding.kind === "trial") {
-      const delta = spentMicros - funding.reserved;
       const [user] = await Promise.all([
-        adjustTrial(funding.userId, delta),
-        funding.houseDay ? adjustHouse(funding.houseDay, delta) : Promise.resolve(),
+        adjustTrial(funding.userId, spentMicros - funding.reserved),
+        settleHouse(funding.houseReserved, spentMicros),
       ]);
       return meterFor(user, null);
     }

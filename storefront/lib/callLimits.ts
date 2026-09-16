@@ -54,7 +54,7 @@ export const TUTOR_MAX_TOKENS = {
 /**
  * A lesson whose starter lost a planted mistake is drafted once more: the model reformats an authored line often
  * enough (a one-line catch split over three lines) that one retry recovers most of them. Two, not more — each
- * attempt is a full lesson call, and the credit ceiling reserves for every one.
+ * attempt is a full lesson call. Credit is reserved one draft at a time: a retry runs only if its own draft fits.
  */
 export const LESSON_ATTEMPTS = 2;
 

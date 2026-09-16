@@ -2,7 +2,7 @@ import "server-only";
 import type { z } from "zod";
 import { cors } from "./assistant";
 import type { Surface } from "./cost";
-import { AiGateError, gateBody, gateResponse, guardAi, keyError, noteUsage, settle } from "./funding";
+import { AiGateError, gateBody, gateResponse, guardAi, keyError, noteUsage, reserveMore, settle } from "./funding";
 import { redactSecrets } from "./secrets";
 import { TutorError, type CallOptions } from "./tutor";
 
@@ -59,7 +59,7 @@ export async function tutorPost<S extends z.ZodType, R extends object>(
   };
 
   try {
-    const result = await run(parsed.data, { client: funding.client, onSpend });
+    const result = await run(parsed.data, { client: funding.client, onSpend, reserveRetry: () => reserveMore(funding) });
     const meter = await settle(funding, spent);
     after?.(parsed.data, result, funding.kind === "house" ? null : funding.userId);
     return reply({ ...result, ...(meter ? { meter } : {}) });
