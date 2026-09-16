@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { useDoc } from "@docusaurus/plugin-content-docs/client";
 import AudioPlayer from "@site/src/components/AudioPlayer";
 import LabVideo from "@site/src/components/LabVideo";
+import Thumbs from "@site/src/components/Feedback/Thumbs";
 
 type Props = WrapperProps<typeof ContentType>;
 
@@ -18,6 +19,9 @@ type Props = WrapperProps<typeof ContentType>;
  * comes first: it is the same narration the player holds, plus the picture, so
  * a reader who wants to listen rather than read is better served by it. The
  * audio player stays for anyone who would rather not watch anything.
+ *
+ * "Was this page helpful?" goes after the content, on every doc. The storefront
+ * works out which lab a page is from its path, so nothing here needs to know.
  */
 export default function ContentWrapper(props: Props): ReactNode {
   const { frontMatter } = useDoc();
@@ -35,6 +39,7 @@ export default function ContentWrapper(props: Props): ReactNode {
       )}
       {typeof audioSrc === "string" && <AudioPlayer src={audioSrc} />}
       <Content {...props} />
+      <Thumbs surface="page" prompt="Was this page helpful?" />
     </>
   );
 }

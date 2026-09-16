@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AssistantMarkdown from "@/components/AssistantMarkdown";
 import NorthwindAssistantMark from "@/components/NorthwindAssistantMark";
+import ReplyThumbs from "@/components/ReplyThumbs";
 import { useSpeechInput } from "./useSpeechInput";
 import { publishMeter, reportAi } from "@/lib/accountClient";
 
@@ -335,7 +336,10 @@ export default function AssistantChat({ fullPage = false, initialProduct, initia
               <NorthwindAssistantMark size={22} className="mt-0.5 shrink-0" />
               <div className="min-w-0 flex-1 rounded-lg border border-pine/15 bg-white/50 p-3 text-sm text-pine">
                 {message.text ? (
-                  <AssistantMarkdown>{message.text}</AssistantMarkdown>
+                  <>
+                    <AssistantMarkdown>{message.text}</AssistantMarkdown>
+                    {!(pending && index === messages.length - 1) && <ReplyThumbs />}
+                  </>
                 ) : (
                   <span className="opacity-70">{status ?? "Thinking…"}</span>
                 )}

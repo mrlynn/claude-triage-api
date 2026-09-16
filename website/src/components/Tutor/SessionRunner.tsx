@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import AssistantMarkdown from "@site/src/components/AssistantMarkdown";
+import Thumbs from "@site/src/components/Feedback/Thumbs";
 import Drill from "./Drill";
 import { DocLinks, MetaLine } from "./PlanView";
 import type { Phase, SessionProgress } from "./store";
@@ -202,6 +203,7 @@ export default function SessionRunner({
             Go deeper: <DocLinks ids={session.labIds} docs={docs} />
           </p>
           <MetaLine meta={meta} what="Prepared" />
+          <Thumbs surface="tutor_lesson" labIds={session.labIds} prompt="Was this lesson useful?" />
           <div className={styles.actions}>
             <button type="button" className="button button--primary" onClick={() => go("drill")}>
               Start the drill
@@ -251,7 +253,18 @@ export default function SessionRunner({
             />
           )}
 
-          {lastReview && <ReviewCard review={lastReview} attempt={progress.attempts.length} docs={docs} />}
+          {lastReview && (
+            <>
+              <ReviewCard review={lastReview} attempt={progress.attempts.length} docs={docs} />
+              {/* Keyed by attempt, so a resubmission gets a fresh control rather than the last one's "thanks". */}
+              <Thumbs
+                key={progress.attempts.length}
+                surface="tutor_review"
+                labIds={session.labIds}
+                prompt="Was this review fair?"
+              />
+            </>
+          )}
           <MetaLine meta={progress.attempts.at(-1)?.meta} what="Reviewed" />
 
           {lastReview?.verdict !== "pass" && (
@@ -509,6 +522,7 @@ function StuckPanel({
                   {hint.lookFor ? ` — look for \u201c${hint.lookFor}\u201d` : ""}
                 </p>
               )}
+              <Thumbs surface="tutor_hint" labIds={labIds} compact />
             </li>
           ))}
         </ol>

@@ -117,6 +117,12 @@ export default function RootLayout({
               &mdash; the shop is fictional, the photographs are not.
             </p>
             <p>
+              <a className="underline" href={labs("/feedback")}>
+                Send feedback
+              </a>{" "}
+              &mdash; about the shop, the demos or the course.
+            </p>
+            <p>
               Northwind Outfitters does not exist. It is the scenario behind a
               workshop on building with the Claude API &mdash; read{" "}
               <a

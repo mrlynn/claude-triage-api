@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { requireAdmin } from "@/lib/admin";
-import { overview, parseWindow } from "@/lib/adminData";
+import { openFeedbackCount, overview, parseWindow } from "@/lib/adminData";
 import { AdminShell, Breakdown, DailyBars, Meter, Panel, Stat, Table, ago, ms, num, pct, usd } from "./ui";
 
 const FUNDING_LABEL: Record<string, string> = {
@@ -22,7 +23,7 @@ const GATE_LABEL: Record<string, string> = {
 export default async function AdminOverview({ searchParams }: { searchParams: Promise<{ days?: string }> }) {
   const admin = await requireAdmin();
   const days = parseWindow((await searchParams).days);
-  const o = await overview(days);
+  const [o, openFeedback] = await Promise.all([overview(days), openFeedbackCount()]);
   const t = o.totals;
 
   return (
@@ -70,6 +71,12 @@ export default async function AdminOverview({ searchParams }: { searchParams: Pr
             <dt className="text-pine/65">Signed-in learners</dt>
             <dd className="text-right font-mono">
               {num(o.live.signedInUsers)} <span className="text-pine/45">({num(o.live.sessions)} sessions)</span>
+            </dd>
+            <dt className="text-pine/65">Open feedback</dt>
+            <dd className="text-right font-mono">
+              <Link className="underline decoration-pine/30" href={`/admin/feedback?days=${days}`}>
+                {num(openFeedback)}
+              </Link>
             </dd>
             <dt className="text-pine/65">Keys stored</dt>
             <dd className="text-right font-mono">{num(o.live.keys)}</dd>

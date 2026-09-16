@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";
-import { parseWindow, userDetail } from "@/lib/adminData";
+import { feedbackForUser, parseWindow, userDetail } from "@/lib/adminData";
+import { FeedbackList } from "../../feedback/FeedbackList";
 import { recentCallColumns } from "../../calls";
 import { LabTable } from "../../labs";
 import { AdminShell, Meter, Panel, Stat, Table, ago, ms, num, pct, usd } from "../../ui";
@@ -17,7 +18,7 @@ export default async function AdminUser({
   const [{ id }, { days: rawDays }] = await Promise.all([params, searchParams]);
   const days = parseWindow(rawDays);
   const userId = decodeURIComponent(id);
-  const detail = await userDetail(userId, days);
+  const [detail, feedback] = await Promise.all([userDetail(userId, days), feedbackForUser(userId, days)]);
   if (!detail) notFound();
   const { user } = detail;
 
@@ -96,6 +97,10 @@ export default async function AdminUser({
 
       <Panel title="By lab">
         <LabTable rows={detail.labs} showLearners={false} />
+      </Panel>
+
+      <Panel title="Their feedback" note="The latest 30 in the window.">
+        <FeedbackList items={feedback} days={days} showUser={false} />
       </Panel>
 
       <Panel title="Recent calls">

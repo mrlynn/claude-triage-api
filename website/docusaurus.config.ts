@@ -276,6 +276,7 @@ const config: Config = {
             { label: "Instructor guide", to: "/docs/instructor-guide" },
             { label: "Architecture", to: "/docs/architecture" },
             { label: "Ask a question or share your build", href: GITHUB_DISCUSSIONS_URL },
+            { label: "Send feedback", to: "/feedback" },
           ],
         },
         {

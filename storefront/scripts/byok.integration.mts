@@ -302,8 +302,35 @@ test("admin log: refusals at the gate are counted per day by code", async () => 
   });
 });
 
+test("feedback: a rating can be amended once, within the hour, and only by its id", async () => {
+  const { createFeedback, amendFeedback } = await import("../lib/feedback");
+  const base = {
+    surface: "page" as const,
+    site: "course" as const,
+    rating: "down" as const,
+    reasons: [],
+    category: null,
+    comment: null,
+    path: "/docs/labs/lab-5-prompt-caching",
+    labIds: ["lab-5"],
+  };
+  const id = await createFeedback(base, null);
+  const row = await db.collection("feedback").findOne({ _id: id as never });
+  assert.equal(row?.status, "new");
+  assert.ok(row?.expiresAt > new Date(Date.now() + 89 * 86_400_000));
+
+  assert.equal(await amendFeedback(id, { ...base, reasons: ["confusing"], comment: "the TTL bit" }), true);
+  assert.equal(await amendFeedback(id, { ...base, comment: "overwrite attempt" }), false, "a second amend matches nothing");
+  assert.equal((await db.collection("feedback").findOne({ _id: id as never }))?.comment, "the TTL bit");
+
+  const old = await createFeedback(base, null);
+  await db.collection("feedback").updateOne({ _id: old as never }, { $set: { createdAt: new Date(Date.now() - 2 * 3_600_000) } });
+  assert.equal(await amendFeedback(old, { ...base, comment: "late" }), false, "past the hour it is closed");
+  assert.equal(await amendFeedback("x".repeat(43), { ...base, comment: "guess" }), false);
+});
+
 test("every new collection carries a TTL index", async () => {
-  for (const name of ["users", "auth_sessions", "byok_keys", "ai_calls", "tutor_reviews"]) {
+  for (const name of ["users", "auth_sessions", "byok_keys", "ai_calls", "tutor_reviews", "feedback"]) {
     const indexes = await db.collection(name).indexes();
     assert.ok(indexes.some((i) => i.expireAfterSeconds === 0 && i.key.expiresAt === 1), `${name} has no TTL index`);
   }

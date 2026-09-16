@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import AssistantMarkdown from "@site/src/components/AssistantMarkdown";
+import Thumbs from "@site/src/components/Feedback/Thumbs";
 import { useSpeechInput } from "./useSpeechInput";
 import { NorthwindAssistantMark } from "@site/src/components/NorthwindLogo";
 import { storefrontApi as assistantApi } from "@site/src/urls";
@@ -224,7 +225,11 @@ export default function AssistantDock() {
                 )}
                 {item.role === "assistant" ? (
                   item.text ? (
-                    <AssistantMarkdown>{item.text}</AssistantMarkdown>
+                    <div>
+                      <AssistantMarkdown>{item.text}</AssistantMarkdown>
+                      {/* Only once the reply has finished: rating half a sentence is noise. */}
+                      {!(busy && i === chat.length - 1) && <Thumbs surface="assistant" compact />}
+                    </div>
                   ) : (
                     <span className="nw-assistant__status">{status ?? "Thinking…"}</span>
                   )

@@ -2,6 +2,8 @@ import "server-only";
 import type { Document } from "mongodb";
 import type { CallDoc, ReviewDoc } from "./activity";
 import { byokSettings } from "./byokConfig";
+import type { FeedbackDoc } from "./feedback";
+import { FEEDBACK_SURFACES, type FeedbackSurface } from "./feedbackPolicy";
 import type { KeyDoc, SessionDoc, UserDoc } from "./identity";
 import { ensureIndexes, getDb } from "./mongo";
 import { CORPUS_INDEX, mistakeLab } from "./tutor";
@@ -640,4 +642,145 @@ export async function learning(days: WindowDays): Promise<Learning> {
       lastAt: (r.lastAt as Date).toISOString(),
     })),
   };
+}
+
+// ---- feedback -----------------------------------------------------------------------------------
+
+export interface FeedbackFilter {
+  status: "new" | "resolved" | "all";
+  surface: FeedbackSurface | "all";
+  rating: "up" | "down" | "all";
+  commentsOnly: boolean;
+}
+
+export function parseFeedbackFilter(q: Record<string, string | string[] | undefined>): FeedbackFilter {
+  const one = (k: string) => (Array.isArray(q[k]) ? q[k][0] : q[k]);
+  const pick = <T extends string>(v: string | undefined, allowed: readonly T[], fallback: T): T =>
+    (allowed as readonly string[]).includes(v ?? "") ? (v as T) : fallback;
+  return {
+    status: pick(one("status"), ["new", "resolved", "all"] as const, "new"),
+    surface: pick(one("surface"), [...FEEDBACK_SURFACES, "all"] as const, "all"),
+    rating: pick(one("rating"), ["up", "down", "all"] as const, "all"),
+    commentsOnly: one("comments") === "1",
+  };
+}
+
+export interface FeedbackItem {
+  id: string;
+  createdAt: string;
+  surface: string;
+  site: string;
+  rating: "up" | "down" | null;
+  reasons: string[];
+  category: string | null;
+  comment: string | null;
+  path: string | null;
+  labIds: string[];
+  userId: string | null;
+  login: string | null;
+  status: "new" | "resolved";
+}
+
+export interface FeedbackView {
+  days: WindowDays;
+  totals: { items: number; up: number; down: number; comments: number; open: number };
+  surfaces: { surface: string; up: number; down: number; comments: number }[];
+  pages: { path: string; up: number; down: number; comments: number }[];
+  labs: { labId: string; title: string; up: number; down: number }[];
+  reasons: { reason: string; count: number }[];
+  items: FeedbackItem[];
+}
+
+const tally = {
+  up: { $sum: { $cond: [{ $eq: ["$rating", "up"] }, 1, 0] } },
+  down: { $sum: { $cond: [{ $eq: ["$rating", "down"] }, 1, 0] } },
+  comments: { $sum: { $cond: [{ $ne: ["$comment", null] }, 1, 0] } },
+};
+
+export const FEEDBACK_LIST_LIMIT = 100;
+
+function toItem(r: FeedbackDoc, logins: Map<string, string>): FeedbackItem {
+  return {
+    id: r._id,
+    createdAt: r.createdAt.toISOString(),
+    surface: r.surface,
+    site: r.site,
+    rating: r.rating,
+    reasons: r.reasons,
+    category: r.category,
+    comment: r.comment,
+    path: r.path,
+    labIds: r.labIds,
+    userId: r.userId,
+    login: r.userId ? (logins.get(r.userId) ?? null) : null,
+    status: r.status,
+  };
+}
+
+export async function feedbackView(days: WindowDays, filter: FeedbackFilter): Promise<FeedbackView> {
+  const d = await db();
+  const since = sinceDate(days);
+  const col = d.collection<FeedbackDoc>("feedback");
+
+  const match: Document = { createdAt: { $gte: since } };
+  if (filter.status !== "all") match.status = filter.status;
+  if (filter.surface !== "all") match.surface = filter.surface;
+  if (filter.rating !== "all") match.rating = filter.rating;
+  if (filter.commentsOnly) match.comment = { $ne: null };
+
+  const [facet, rows] = await Promise.all([
+    col
+      .aggregate([
+        // The summary ignores the list's filters: it is the shape of the whole window.
+        { $match: { createdAt: { $gte: since } } },
+        {
+          $facet: {
+            totals: [
+              { $group: { _id: null, items: { $sum: 1 }, ...tally, open: { $sum: { $cond: [{ $eq: ["$status", "new"] }, 1, 0] } } } },
+            ],
+            surfaces: [{ $group: { _id: "$surface", ...tally } }, { $sort: { down: -1 } }],
+            pages: [
+              { $match: { path: { $ne: null }, surface: "page" } },
+              { $group: { _id: "$path", ...tally } },
+              { $sort: { down: -1, comments: -1 } },
+              { $limit: 15 },
+            ],
+            labs: [{ $unwind: "$labIds" }, { $group: { _id: "$labIds", up: tally.up, down: tally.down } }],
+            reasons: [{ $unwind: "$reasons" }, { $group: { _id: "$reasons", count: { $sum: 1 } } }, { $sort: { count: -1 } }],
+          },
+        },
+      ])
+      .next(),
+    col.find(match).sort({ createdAt: -1 }).limit(FEEDBACK_LIST_LIMIT).toArray(),
+  ]);
+
+  const logins = await loginsFor(rows.map((r) => r.userId));
+  const t = (facet?.totals as Document[] | undefined)?.[0];
+  const order = new Map(CORPUS_INDEX.map((c, i) => [c.id, i]));
+  return {
+    days,
+    totals: { items: t?.items ?? 0, up: t?.up ?? 0, down: t?.down ?? 0, comments: t?.comments ?? 0, open: t?.open ?? 0 },
+    surfaces: ((facet?.surfaces ?? []) as Document[]).map((r) => ({ surface: r._id, up: r.up, down: r.down, comments: r.comments })),
+    pages: ((facet?.pages ?? []) as Document[]).map((r) => ({ path: r._id, up: r.up, down: r.down, comments: r.comments })),
+    labs: ((facet?.labs ?? []) as Document[])
+      .map((r) => ({ labId: r._id as string, title: LAB_TITLES.get(r._id) ?? r._id, up: r.up, down: r.down }))
+      .sort((a, b) => (order.get(a.labId) ?? 99) - (order.get(b.labId) ?? 99)),
+    reasons: ((facet?.reasons ?? []) as Document[]).map((r) => ({ reason: r._id, count: r.count })),
+    items: rows.map((r) => toItem(r, logins)),
+  };
+}
+
+/** Open feedback, all time, for the tab badge and the overview. */
+export async function openFeedbackCount(): Promise<number> {
+  return (await db()).collection<FeedbackDoc>("feedback").countDocuments({ status: "new" });
+}
+
+export async function feedbackForUser(userId: string, days: WindowDays): Promise<FeedbackItem[]> {
+  const rows = await (await db())
+    .collection<FeedbackDoc>("feedback")
+    .find({ userId, createdAt: { $gte: sinceDate(days) } })
+    .sort({ createdAt: -1 })
+    .limit(30)
+    .toArray();
+  return rows.map((r) => toItem(r, new Map()));
 }

@@ -142,6 +142,30 @@ export default function Privacy(): ReactNode {
         </section>
 
         <section>
+          <h2>Feedback</h2>
+          <p>
+            Course pages, the Tutor and the assistant have &ldquo;Was this helpful?&rdquo; buttons, and
+            there is a <Link to="/feedback">feedback page</Link>. If you use them:
+          </p>
+          <ul>
+            <li>
+              The site stores your rating, any reasons you pick, your comment if you write one, the
+              page&rsquo;s path (never its query string), and which lab it concerns. It does not store the
+              text of the page, lesson or reply you rated.
+            </li>
+            <li>
+              Before a comment is stored, email addresses, phone numbers, card numbers and API keys in it
+              are removed. Please still leave personal details out.
+            </li>
+            <li>
+              If you are signed in with GitHub, your feedback is linked to your username so the operator
+              can read it alongside how you used the course. Otherwise it is anonymous.
+            </li>
+            <li>Only the site&rsquo;s operator can read it. There is no reply address.</li>
+          </ul>
+        </section>
+
+        <section>
           <h2>Your own Anthropic API key</h2>
           <p>
             When your free credit runs out you can add your own Anthropic API key. If you do:
@@ -222,6 +246,10 @@ export default function Privacy(): ReactNode {
                   <td>30 days</td>
                 </tr>
                 <tr>
+                  <td>Feedback: ratings, reasons and comments</td>
+                  <td>90 days</td>
+                </tr>
+                <tr>
                   <td>AI request records and Tutor review results (no message text)</td>
                   <td>90 days</td>
                 </tr>
@@ -267,7 +295,7 @@ export default function Privacy(): ReactNode {
             <li>
               <strong>MongoDB Atlas</strong> — the database that holds assistant
               conversations, escalations, sign-in records, AI request records, Tutor review
-              results and encrypted API keys.
+              results, feedback and encrypted API keys.
             </li>
             <li>
               <strong>Anthropic</strong> — the Claude API, which receives assistant messages
