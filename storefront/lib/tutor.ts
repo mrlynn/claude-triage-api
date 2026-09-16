@@ -4,15 +4,24 @@ import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 import corpus from "@/data/tutor-corpus.json";
 import { houseClient } from "./anthropicClient";
-import { LESSON_ATTEMPTS, TUTOR_MAX_TOKENS, TUTOR_MODEL } from "./callLimits";
+import { LESSON_ATTEMPTS, LESSON_TIME_BUDGET_MS, TUTOR_MAX_TOKENS, TUTOR_MODEL } from "./callLimits";
 import { costMicros, microsToUsd } from "./cost";
 import { PRICING_BY_MODEL } from "./pricing.generated";
+import { STARTER_RUN_SECONDS, runStarterInSandbox, starterSandboxReady } from "./starterSandbox";
+import {
+  STARTER_JUDGE_MAX_TOKENS,
+  STARTER_VERDICT_FIELDS,
+  starterVerdictPrompt,
+  type StarterVerdict,
+} from "./starterVerdict";
+import { redactSecrets } from "./secrets";
 import { recordSpend } from "./telemetry";
 import { wrapUntrusted } from "./untrusted";
 import {
   assembleDrill,
   resolveDefects,
   composeExercise,
+  draftScore,
   sessionCount,
   starterDrops,
   unfixed,
@@ -28,6 +37,7 @@ import {
   type Plan,
   type PlanSession,
   type Review,
+  type StarterCheck,
   type StarterDefect,
   TUTOR_FIELDS,
 } from "./tutorPolicy";
@@ -362,9 +372,9 @@ function starterInstructions(labIds: readonly string[], level: Intake["level"]):
   return [
     "Starter code. If the exercise is about writing or fixing code, the editor can open with a short program for the learner to fix instead of a blank page. Build it around one or two of the authored mistakes below — no others. Copy each planted `wrong` line into the code exactly as written. If a line does not fit your scenario, change the scenario, not the line: declare the names it uses, in the shape it expects. A line that is not in the code exactly is dropped, and the bug it was meant to plant goes ungraded. Everything else in the starter must be correct, and nothing in it may point at the mistakes: no comments like \"bug here\". Every planted mistake needs its own exercise part, whose ask is to fix it and whose criterion is met when it is fixed.",
     "The starter must be able to show its problems when it is run, and the fixed version must show them gone. Never stand in for something that behaviour depends on with a placeholder: a caching demo whose prompt is a few words sits below the model's minimum cacheable prefix and cannot show a hit, fixed or not. Where something is too long to inline, load the course's real file the documents name (for example `readFileSync(\"data/policies.md\", \"utf8\")` for the handbook) or pick a scenario that does not need it. A stand-in the behaviour does not depend on is fine.",
-    // "Runnable" alone pushed a live Lab 9 starter to call the real API once per ticket for a 1,200-ticket queue:
-    // running it as the exercise invites would cost the learner tens of dollars and real 429s.
-    "Running the starter must be cheap and safe. If the problem only shows up under volume, failures or rate limits, stand in for the API with a small mock that produces them (for example a fake client that returns a 429 above a few requests in flight), and never write a starter that makes more than two real API calls when run.",
+    // "Runnable" alone pushed a live Lab 9 starter to call the real API once per ticket for a 1,200-ticket queue. And a
+    // starter is now run before it is served, in a sandbox with no network and no key: a real call cannot be checked.
+    "The starter never calls the real API. Before the learner sees it, it is run with no network access and no API key, and a starter whose run does not show what the prompt says is thrown away. Stand in for the Messages API with a small mock that returns the fields the exercise reads — usage, stop_reason, content blocks — and produces failures, volume or rate limits when the problem needs them (for example a fake client that returns a 429 above a few requests in flight). Make it finish within a few seconds, and mark canned values as canned.",
     // A live Lab 1 starter set max_tokens: 30 to force a truncation. At that budget the response has no text block
     // at all, so a learner who correctly fixed the content-block narrowing still saw nothing printed.
     "A limit or budget that makes the bug visible must still leave room for the fixed behaviour to show. If it cannot do both — a token budget low enough to truncate is too low to print a reply — either raise it and trigger the bug another way, or make raising it one of the parts, and say in the prompt what the learner should see once each part is fixed.",
@@ -380,6 +390,51 @@ function starterInstructions(labIds: readonly string[], level: Intake["level"]):
       : "Set starter to null if no mistake below fits the exercise.",
     `Authored mistakes:\n${offered.map((m) => `- ${m.id}\n  wrong: ${m.wrong.trim()}\n  symptom: ${m.symptom}`).join("\n")}`,
   ].join("\n\n");
+}
+
+/** Declared here with this app's zod; the fields and their descriptions live in starterVerdict.ts. */
+const StarterVerdictOutput = z.object({
+  claims: z.array(z.string()).describe(STARTER_VERDICT_FIELDS.claims),
+  consistent: z.boolean().describe(STARTER_VERDICT_FIELDS.consistent),
+  mismatch: z.string().nullable().describe(STARTER_VERDICT_FIELDS.mismatch),
+}) satisfies z.ZodType<StarterVerdict>;
+
+/**
+ * Runs a starter in the sandbox and asks whether the run shows what the exercise prompt claims. Anything that stops the
+ * check itself — no sandbox configured, the platform failing, a verdict that does not parse — is "unchecked", not a
+ * failure: verification decides between drafts, and it must never be the reason a lesson does not load.
+ */
+async function checkStarter(
+  client: Anthropic,
+  prompt: string,
+  code: string,
+  onSpend: CallOptions["onSpend"],
+): Promise<{ check: StarterCheck; costUsd: number }> {
+  if (!starterSandboxReady()) return { check: "unchecked", costUsd: 0 };
+  const run = await runStarterInSandbox(code);
+  if (!run) return { check: "unchecked", costUsd: 0 };
+
+  try {
+    const response = await parseCall(client, {
+      model: TUTOR_MODEL,
+      max_tokens: STARTER_JUDGE_MAX_TOKENS,
+      output_config: { effort: "low", format: zodOutputFormat(StarterVerdictOutput) },
+      messages: [
+        {
+          role: "user",
+          content: starterVerdictPrompt({ prompt, code, run, timeoutSeconds: STARTER_RUN_SECONDS }, wrapUntrusted),
+        },
+      ],
+    });
+    const { costUsd } = spend(response, onSpend);
+    const verdict = response.parsed_output;
+    if (!verdict) return { check: "unchecked", costUsd };
+    if (!verdict.consistent) console.info("tutor starter inconsistent", redactSecrets(verdict.mismatch ?? ""));
+    return { check: verdict.consistent ? "consistent" : "inconsistent", costUsd };
+  } catch (error) {
+    console.error("starter verdict failed; treating as unchecked", redactSecrets(error));
+    return { check: "unchecked", costUsd: 0 };
+  }
 }
 
 export async function prepareLesson(
@@ -424,6 +479,7 @@ export async function prepareLesson(
 
   const labMistakes = [...MISTAKES.values()].filter((m) => labIds.includes(m.labId));
   const draftOnce = async () => {
+    const started = Date.now();
     const response = await parseCall(client, request);
     const spent = spend(response, onSpend);
     const draft = requireParsed(response);
@@ -434,28 +490,67 @@ export async function prepareLesson(
       labMistakes,
     );
     if (droppedParts) dropped.push(`${droppedParts} exercise part(s)`);
-    return { draft, lesson, dropped, spent };
+    const checked = lesson.starter
+      ? await checkStarter(client, lesson.exercise.prompt, lesson.starter.code, onSpend)
+      : { check: "unchecked" as const, costUsd: 0 };
+    return {
+      draft,
+      lesson,
+      dropped,
+      check: checked.check,
+      ms: Date.now() - started,
+      spent: { ...spent, costUsd: spent.costUsd + checked.costUsd },
+    };
   };
 
-  // Fewer lost mistakes wins; a lesson that kept its starter beats one that did not.
-  const score = (d: readonly string[]) => {
-    const { defects, whole } = starterDrops(d);
-    return (whole ? 100 : 0) + defects;
-  };
+  const score = (a: { dropped: readonly string[]; check: StarterCheck }) => draftScore(a.dropped, a.check);
 
-  const attempts = [await draftOnce()];
-  while (attempts.length < LESSON_ATTEMPTS && score(attempts.at(-1)!.dropped) > 0) {
-    // Out of credit for another draft: the first one, with a mistake or two missing, beats refusing the lesson.
-    if (reserveRetry && !(await reserveRetry())) break;
+  // A draft that throws (it ran out of room, or its JSON did not parse) is a spent attempt, not the end of the lesson:
+  // a live Lab 4 lesson failed on its first draft with two attempts unused.
+  const lessonStarted = Date.now();
+  const attempts: Awaited<ReturnType<typeof draftOnce>>[] = [];
+  let tries = 0;
+  let slowest = 0;
+  let lastError: unknown = null;
+  const failures: { ms: number; error: string }[] = [];
+  while (tries < LESSON_ATTEMPTS && !attempts.some((a) => score(a) === 0)) {
+    if (tries > 0) {
+      // Out of time for another draft as slow as the slowest: serve the best one rather than lose them all to the timeout.
+      if (Date.now() - lessonStarted + slowest > LESSON_TIME_BUDGET_MS) break;
+      // Out of credit for another draft: the one it has, flaws and all, beats refusing the lesson.
+      if (reserveRetry && !(await reserveRetry())) break;
+    }
+    tries++;
+    const tryStarted = Date.now();
     try {
-      attempts.push(await draftOnce());
+      const attempt = await draftOnce();
+      attempts.push(attempt);
+      slowest = Math.max(slowest, attempt.ms);
     } catch (error) {
-      // A retry that fails outright should not cost the learner the draft they already have.
       if (!(error instanceof TutorError)) throw error;
-      break;
+      lastError = error;
+      failures.push({ ms: Date.now() - tryStarted, error: error.message });
+      slowest = Math.max(slowest, Date.now() - tryStarted);
     }
   }
-  const best = attempts.reduce((a, b) => (score(b.dropped) < score(a.dropped) ? b : a));
+  console.info(
+    "tutor lesson drafts",
+    JSON.stringify({
+      labs: labIds,
+      ms: Date.now() - lessonStarted,
+      failures,
+      drafts: attempts.map((a) => ({
+        check: a.check,
+        score: score(a),
+        ms: a.ms,
+        dropped: a.dropped.filter((d) => d.startsWith("starter")),
+        // What the model wrote, even when validation threw it away: the evidence for the next limit change.
+        starterSize: a.draft.starter ? { chars: a.draft.starter.code.length, lines: a.draft.starter.code.split("\n").length } : null,
+      })),
+    }),
+  );
+  if (attempts.length === 0) throw lastError;
+  const best = attempts.reduce((a, b) => (score(b) < score(a) ? b : a));
   const { draft, lesson, dropped } = best;
 
   // A dropped starter leaves a prompt written around code the learner does not have. Serving that teaches them the

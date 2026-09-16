@@ -4,6 +4,7 @@ import { join } from "node:path";
 import test from "node:test";
 import { LESSON_ATTEMPTS, TUTOR_MAX_TOKENS } from "./callLimits";
 import { PRICING_BY_MODEL } from "./pricing.generated";
+import { STARTER_JUDGE_MAX_TOKENS } from "./starterVerdict";
 import { TUTOR_FIELDS } from "./tutorPolicy";
 import {
   OWN_TEXT_TOKENS,
@@ -12,6 +13,7 @@ import {
   costMicros,
   estimateMicros,
   uncachedCostMicros,
+  type Ceiling,
   type Surface,
 } from "./cost";
 
@@ -63,13 +65,17 @@ test("every surface estimate is a positive whole number of micro-dollars", () =>
 });
 
 test("an estimate covers the dearest real usage its ceiling allows", () => {
-  // The worst bill a ceiling permits: every input token written to cache, every request at max_tokens.
-  for (const [surface, ceiling] of Object.entries(SURFACE_CEILINGS)) {
+  // The worst bill a ceiling permits: every input token written to cache, every request at its own max_tokens.
+  for (const [surface, ceiling] of Object.entries(SURFACE_CEILINGS) as [string, Ceiling][]) {
     const worst = ceiling.inputTokensPerRequest.reduce(
-      (sum, input) =>
+      (sum, input, i) =>
         sum +
         costMicros(
-          { input_tokens: 0, cache_creation_input_tokens: input, output_tokens: ceiling.maxOutputTokens },
+          {
+            input_tokens: 0,
+            cache_creation_input_tokens: input,
+            output_tokens: ceiling.maxOutputTokensPerRequest?.[i] ?? ceiling.maxOutputTokens,
+          },
           ceiling.model,
         ),
       0,
@@ -154,10 +160,16 @@ test("Ask Northwind's fixed prompt and tool text fit their ceiling", () => {
   assert.ok(tokens <= OWN_TEXT_TOKENS.assistantFixed, `${tokens} > ${OWN_TEXT_TOKENS.assistantFixed}`);
 });
 
-test("a lesson reserves one draft at the full output budget; a retry reserves its own", () => {
-  const { inputTokensPerRequest, maxOutputTokens } = SURFACE_CEILINGS.tutor_lesson;
+test("a lesson reserves one draft and its starter verdict; a retry reserves its own", () => {
+  const { inputTokensPerRequest, maxOutputTokensPerRequest } = SURFACE_CEILINGS.tutor_lesson as Ceiling;
   // Retries are covered by reserveMore in funding.ts, one draft at a time, never up front.
   assert.ok(LESSON_ATTEMPTS > 1, "if lessons stop retrying, reserveMore has no caller");
-  assert.equal(inputTokensPerRequest.length, 1);
-  assert.equal(maxOutputTokens, TUTOR_MAX_TOKENS.lesson);
+  assert.equal(inputTokensPerRequest.length, 2);
+  assert.deepEqual(maxOutputTokensPerRequest, [TUTOR_MAX_TOKENS.lesson, STARTER_JUDGE_MAX_TOKENS]);
+});
+
+test("a request priced at its own max_tokens costs less than at the call's largest", () => {
+  const lesson = SURFACE_CEILINGS.tutor_lesson as Ceiling;
+  const { maxOutputTokensPerRequest: _perRequest, ...flat } = lesson;
+  assert.ok(ceilingMicros(lesson) < ceilingMicros(flat));
 });

@@ -9,7 +9,9 @@ import { TUTOR_FIELDS, TUTOR_LIMITS } from "@/lib/tutorPolicy";
  * interpolated into a prompt, and an unbounded one is an unbounded bill.
  */
 export const runtime = "nodejs";
-export const maxDuration = 60;
+// Up to three drafts, each ~40s of generation plus a sandboxed starter run and its verdict. 60 was already too short
+// for the two drafts #133 allowed.
+export const maxDuration = 300;
 
 const text = (max: number) => z.string().trim().min(1).max(max);
 
