@@ -416,10 +416,11 @@ mode of a written retention policy is not that it is wrong, it is that the job
 implementing it was disabled in an incident eighteen months ago and nobody
 noticed.
 
-Eight collections carry one: `rate_limits`, `escalations`, `usage_daily`,
+Ten collections carry one: `rate_limits`, `escalations`, `usage_daily`,
 `assistant_sessions`, `assistant_proposals`, and — since the storefront started
 asking who pays for a call (Decision 12) — `users`, `auth_sessions` and
-`byok_keys`. Everything the storefront stores that derives from a person
+`byok_keys`, and — since the owner started reading who uses it (Decision 13) —
+`ai_calls` and `tutor_reviews`. Everything the storefront stores that derives from a person
 deletes itself, including a learner's encrypted API key, a day after its last
 use.
 
@@ -599,6 +600,56 @@ product and technical write-ups are in `docs/byok/`.
 
 ---
 
+## Decision 13 — the owner can see who uses it, but not what they said
+
+Decision 12 gave the storefront a person to charge. The owner then needs to
+answer questions a daily counter cannot: which learners are spending the free
+credit, on which feature, which model answered, how slow it was, and whether
+the Tutor's exercises are landing. `telemetry.ts` argued against a row per
+request, and for an anonymous demo that argument still holds. For signed-in
+learners it does not, so the storefront now keeps two logs, on narrow terms.
+
+```mermaid
+flowchart LR
+    Gate["guardAi"] --> Call["model call"]
+    Call --> Note["noteUsage<br/>tokens · model · stop reason"]
+    Note --> Settle["settle"]
+    Settle --> Calls["ai_calls<br/>TTL 90 days"]
+    Review["tutor review"] --> Reduce["reviewRecord<br/>counts only"]
+    Reduce --> Reviews["tutor_reviews<br/>TTL 90 days"]
+    Calls --> Admin["/admin<br/>ADMIN_GITHUB_IDS"]
+    Reviews --> Admin
+```
+
+- **`ai_calls` is metadata with no text field.** Surface, model, token counts,
+  cost, latency, who paid, the learner's id, and an error *code*. There is no
+  column a prompt, a reply, or an error message could be written into, and
+  `errorCode` turns an upstream error into `http_529` precisely because the
+  message can quote the request. Every call site already reported cost to
+  `settle`; the log hangs off that one function, so a new AI route is logged by
+  doing what it already had to do.
+- **`tutor_reviews` keeps outcomes, not work.** Which labs, pass or revise, how
+  many criteria were met, and whether each planted starter mistake was fixed.
+  `reviewRecord` drops the attempt, the feedback and the rubric wording before
+  anything reaches the database, and it keeps only lab and mistake ids the
+  Tutor knows, so the page cannot use the field to store arbitrary strings.
+  Course progress is still in the learner's browser and the admin console
+  cannot see it.
+- **Refusals are counted, not logged.** A request the gate turns away increments
+  `usage_daily.gate.<code>`. The question is how often people hit the wall, and
+  an anonymous refusal has nobody to attribute it to.
+- **Both logs expire after 90 days**, by TTL index, and the privacy page lists
+  both. A telemetry change that is not in the privacy policy is a promise broken
+  quietly.
+
+The console at `/admin` is the first real authorisation check in the
+storefront. It reuses GitHub sign-in and allows numeric ids listed in
+`ADMIN_GITHUB_IDS`. Logins are not accepted, because a login can be renamed and
+then registered by someone else. Every failure is a 404, an unset list admits
+nobody, and each page checks for itself rather than trusting its layout.
+
+---
+
 ## What this reference deliberately omits
 
 Being explicit about scope is part of being teachable. Not here:
@@ -659,11 +710,10 @@ Being explicit about scope is part of being teachable. Not here:
   content. A public product needs a moderation pass in front of triage; a
   support queue for outdoor gear is a soft enough target that we left it out,
   and that is a domain judgement rather than a general one.
-- **Observability beyond a daily counter.** The storefront aggregates its own
-  Claude usage — calls, cache-hit rate, cost, category mix — into one document
-  per day and renders it on `/ops`. That is the floor, not observability: there
-  is no tracing, no metrics export, no per-tenant attribution, and no
-  alerting. `GET /v1/limits` still shows only the last rate-limit snapshot this
+- **Observability beyond a call log.** The storefront aggregates its own
+  Claude usage into one document per day for `/ops`, and keeps a metadata row per
+  call for the owner's `/admin` console (Decision 13). That is still the floor,
+  not observability: there is no tracing, no metrics export, and no alerting. `GET /v1/limits` still shows only the last rate-limit snapshot this
   process saw, and nothing aggregates it.
 
   The API service in `src/` is deliberately **not** instrumented and will not

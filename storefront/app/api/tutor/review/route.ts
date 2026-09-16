@@ -1,5 +1,7 @@
 import { z } from "zod";
-import { reviewAttempt } from "@/lib/tutor";
+import { logReview } from "@/lib/activity";
+import { reviewRecord } from "@/lib/adminPolicy";
+import { KNOWN_IDS, mistakeLab, reviewAttempt } from "@/lib/tutor";
 import { tutorOptions, tutorPost } from "@/lib/tutorRoute";
 import { TUTOR_FIELDS, TUTOR_LIMITS } from "@/lib/tutorPolicy";
 
@@ -34,10 +36,17 @@ const Body = z.object({
     .max(TUTOR_LIMITS.maxDefects)
     .default([]),
   attempt: text(TUTOR_LIMITS.maxAttemptChars),
+  // The labs the lesson teaches, for the admin console's per-lab pass rates.
+  // Ids only, filtered against the corpus before storage. Optional: pages
+  // cached from before this field existed still get a review.
+  labIds: z.array(text(TUTOR_FIELDS.mistakeId)).max(8).default([]),
 });
 
 export const OPTIONS = tutorOptions;
 
 export async function POST(request: Request) {
-  return tutorPost(request, Body, "tutor_review", reviewAttempt);
+  return tutorPost(request, Body, "tutor_review", reviewAttempt, (input, { review }, userId) => {
+    // Outcomes only. The attempt, the notes and the criterion text stay out of the database.
+    logReview(userId, reviewRecord(review, input, { labs: KNOWN_IDS, mistakeLab }));
+  });
 }

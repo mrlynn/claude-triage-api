@@ -33,7 +33,7 @@ const { getDb } = await import("../lib/mongo");
 const { estimateMicros } = await import("../lib/cost");
 const { reserveTrial, reserveHouse, adjustTrial } = await import("../lib/ledger");
 const { createSession, upsertUser, destroySession, SESSION_COOKIE } = await import("../lib/identity");
-const { guardAi, settle, keyError, storeKey, accountFor, AiGateError } = await import("../lib/funding");
+const { guardAi, settle, keyError, storeKey, accountFor, noteUsage, AiGateError } = await import("../lib/funding");
 const { houseClient } = await import("../lib/anthropicClient");
 const { seal, sha256 } = await import("../lib/secrets");
 const { APIError } = await import("@anthropic-ai/sdk");
@@ -246,8 +246,64 @@ test("sign-out deletes the session and the key sealed to it", async () => {
   await assert.rejects(guardAi(requestWith(token), "tutor", "tutor_hint"), (e) => e instanceof AiGateError && e.code === "sign_in_required");
 });
 
+/** The call log is fire-and-forget, so a test waits for the row rather than for the write. */
+async function waitFor<T>(read: () => Promise<T | null>): Promise<T> {
+  for (let i = 0; i < 50; i++) {
+    const value = await read();
+    if (value) return value;
+    await new Promise((r) => setTimeout(r, 20));
+  }
+  throw new Error("timed out waiting for a write");
+}
+
+test("admin log: a settled call writes one metadata row, with usage, latency and who paid", async () => {
+  mode("enforce");
+  const { user, token } = await signedIn();
+  const funding = await guardAi(requestWith(token), "tutor", "tutor_hint");
+  noteUsage(funding, {
+    model: "claude-sonnet-5",
+    stop_reason: "end_turn",
+    usage: { input_tokens: 100, output_tokens: 50, cache_read_input_tokens: 30_000, cache_creation_input_tokens: 0 },
+  });
+  await settle(funding, 4_321);
+  const row = await waitFor(() => db.collection("ai_calls").findOne({ userId: user._id }));
+  assert.equal(row.surface, "tutor_hint");
+  assert.equal(row.scope, "tutor");
+  assert.equal(row.funding, "trial");
+  assert.equal(row.model, "claude-sonnet-5");
+  assert.equal(row.requests, 1);
+  assert.equal(row.cacheReadTokens, 30_000);
+  assert.equal(row.costMicros, 4_321);
+  assert.equal(row.error, null);
+  assert.ok(row.latencyMs >= 0);
+  assert.ok(row.expiresAt > new Date(Date.now() + 89 * 86_400_000));
+});
+
+test("admin log: a failed call records a code, never the message", async () => {
+  mode("enforce");
+  const { user, token } = await signedIn();
+  const funding = await guardAi(requestWith(token), "tutor", "tutor_hint");
+  const upstream = Object.assign(new Error("the learner's secret words"), { status: 529 });
+  await settle(funding, 0, upstream);
+  const row = await waitFor(() => db.collection("ai_calls").findOne({ userId: user._id }));
+  assert.equal(row.error, "http_529");
+  assert.equal(row.model, null);
+  assert.ok(!JSON.stringify(row).includes("secret"));
+});
+
+test("admin log: refusals at the gate are counted per day by code", async () => {
+  mode("enforce");
+  const day = new Date().toISOString().slice(0, 10);
+  const before = ((await db.collection("usage_daily").findOne({ _id: day as never }))?.gate?.sign_in_required as number) ?? 0;
+  await assert.rejects(guardAi(requestWith(), "tutor", "tutor_hint"));
+  await waitFor(async () => {
+    const doc = await db.collection("usage_daily").findOne({ _id: day as never });
+    return (doc?.gate?.sign_in_required ?? 0) > before ? doc : null;
+  });
+});
+
 test("every new collection carries a TTL index", async () => {
-  for (const name of ["users", "auth_sessions", "byok_keys"]) {
+  for (const name of ["users", "auth_sessions", "byok_keys", "ai_calls", "tutor_reviews"]) {
     const indexes = await db.collection(name).indexes();
     assert.ok(indexes.some((i) => i.expireAfterSeconds === 0 && i.key.expiresAt === 1), `${name} has no TTL index`);
   }

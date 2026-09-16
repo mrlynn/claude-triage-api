@@ -1,4 +1,4 @@
-import { AiGateError, gateBody, guardAi, keyError, settle, type Meter } from "@/lib/funding";
+import { AiGateError, gateBody, guardAi, keyError, noteUsage, settle, type Meter } from "@/lib/funding";
 import { redactSecrets } from "@/lib/secrets";
 import { redactPII } from "@/lib/untrusted";
 import { costMicros, microsToUsd, type UsageLike } from "@/lib/cost";
@@ -103,12 +103,15 @@ export async function POST(request: Request) {
       let billed: UsageLike | null = null;
       let billedModel = LIVE_MODEL;
       let recorded = false;
+      // What ended the stream early, if anything: an abort or an upstream error.
+      let failure: unknown;
       const record = async (usage: UsageLike, model: string): Promise<{ micros: number; meter: Meter | null }> => {
         if (recorded) return { micros: 0, meter: null };
         recorded = true;
         const micros = costMicros(usage, model);
+        noteUsage(funding, { usage, model });
         recordSpend("live", micros);
-        return { micros, meter: await settle(funding, micros) };
+        return { micros, meter: await settle(funding, micros, failure) };
       };
 
       try {
@@ -164,6 +167,7 @@ export async function POST(request: Request) {
           total_ms: Date.now() - t0,
         });
       } catch (err) {
+        failure = request.signal.aborted ? "aborted" : err;
         // An abort is the expected, healthy path here — it means the visitor
         // kept typing, which is the whole design. Logging it as an error would
         // fill the logs with successful debounces.
@@ -183,7 +187,7 @@ export async function POST(request: Request) {
         try {
           if (billed) await record(billed, billedModel);
           // Never reached the model at all: give the whole reservation back.
-          else await settle(funding, 0);
+          else await settle(funding, 0, failure);
         } catch (err) {
           console.error("live preview accounting failed (ignored)", redactSecrets(err));
         }

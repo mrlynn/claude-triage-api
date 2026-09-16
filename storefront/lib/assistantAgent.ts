@@ -5,7 +5,7 @@ import { betaZodTool } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
 import { houseClient } from "./anthropicClient";
 import { ASSISTANT_MAX_ITERATIONS, ASSISTANT_MAX_TOKENS, MODEL } from "./callLimits";
-import { costMicros } from "./cost";
+import { costMicros, type UsageLike } from "./cost";
 import { getDb, ensureIndexes, HAS_MONGO } from "./mongo";
 import { recordCall } from "./telemetry";
 import { redactPII, sanitizeToolOutput, wrapUntrusted } from "./untrusted";
@@ -121,7 +121,8 @@ interface RunInput {
   /** Who pays. The house key unless the route says otherwise. */
   client?: Anthropic;
   /** Told the whole run's cost once, when it ends — including a run that failed part-way. */
-  onSpend?: (micros: number) => void;
+  /** The whole run's cost and usage, once, when it ends. `requests` is the number of model turns. */
+  onSpend?: (micros: number, usage: { usage: UsageLike; model: string; requests: number }) => void;
   /** A chance to turn an upstream failure into something the visitor can act on, e.g. a rejected key. */
   onError?: (error: unknown) => Promise<{ detail: string; code: string } | null>;
 }
@@ -384,17 +385,15 @@ export async function* runAssistant(input: RunInput): AsyncGenerator<AssistantEv
     // recording a zero-cost call for a request that never started would
     // quietly deflate the mean cost per call on /ops.
     if (turns > 0) {
-      const micros = costMicros(
-        {
-          input_tokens: inputTokens,
-          output_tokens: outputTokens,
-          cache_read_input_tokens: cacheRead,
-          cache_creation_input_tokens: cacheWrite,
-        },
-        model,
-      );
+      const usage = {
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
+        cache_read_input_tokens: cacheRead,
+        cache_creation_input_tokens: cacheWrite,
+      };
+      const micros = costMicros(usage, model);
       recordCall({ surface: "assistant", category: "assistant", cacheHit: cacheRead > 0, escalated, costMicros: micros });
-      input.onSpend?.(micros);
+      input.onSpend?.(micros, { usage, model, requests: turns });
     }
   }
 }

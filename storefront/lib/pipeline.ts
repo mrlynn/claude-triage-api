@@ -1,6 +1,6 @@
 import "server-only";
 import { z } from "zod";
-import { AiGateError, guardAi, keyError, settle, type Funding, type GateCode, type Meter } from "./funding";
+import { AiGateError, guardAi, keyError, noteUsage, settle, type Funding, type GateCode, type Meter } from "./funding";
 import { redactSecrets } from "./secrets";
 import { costMicros, microsToUsd, uncachedCostMicros } from "./cost";
 import { redactPII } from "./untrusted";
@@ -228,7 +228,7 @@ export async function* runPipeline(
   try {
     response = await callClaude(system, message, { client: funding.client });
   } catch (err) {
-    const meter = await settle(funding, 0);
+    const meter = await settle(funding, 0, err);
     const refused = await keyError(funding, err);
     if (!refused) console.error("model call failed", redactSecrets(err));
     yield { type: "stage", id: "model", status: "failed", ms: mark() - s };
@@ -244,6 +244,7 @@ export async function* runPipeline(
   }
   // Settled the moment the bill is known, before anything below can fail: a
   // reply that does not validate was still paid for.
+  noteUsage(funding, response);
   const settled = settle(funding, costMicros(response.usage, response.model));
   const modelMs = mark() - s;
 

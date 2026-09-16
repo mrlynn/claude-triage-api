@@ -4,7 +4,7 @@ import Link from "@docusaurus/Link";
 
 import styles from "./legal.module.css";
 
-const UPDATED = "15 September 2026";
+const UPDATED = "16 September 2026";
 
 export default function Privacy(): ReactNode {
   return (
@@ -111,7 +111,24 @@ export default function Privacy(): ReactNode {
             </li>
             <li>
               Against that id it stores how much free credit you were given and how much you
-              have used, in dollars. It does not store what you asked.
+              have used, in dollars.
+            </li>
+            <li>
+              <strong>A record of each AI request</strong> you make: which feature it was
+              (for example a Tutor hint), which Claude model answered, how many tokens it used,
+              what it cost, how long it took, and an error code if it failed. It does{" "}
+              <strong>not</strong> store what you asked or what the AI replied. Requests from
+              visitors who are not signed in are recorded the same way, with no identity attached.
+            </li>
+            <li>
+              <strong>Tutor review results.</strong> When the Tutor reviews an attempt, the site
+              keeps which lab it was for, whether it passed, how many rubric criteria were met,
+              and whether each deliberately planted mistake was fixed. Your attempt, the
+              Tutor&rsquo;s feedback and the rubric text are not stored.
+            </li>
+            <li>
+              The site&rsquo;s operator can see these records, by username, to understand how the
+              course is used, what it costs, and which labs are not landing. Nobody else can.
             </li>
             <li>
               A session cookie (<code>nw_session</code>) keeps you signed in. The database
@@ -205,6 +222,10 @@ export default function Privacy(): ReactNode {
                   <td>30 days</td>
                 </tr>
                 <tr>
+                  <td>AI request records and Tutor review results (no message text)</td>
+                  <td>90 days</td>
+                </tr>
+                <tr>
                   <td>Rate-limit and daily usage counters</td>
                   <td>Until the window ends</td>
                 </tr>
@@ -245,7 +266,8 @@ export default function Privacy(): ReactNode {
             </li>
             <li>
               <strong>MongoDB Atlas</strong> — the database that holds assistant
-              conversations, escalations, sign-in records and encrypted API keys.
+              conversations, escalations, sign-in records, AI request records, Tutor review
+              results and encrypted API keys.
             </li>
             <li>
               <strong>Anthropic</strong> — the Claude API, which receives assistant messages
