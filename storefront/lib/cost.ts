@@ -8,6 +8,7 @@ import {
   MAX_MESSAGE_CHARS,
   MAX_TOKENS,
   MODEL,
+  LESSON_ATTEMPTS,
   TUTOR_MAX_TOKENS,
   TUTOR_MODEL,
 } from "./callLimits";
@@ -153,15 +154,20 @@ export const SURFACE_CEILINGS = {
     OWN_TEXT_TOKENS.tutorIndex + OWN_TEXT_TOKENS.perCallOverhead,
     TUTOR_MAX_TOKENS.plan,
   ),
-  tutor_lesson: once(
-    TUTOR_MODEL,
-    OWN_TEXT_TOKENS.tutorCorpus +
-      OWN_TEXT_TOKENS.tutorMistakes +
-      TUTOR_FIELDS.title +
-      TUTOR_FIELDS.objectives * TUTOR_FIELDS.objective +
-      OWN_TEXT_TOKENS.perCallOverhead,
-    TUTOR_MAX_TOKENS.lesson,
-  ),
+  // A lesson may be drafted LESSON_ATTEMPTS times, each a full request at the same size.
+  tutor_lesson: {
+    model: TUTOR_MODEL,
+    inputTokensPerRequest: Array.from(
+      { length: LESSON_ATTEMPTS },
+      () =>
+        OWN_TEXT_TOKENS.tutorCorpus +
+        OWN_TEXT_TOKENS.tutorMistakes +
+        TUTOR_FIELDS.title +
+        TUTOR_FIELDS.objectives * TUTOR_FIELDS.objective +
+        OWN_TEXT_TOKENS.perCallOverhead,
+    ),
+    maxOutputTokens: TUTOR_MAX_TOKENS.lesson,
+  },
   tutor_review: once(
     TUTOR_MODEL,
     OWN_TEXT_TOKENS.tutorCorpus + OWN_TEXT_TOKENS.tutorMistakes + exerciseChars + TUTOR_LIMITS.maxAttemptChars +

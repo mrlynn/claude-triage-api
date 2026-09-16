@@ -37,13 +37,26 @@ export const MAX_LIVE_TOKENS = 300;
 
 export const TUTOR_MODEL = process.env.TUTOR_MODEL ?? "claude-sonnet-5";
 
-/** Per call. The lesson is the largest: a brief, a six-question drill, an exercise and a starter. */
+/**
+ * Per call. The lesson is the largest: a brief, a six-question drill, an exercise and a starter.
+ *
+ * Measured across all nine labs with adaptive thinking at medium effort: the visible lesson is a steady
+ * ~2,500-2,900 tokens, but thinking ranged from 1,500 to 5,500, and a Lab 3 lesson hit 8,000 and was cut off
+ * mid-JSON. 16,000 leaves thinking room to vary. Only tokens used are billed; the ceiling is what credit reserves.
+ */
 export const TUTOR_MAX_TOKENS = {
   plan: 6_000,
-  lesson: 8_000,
+  lesson: 16_000,
   review: 4_000,
   hint: 1_500,
 } as const;
+
+/**
+ * A lesson whose starter lost a planted mistake is drafted once more: the model reformats an authored line often
+ * enough (a one-line catch split over three lines) that one retry recovers most of them. Two, not more — each
+ * attempt is a full lesson call, and the credit ceiling reserves for every one.
+ */
+export const LESSON_ATTEMPTS = 2;
 
 // ---- Ask Northwind --------------------------------------------------------------
 
