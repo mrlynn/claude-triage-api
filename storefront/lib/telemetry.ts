@@ -39,7 +39,7 @@ import type { Micros } from "./cost";
  * owner's question is "where does the money go", and four Tutor calls are one
  * answer to it.
  */
-export type SpendSurface = "support" | "injection" | "live" | "tutor" | "assistant";
+export type SpendSurface = "support" | "injection" | "live" | "tutor" | "assistant" | "explorer";
 
 interface DayDoc {
   _id: string; // YYYY-MM-DD

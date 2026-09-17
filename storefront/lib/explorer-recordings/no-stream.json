@@ -1,0 +1,105 @@
+{
+ "id": "no-stream",
+ "recordedAt": "2026-09-17T08:44:38.243Z",
+ "turns": [
+  {
+   "body": {
+    "model": "claude-opus-5",
+    "max_tokens": 1024,
+    "messages": [
+     {
+      "role": "user",
+      "content": "In two sentences: what does a three-layer shell jacket do that a two-layer one doesn't?"
+     }
+    ],
+    "output_config": {
+     "effort": "low"
+    }
+   },
+   "events": [
+    {
+     "event": "start",
+     "data": {
+      "t": 0,
+      "funding": "house",
+      "sdk": "0.126.0"
+     }
+    },
+    {
+     "event": "attempt",
+     "data": {
+      "t": 2,
+      "n": 1,
+      "method": "POST",
+      "url": "https://api.anthropic.com/v1/messages",
+      "headers": {
+       "accept": "application/json",
+       "anthropic-version": "2023-06-01",
+       "content-type": "application/json",
+       "user-agent": "Anthropic/JS 0.126.0",
+       "x-api-key": "sk-ant-…•••• (Northwind's key)",
+       "x-stainless-arch": "arm64",
+       "x-stainless-lang": "js",
+       "x-stainless-os": "MacOS",
+       "x-stainless-package-version": "0.126.0",
+       "x-stainless-retry-count": "0",
+       "x-stainless-runtime": "node",
+       "x-stainless-runtime-version": "v26.7.0",
+       "x-stainless-timeout": "600"
+      },
+      "body": "{\"model\":\"claude-opus-5\",\"max_tokens\":1024,\"messages\":[{\"role\":\"user\",\"content\":\"In two sentences: what does a three-layer shell jacket do that a two-layer one doesn't?\"}],\"output_config\":{\"effort\":\"low\"}}"
+     }
+    },
+    {
+     "event": "headers",
+     "data": {
+      "t": 6380,
+      "status": 200,
+      "headers": {
+       "anthropic-ratelimit-input-tokens-limit": "10000000",
+       "anthropic-ratelimit-input-tokens-remaining": "10000000",
+       "anthropic-ratelimit-input-tokens-reset": "2026-09-17T08:44:32Z",
+       "anthropic-ratelimit-output-tokens-limit": "2000000",
+       "anthropic-ratelimit-output-tokens-remaining": "2000000",
+       "anthropic-ratelimit-output-tokens-reset": "2026-09-17T08:44:38Z",
+       "anthropic-ratelimit-requests-limit": "10000",
+       "anthropic-ratelimit-requests-remaining": "9999",
+       "anthropic-ratelimit-requests-reset": "2026-09-17T08:44:31Z",
+       "anthropic-ratelimit-tokens-limit": "12000000",
+       "anthropic-ratelimit-tokens-remaining": "12000000",
+       "anthropic-ratelimit-tokens-reset": "2026-09-17T08:44:32Z",
+       "cf-cache-status": "DYNAMIC",
+       "cf-ray": "a3c6d45b692daf79-EWR",
+       "content-encoding": "br",
+       "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+       "content-type": "application/json",
+       "date": "Thu, 17 Sep 2026 08:44:38 GMT",
+       "request-id": "req_011Cf8iZEg5vjUuPCuLonQKx",
+       "server": "cloudflare",
+       "server-timing": "x-originResponse;dur=6329",
+       "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+       "traceresponse": "00-1c628b9331fe3dbcb25df2d7a1059359-ef1d10cde6149567-01",
+       "vary": "Accept-Encoding",
+       "x-robots-tag": "none"
+      }
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6381,
+      "chunk": "{\"model\":\"claude-opus-5\",\"id\":\"msg_011Cf8iZEsFgUVnLzi98DbpT\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"CAIS9AUKjgEIERgCKkC1TUyETFGRCd5jNPQDPZ02MdKN5tkPYhYPqgAcdNwSt0cyLPIYjMK3Wn5Gpk9qyKwDwpP5epuWxZsMZJq/fQBnMg1jbGF1ZGUtb3B1cy01OAFCCHRoaW5raW5nWiQ2MzhhNDc4YS0yMmVjLTRjY2YtOGEwZC1jMzRiYTZlMWFhMzOoAfPQrtUGEgxqdq7q/z+fFzWLxsoaDLf3/9aClOycegzwyCIwDzxS7QF/o42UB88R0me3/11KcY/ZHWA2WAmmishMGKdKvhV3k1ZqFBuykDM4cLOqKpIEPqypAziVmkfHoQsILqxcuI9v+Zn7alD4B/IWJiWuIjvonxGaljiB2vXogcaZIRXig+5SKPNFFdkaK6z9MCp6XRPE8+tK/FBGDrqDOFD8gnEiwle6++NSkHAbfHXxjfMl+BQUc0lF0dDcVoz56KAdwPaExI/DCXYZ1zYAgFuuiK++9je7qOzuRI8PnxVnquCh5+z5JxonuVOdXXNMPQOqp65VwGjiMkJJPrDNInF9guTZblgxgIPu1Qvau2K17wNXRFT0644ScmgUwMm46FumMfOp2JrUckUHCA4s2hSdeaESRdmRfww8D7BDqgwl5d6mzwkqZUDJwfXeI+cAthqDFANpnhyJ3WBOOhIXsq6/Cyp9zxl4t396d4EO4qaOwUz9jsMEyKcpY2Fpt1BA+9ymyCenBzaqDiIWN0kNcl0H2j6hEt9QpdedWWkFP1t2qJ12Pk4uMtq+JTnjoWOgXNOsk092m1GbfE/A1x1xPJQv55XO+E3I9DaV1nL4CZAwolYv2Ff6xzdusfwG3d6losHmxIKvhzXHvHKhk7siMcSatC5OWg7Ik5qZTCDC6AYu3oJd9ftYPWPUhId/1oji9kP501K8Fb/CqfgQx96mvUP5XwPn6Zqu01TpNlUO2Us1/8qySbqrSlOtC/EekJCIScnxRLXZqX372RRkovqMHtjzfYBeU9TaOPb6WFJZKnu5DCbzgwIYAQ==\"},{\"type\":\"text\",\"text\":\"A three-layer shell bonds the waterproof membrane between the face fabric and a thin inner scrim, so the membrane is protected from abrasion and body oils without needing a separate hanging liner — making the jacket lighter, less bulky, better packing, and more durable for hard use. A two-layer shell leaves the membrane's inner face exposed, so it requires a loose mesh or taffeta liner that adds weight and bulk, tends to cling when you're sweaty, and generally makes the garment cheaper but less suited to high-output or alpine conditions.\"}],\"container\":null,\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":37,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":373,\"output_tokens_details\":{\"thinking_tokens\":191},\"service_tier\":\"standard\",\"inference_geo\":\"global\"}}"
+     }
+    },
+    {
+     "event": "done",
+     "data": {
+      "t": 6381,
+      "model": "claude-opus-5",
+      "cost_usd": 0.00951
+     }
+    }
+   ]
+  }
+ ]
+}

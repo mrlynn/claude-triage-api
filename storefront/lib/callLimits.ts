@@ -85,3 +85,24 @@ export const ASSISTANT_LIMITS = {
   progressItems: 20,
   progressItemChars: 80,
 } as const;
+
+// ---- the Messages API explorer ------------------------------------------------
+
+/**
+ * The explorer forwards a request body the visitor wrote, so these are the only numbers standing between a text box and
+ * the bill. The first model is the dearest, and `cost.ts` prices every explorer call as if it used it.
+ */
+export const EXPLORER_MODELS = ["claude-opus-5", "claude-sonnet-5", "claude-haiku-4-5"] as const;
+
+/** Low enough that thinking at high effort can visibly run into it: `stop_reason: "max_tokens"` is worth seeing once. */
+export const EXPLORER_MAX_TOKENS = 2_048;
+
+/**
+ * The whole request body, serialized. Tokens are counted at one per character, as for any text a visitor sends. The
+ * cache preset's handbook is ~9,000 characters, and a tool round trip carries thinking signatures, so this leaves room
+ * for either but not a pasted novel.
+ */
+export const EXPLORER_MAX_BODY_CHARS = 14_000;
+
+/** A tool round trip is three messages; a short conversation a few more. */
+export const EXPLORER_MAX_MESSAGES = 12;

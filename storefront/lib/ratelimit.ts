@@ -70,12 +70,17 @@ const SCOPES = {
   // script filling the admin console, generous enough for a reader rating
   // every page of a lab and then adding comments.
   feedback: Number(process.env.FEEDBACK_IP_LIMIT ?? 30),
+  // The Messages API explorer. Each send is one call a developer chose to make and then reads for a while, so the
+  // window is closer to the injection playground than to the as-you-type preview.
+  explorer: Number(process.env.EXPLORER_IP_LIMIT ?? 20),
+  // The explorer's token-count preflight. count_tokens is free, so no daily cap; the window is a floor under a script.
+  count: Number(process.env.COUNT_IP_LIMIT ?? 40),
 } as const;
 
 export type LimitScope = keyof typeof SCOPES;
 
 /** The scopes that call a model, and so share the global daily cap. */
-const PAID_SCOPES: ReadonlySet<LimitScope> = new Set(["support", "injection", "assistant", "live", "tutor"]);
+const PAID_SCOPES: ReadonlySet<LimitScope> = new Set(["support", "injection", "assistant", "live", "tutor", "explorer"]);
 
 const DAILY_CAP = Number(process.env.SUPPORT_DAILY_CAP ?? 600);
 

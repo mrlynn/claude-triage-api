@@ -1,0 +1,468 @@
+{
+ "id": "think",
+ "recordedAt": "2026-09-17T08:44:47.207Z",
+ "turns": [
+  {
+   "body": {
+    "model": "claude-opus-5",
+    "max_tokens": 2048,
+    "stream": true,
+    "messages": [
+     {
+      "role": "user",
+      "content": "A tent weighs 2.4 kg and the poles are 30% of that. A lighter pole set saves 40% of the pole weight. What does the tent weigh now, and is it worth $90 for a thru-hiker who values 100 g at $15?"
+     }
+    ],
+    "thinking": {
+     "type": "adaptive",
+     "display": "summarized"
+    },
+    "output_config": {
+     "effort": "medium"
+    }
+   },
+   "events": [
+    {
+     "event": "start",
+     "data": {
+      "t": 0,
+      "funding": "house",
+      "sdk": "0.126.0"
+     }
+    },
+    {
+     "event": "attempt",
+     "data": {
+      "t": 1,
+      "n": 1,
+      "method": "POST",
+      "url": "https://api.anthropic.com/v1/messages",
+      "headers": {
+       "accept": "application/json",
+       "anthropic-version": "2023-06-01",
+       "content-type": "application/json",
+       "user-agent": "Anthropic/JS 0.126.0",
+       "x-api-key": "sk-ant-…•••• (Northwind's key)",
+       "x-stainless-arch": "arm64",
+       "x-stainless-lang": "js",
+       "x-stainless-os": "MacOS",
+       "x-stainless-package-version": "0.126.0",
+       "x-stainless-retry-count": "0",
+       "x-stainless-runtime": "node",
+       "x-stainless-runtime-version": "v26.7.0",
+       "x-stainless-timeout": "600"
+      },
+      "body": "{\"model\":\"claude-opus-5\",\"max_tokens\":2048,\"stream\":true,\"messages\":[{\"role\":\"user\",\"content\":\"A tent weighs 2.4 kg and the poles are 30% of that. A lighter pole set saves 40% of the pole weight. What does the tent weigh now, and is it worth $90 for a thru-hiker who values 100 g at $15?\"}],\"thinking\":{\"type\":\"adaptive\",\"display\":\"summarized\"},\"output_config\":{\"effort\":\"medium\"}}"
+     }
+    },
+    {
+     "event": "headers",
+     "data": {
+      "t": 1000,
+      "status": 200,
+      "headers": {
+       "anthropic-ratelimit-input-tokens-limit": "10000000",
+       "anthropic-ratelimit-input-tokens-remaining": "10000000",
+       "anthropic-ratelimit-input-tokens-reset": "2026-09-17T08:44:38Z",
+       "anthropic-ratelimit-output-tokens-limit": "2000000",
+       "anthropic-ratelimit-output-tokens-remaining": "2000000",
+       "anthropic-ratelimit-output-tokens-reset": "2026-09-17T08:44:38Z",
+       "anthropic-ratelimit-requests-limit": "10000",
+       "anthropic-ratelimit-requests-remaining": "9999",
+       "anthropic-ratelimit-requests-reset": "2026-09-17T08:44:38Z",
+       "anthropic-ratelimit-tokens-limit": "12000000",
+       "anthropic-ratelimit-tokens-remaining": "12000000",
+       "anthropic-ratelimit-tokens-reset": "2026-09-17T08:44:38Z",
+       "cache-control": "no-cache",
+       "cf-cache-status": "DYNAMIC",
+       "cf-ray": "a3c6d4835fd5af79-EWR",
+       "content-encoding": "gzip",
+       "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+       "content-type": "text/event-stream; charset=utf-8",
+       "date": "Thu, 17 Sep 2026 08:44:39 GMT",
+       "request-id": "req_011Cf8iZhzeUd4Z79Dv5ZT73",
+       "server": "cloudflare",
+       "server-timing": "x-originResponse;dur=951",
+       "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+       "traceresponse": "00-4261aef80d6b6ba302990643598fc2a8-2fe69c6ffece11c8-01",
+       "vary": "Accept-Encoding",
+       "x-robots-tag": "none"
+      }
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 1001,
+      "chunk": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-opus-5\",\"id\":\"msg_011Cf8iZiC4Zv9RAsMmpJzVE\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":85,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":3,\"service_tier\":\"standard\",\"inference_geo\":\"global\"}}   }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}    }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6290,
+      "chunk": "event: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"The\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" t\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"ent\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"'s poles we\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"igh 0\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\".72 k\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"g (30% of 2.\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"4 kg), and cut\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"ting \"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"40% of\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" that saves 288\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" \"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"g\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\", b\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"ringing the new weight to \"}              }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6298,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"2.112 kg. At\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" $15\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" \"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"per 100g sa\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"ved, that's\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" only\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" worth $43.\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"20 in\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" value, well\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" under\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" the $90 up\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"g\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"rade cost—\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"so it's not wor\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"th it.\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"\\n\\n\"}      }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6298,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"CAISrQMKjgEIERgCKkD5L6YN6PvzEtlEfUwbcaLc1jEJy2sX9ApOetuTD+L5T0UNZtc62ENvMdEaLrovZL/3KdQlOg7V7+eYIXQJstXzMg1jbGF1ZGUtb3B1cy01OAFCCHRoaW5raW5nWiQ2MzhhNDc4YS0yMmVjLTRjY2YtOGEwZC1jMzRiYTZlMWFhMzOoAfzQrtUGEgwmM5X6YZnLrAETANAaDM3EEujqk9fmeMna2SIwFvSCuQJA9CR78emabiGq6G6ZC8q0UgV8XGNhvWOnROSeVPf9RCmbL8EDy0TAYfn8KssBC9UW2spbxcO++e4j4rlU6Coe2Z3RkW3OKMohcS33WYoubaSfTXchfoi9Jck7/Qb4SBinuXQt6o2mlfuDPNXM2Cp/NsuBvz1uT9RQRP/RWLQLyjIh6UVmEzL8t3bE72CkjdstyKH0i4tt1mg6Qhl/MRQjSix3sNoOaU83V2m7k8ThU4GhMCHhTem2jnIHjS6tc2V1QySzTnjhYOlYFhCyZSBn2dQsvAkGbshOYRanIge4HDEHPcLnzEiU1a7hYX2bch+vmzGdCFAxnKoYAQ==\"}             }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0          }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"text\",\"text\":\"\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"## We\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ight calculation\\n\\n**Original\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" pole weight:** 30\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"% × 2.4 k\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"g = **\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"0.72 kg**\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" (720 g)\\n\\n**\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"Weight saved:** 40\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"% × 720\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" g = **288\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" g**\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\n\\n**New tent weight:\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"** 2.4 k\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"g − 0.288 k\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"g = **2.112 k\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"g** (about 2.11\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" kg,\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" or\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" 4.66 l\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"b)\\n\\nSo\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" the po\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"les now\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" we\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"igh 432\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" g inst\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ead of 720 g, and\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" the whole tent drops from\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" 2.40\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" kg to 2.11\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" kg —\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" a \"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"12% reduction in\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" total p\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ack weight for\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" that item\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\".\\n\\n## Is\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" it worth $90?\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\n\\nUsing the hiker's own\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" stated val\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"uation of\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" **$15 per 100 \"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"g**:\\n\\n-\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" Implied value of the sav\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ings: 288 g × \"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"($15 /\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" 100 g) = **$\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"43.20**\\n- C\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ost of the upgrade:\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" **$90.\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"00**\\n- Net\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\": $\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"43.20 − $90 \"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"= **−$46.80**\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\n\\n**\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"Ver\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"dict: not\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" worth it.** The up\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"grade costs ro\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ughly $31 per 100\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" g saved, more\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" than double what\"}           }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6298,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" this\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" hiker says\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" a\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" gram is worth to\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" them. They\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"'d need the\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" price to fall to about\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" **$43**\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" (\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"or the savings to more\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" than double,\"}     }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6317,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" to ~600 g) for\"}           }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6379,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" the math\"}          }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6485,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" to break\"}   }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6501,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" even.\\n\\n**\"}      }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6558,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"Caveats worth a\"}            }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6611,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" th\"}        }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6678,
+      "chunk": "event: content_block_del"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6680,
+      "chunk": "ta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ought:** if\"}              }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6736,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" the\"}   }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6792,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" l\"}          }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6848,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ighter poles are less\"} }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6921,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" durable,\"}         }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7009,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" a m\"}             }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7029,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"id-trail failure on\"}            }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7085,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" a th\"}        }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7144,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ru-hike car\"}     }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7204,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ries a\"}           }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7262,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" cost well\"}            }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7317,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" beyond we\"} }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7378,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ight.\"}        }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7439,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" Conversely, the $15/\"}}\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7533,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"100 g figure is us\"}               }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7553,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ually cal\"}  }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7617,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ibrated for *total\"}           }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7673,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"* p\"}               }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7730,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ack we\"}               }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7786,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ight dec\"}           }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7848,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"isions — if there\"}}\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7907,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" are\"}}\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 8058,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" cheaper places\"}       }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 8059,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" to sh\"}             }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 8086,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ed\"}   }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 8147,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" 288 g (\"}               }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 8198,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"food\"}             }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 8269,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" rep\"}  }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 8327,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ack\"}            }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 8378,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"aging, \"} }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 8438,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ditching red\"}  }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 8580,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"undant lay\"}     }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 8581,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ers, a l\"}         }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 8615,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ighter s\"}             }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 8679,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"leeping p\"}             }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 8728,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ad), those should\"} }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 8801,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" be sp\"}               }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 8861,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ent first.\"}    }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 8946,
+      "chunk": "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1     }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 8948,
+      "chunk": "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":85,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":630,\"output_tokens_details\":{\"thinking_tokens\":114}}               }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"             }\n\n"
+     }
+    },
+    {
+     "event": "done",
+     "data": {
+      "t": 8956,
+      "model": "claude-opus-5",
+      "cost_usd": 0.016175
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -26,6 +26,11 @@ const WORKSHOP = [
     title: "Watch a message get classified as you type",
   },
   {
+    href: "/playground/messages",
+    label: "Messages API",
+    title: "Build a Messages API request and watch it cross the wire",
+  },
+  {
     href: "/playground/injection",
     label: "Break it",
     title: "Prompt-injection playground",

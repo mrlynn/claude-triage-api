@@ -1,0 +1,1148 @@
+{
+ "id": "cache",
+ "recordedAt": "2026-09-17T08:45:09.805Z",
+ "turns": [
+  {
+   "body": {
+    "model": "claude-opus-5",
+    "max_tokens": 400,
+    "stream": true,
+    "system": [
+     {
+      "type": "text",
+      "text": "You answer questions for Northwind Outfitters customers using only this handbook.\n\n# Northwind Outfitters — Customer Support Policy Handbook\n\nVersion 4.2 · Effective 2026-01-01 · Owner: Support Operations\n\nThis handbook is the single source of truth for support agent decisions. When a\ncustomer request conflicts with this document, this document wins. When this\ndocument is silent, escalate rather than improvise.\n\n---\n\n## 1. Tone and Voice\n\n1.1 Address the customer by first name if it is known. Never use a title plus\nsurname unless the customer used one first.\n\n1.2 Lead with the resolution, not with the apology. \"Your replacement ships\ntoday\" outranks \"We're so sorry for the inconvenience.\"\n\n1.3 One apology per message, maximum. Repeated apologies read as insincere and\nmeasurably reduce CSAT in our post-contact surveys.\n\n1.4 Never blame the customer, the carrier, or another department by name. Say\n\"the package was misrouted,\" not \"FedEx lost it.\"\n\n1.5 Never speculate about root cause. If engineering has not confirmed why\nsomething broke, say we are investigating.\n\n1.6 Do not use exclamation marks in messages about money, delays, or defects.\n\n1.7 Plain language. No internal jargon: never write \"RMA,\" \"SKU,\" \"P1,\" or\n\"tier-2\" to a customer. Write \"return,\" \"item,\" \"urgent,\" \"specialist.\"\n\n---\n\n## 2. Refunds and Returns\n\n2.1 **Standard return window is 60 days** from the delivery date, for any\nreason, provided the item is in resellable condition.\n\n2.2 **Defective items have no return window.** If an item fails due to a\nmanufacturing defect, we replace or refund it regardless of age. This is our\nlifetime workmanship guarantee.\n\n2.3 Refunds are issued to the original payment method. Processing takes 5–7\nbusiness days to appear on a customer's statement. Never promise \"immediately.\"\n\n2.4 **Store credit may be offered but never required.** If a customer asks for\na refund to their card, issue it to their card.\n\n2.5 Return shipping is free for defective items, wrong items shipped, and any\norder over $75. For all other returns, a $6.95 return label fee is deducted.\n\n2.6 Items excluded from returns: personalized/engraved goods, opened food and\nnutrition products, and clearance items marked \"Final Sale.\"\n\n2.7 **Agent refund authority is $200.** Refunds above $200 require a\nsupervisor. Do not split a refund into multiple sub-$200 transactions to avoid\napproval — this is a terminable offense.\n\n2.8 If an order was delivered more than 60 days ago and is not defective, the\ncorrect answer is a polite decline plus a one-time 15% goodwill discount code.\n\n---\n\n## 3. Shipping and Delivery\n\n3.1 Standard shipping is 5–7 business days. Expedited is 2 business days.\nOvernight orders placed after 2:00 PM ET ship the following business day.\n\n3.2 A package is not considered lost until **7 business days** past its\nprojected delivery date for domestic orders, or 21 calendar days international.\n\n3.3 For a confirmed lost package, ship a replacement at no cost and do not ask\nthe customer to wait for the carrier investigation to close.\n\n3.4 **\"Delivered but not received\"**: file a carrier trace, then ship a\nreplacement immediately if the order value is under $150. Above $150, a\nsupervisor reviews the account for prior claims first.\n\n3.5 We do not ship to freight forwarders. Orders detected going to a known\nforwarder address are cancelled and refunded in full before shipment.\n\n3.6 Weather and natural-disaster delays are not eligible for shipping refunds,\nbut we will refund expedited shipping upgrades when the upgrade delivered no\nbenefit.\n\n---\n\n## 4. Billing and Subscriptions\n\n4.1 The Trail Club membership is $89/year and auto-renews. We send a renewal\nnotice 14 days before the charge.\n\n4.2 **Cancel any membership on request, no retention script, no exceptions.**\nAsk once if they would like to hear about a cheaper tier; if they decline, cancel.\n\n4.3 A membership charged within the last 30 days is fully refundable on\ncancellation. Older than 30 days, it is prorated by remaining months.\n\n4.4 Duplicate charges: refund the duplicate the same day. Do not ask the\ncustomer to dispute it with their bank.\n\n4.5 We never store full card numbers. If a customer sends card digits in a\nmessage, do not repeat them back, and note that the message needs redaction.\n\n---\n\n## 5. Security, Privacy, and Escalation\n\n5.1 **Never confirm or deny account details to an unverified requester.**\nVerification requires the order number plus either the email on file or the\nlast four digits of the payment method.\n\n5.2 Never send a password, reset link, or one-time code to any address other\nthan the verified email on file.\n\n5.3 Escalate to a supervisor immediately, without attempting resolution, when:\n  - The customer reports a physical injury or property damage from a product.\n  - The customer mentions a lawyer, a lawsuit, or a regulator.\n  - The customer alleges discrimination or harassment by staff.\n  - A single account requests more than $500 in refunds within 30 days.\n  - The customer mentions self-harm.\n\n5.4 Product-safety reports (injury, fire, choking hazard, allergic reaction)\nare logged to the Safety queue within one hour, no exceptions, even if the\ncustomer says it is not a big deal.\n\n5.5 Do not discuss another customer's order, ever, including with a spouse,\nparent, or employer of the account holder.\n\n5.6 Data deletion requests are routed to Privacy Operations. Agents must not\ndelete account records directly.\n\n---\n\n## 6. Discounts and Goodwill\n\n6.1 Standing goodwill authority per agent: one 15% discount code per contact.\n\n6.2 Stacking goodwill codes with an active promotion is not permitted.\n\n6.3 Do not offer a discount as the first response to a defect. Fix the problem\nfirst; offer goodwill only if the customer remains dissatisfied.\n\n6.4 Price adjustments are honored within 14 days of purchase if the item drops\nin price on our own site. We do not price-match other retailers.\n\n---\n\n## 7. What Never Goes in a Reply\n\n- Internal ticket IDs, queue names, or agent shift schedules.\n- Estimated engineering fix dates that have not been publicly announced.\n- Any statement that a defect is \"known\" unless it is on the public status page.\n- Promises about future product features.\n- The words \"unfortunately,\" \"as per our policy,\" or \"I'm afraid\" — they are\n  filler that signals a decline before the customer reads the substance.\n\n---\n\n## 8. Category Definitions (used by automated triage)\n\nThese definitions are normative. Automated triage and human agents must apply\nthe same boundaries so that routing metrics stay comparable across channels.\n\n**billing** — Any dispute or question about money already charged or about to\nbe charged: duplicate charges, unexpected renewals, refund status, price\nadjustments, tax questions, payment-method failures. If the customer's core\nask is \"change what I was charged,\" it is billing, even if a defective product\nprompted it.\n\n**shipping** — Anything about the physical movement of goods: tracking that has\nnot updated, late delivery, wrong address, delivered-not-received, carrier\ndamage in transit, international customs holds. Damage discovered in an\nunopened box is shipping; damage discovered after normal use is product_defect.\n\n**product_defect** — The item is broken, malfunctioning, or materially not as\ndescribed: seams failing, zippers separating, waterproofing failing, sizing\ngrossly inconsistent with the published chart. Cosmetic preference (\"I don't\nlike the color in person\") is returns, not product_defect.\n\n**returns** — The customer wants to send something back for reasons other than\na defect: wrong size, changed their mind, gift return, duplicate purchase.\n\n**account** — Login problems, password resets, email changes, membership\nenrollment or cancellation, address book edits, privacy and data requests.\n\n**safety** — Any report of injury, illness, allergic reaction, fire, smoke,\nchoking, or property damage attributed to a product. Safety outranks every\nother category: if a message could be read as a safety report, it is a safety\nreport.\n\n**other** — Genuine pre-sales questions, partnership inquiries, press requests,\ncompliments, and anything that does not fit above. Do not use `other` as a\ndumping ground for ambiguous tickets; pick the closest real category and lower\nthe confidence score instead.\n\n### Urgency Definitions\n\n**urgent** — Safety reports, anything in section 5.3, an order that must be\nintercepted before it ships, or a customer who is currently stranded without a\nproduct they need (e.g., gear for a trip departing within 48 hours).\n\n**high** — Money is wrong right now (duplicate charge, failed refund), a\npackage is confirmed lost, or the customer has contacted us about this same\nissue more than twice.\n\n**normal** — The standard case: a question, a return request, a delivery that\nis late but within the window in section 3.2.\n\n**low** — Pre-sales curiosity, compliments, feature suggestions, and anything\nwith no deadline attached.\n",
+      "cache_control": {
+       "type": "ephemeral"
+      }
+     }
+    ],
+    "messages": [
+     {
+      "role": "user",
+      "content": "How long do I have to return a jacket I've worn once?"
+     }
+    ],
+    "output_config": {
+     "effort": "low"
+    }
+   },
+   "events": [
+    {
+     "event": "start",
+     "data": {
+      "t": 0,
+      "funding": "house",
+      "sdk": "0.126.0"
+     }
+    },
+    {
+     "event": "attempt",
+     "data": {
+      "t": 1,
+      "n": 1,
+      "method": "POST",
+      "url": "https://api.anthropic.com/v1/messages",
+      "headers": {
+       "accept": "application/json",
+       "anthropic-version": "2023-06-01",
+       "content-type": "application/json",
+       "user-agent": "Anthropic/JS 0.126.0",
+       "x-api-key": "sk-ant-…•••• (Northwind's key)",
+       "x-stainless-arch": "arm64",
+       "x-stainless-lang": "js",
+       "x-stainless-os": "MacOS",
+       "x-stainless-package-version": "0.126.0",
+       "x-stainless-retry-count": "0",
+       "x-stainless-runtime": "node",
+       "x-stainless-runtime-version": "v26.7.0",
+       "x-stainless-timeout": "600"
+      },
+      "body": "{\"model\":\"claude-opus-5\",\"max_tokens\":400,\"stream\":true,\"system\":[{\"type\":\"text\",\"text\":\"You answer questions for Northwind Outfitters customers using only this handbook.\\n\\n# Northwind Outfitters — Customer Support Policy Handbook\\n\\nVersion 4.2 · Effective 2026-01-01 · Owner: Support Operations\\n\\nThis handbook is the single source of truth for support agent decisions. When a\\ncustomer request conflicts with this document, this document wins. When this\\ndocument is silent, escalate rather than improvise.\\n\\n---\\n\\n## 1. Tone and Voice\\n\\n1.1 Address the customer by first name if it is known. Never use a title plus\\nsurname unless the customer used one first.\\n\\n1.2 Lead with the resolution, not with the apology. \\\"Your replacement ships\\ntoday\\\" outranks \\\"We're so sorry for the inconvenience.\\\"\\n\\n1.3 One apology per message, maximum. Repeated apologies read as insincere and\\nmeasurably reduce CSAT in our post-contact surveys.\\n\\n1.4 Never blame the customer, the carrier, or another department by name. Say\\n\\\"the package was misrouted,\\\" not \\\"FedEx lost it.\\\"\\n\\n1.5 Never speculate about root cause. If engineering has not confirmed why\\nsomething broke, say we are investigating.\\n\\n1.6 Do not use exclamation marks in messages about money, delays, or defects.\\n\\n1.7 Plain language. No internal jargon: never write \\\"RMA,\\\" \\\"SKU,\\\" \\\"P1,\\\" or\\n\\\"tier-2\\\" to a customer. Write \\\"return,\\\" \\\"item,\\\" \\\"urgent,\\\" \\\"specialist.\\\"\\n\\n---\\n\\n## 2. Refunds and Returns\\n\\n2.1 **Standard return window is 60 days** from the delivery date, for any\\nreason, provided the item is in resellable condition.\\n\\n2.2 **Defective items have no return window.** If an item fails due to a\\nmanufacturing defect, we replace or refund it regardless of age. This is our\\nlifetime workmanship guarantee.\\n\\n2.3 Refunds are issued to the original payment method. Processing takes 5–7\\nbusiness days to appear on a customer's statement. Never promise \\\"immediately.\\\"\\n\\n2.4 **Store credit may be offered but never required.** If a customer asks for\\na refund to their card, issue it to their card.\\n\\n2.5 Return shipping is free for defective items, wrong items shipped, and any\\norder over $75. For all other returns, a $6.95 return label fee is deducted.\\n\\n2.6 Items excluded from returns: personalized/engraved goods, opened food and\\nnutrition products, and clearance items marked \\\"Final Sale.\\\"\\n\\n2.7 **Agent refund authority is $200.** Refunds above $200 require a\\nsupervisor. Do not split a refund into multiple sub-$200 transactions to avoid\\napproval — this is a terminable offense.\\n\\n2.8 If an order was delivered more than 60 days ago and is not defective, the\\ncorrect answer is a polite decline plus a one-time 15% goodwill discount code.\\n\\n---\\n\\n## 3. Shipping and Delivery\\n\\n3.1 Standard shipping is 5–7 business days. Expedited is 2 business days.\\nOvernight orders placed after 2:00 PM ET ship the following business day.\\n\\n3.2 A package is not considered lost until **7 business days** past its\\nprojected delivery date for domestic orders, or 21 calendar days international.\\n\\n3.3 For a confirmed lost package, ship a replacement at no cost and do not ask\\nthe customer to wait for the carrier investigation to close.\\n\\n3.4 **\\\"Delivered but not received\\\"**: file a carrier trace, then ship a\\nreplacement immediately if the order value is under $150. Above $150, a\\nsupervisor reviews the account for prior claims first.\\n\\n3.5 We do not ship to freight forwarders. Orders detected going to a known\\nforwarder address are cancelled and refunded in full before shipment.\\n\\n3.6 Weather and natural-disaster delays are not eligible for shipping refunds,\\nbut we will refund expedited shipping upgrades when the upgrade delivered no\\nbenefit.\\n\\n---\\n\\n## 4. Billing and Subscriptions\\n\\n4.1 The Trail Club membership is $89/year and auto-renews. We send a renewal\\nnotice 14 days before the charge.\\n\\n4.2 **Cancel any membership on request, no retention script, no exceptions.**\\nAsk once if they would like to hear about a cheaper tier; if they decline, cancel.\\n\\n4.3 A membership charged within the last 30 days is fully refundable on\\ncancellation. Older than 30 days, it is prorated by remaining months.\\n\\n4.4 Duplicate charges: refund the duplicate the same day. Do not ask the\\ncustomer to dispute it with their bank.\\n\\n4.5 We never store full card numbers. If a customer sends card digits in a\\nmessage, do not repeat them back, and note that the message needs redaction.\\n\\n---\\n\\n## 5. Security, Privacy, and Escalation\\n\\n5.1 **Never confirm or deny account details to an unverified requester.**\\nVerification requires the order number plus either the email on file or the\\nlast four digits of the payment method.\\n\\n5.2 Never send a password, reset link, or one-time code to any address other\\nthan the verified email on file.\\n\\n5.3 Escalate to a supervisor immediately, without attempting resolution, when:\\n  - The customer reports a physical injury or property damage from a product.\\n  - The customer mentions a lawyer, a lawsuit, or a regulator.\\n  - The customer alleges discrimination or harassment by staff.\\n  - A single account requests more than $500 in refunds within 30 days.\\n  - The customer mentions self-harm.\\n\\n5.4 Product-safety reports (injury, fire, choking hazard, allergic reaction)\\nare logged to the Safety queue within one hour, no exceptions, even if the\\ncustomer says it is not a big deal.\\n\\n5.5 Do not discuss another customer's order, ever, including with a spouse,\\nparent, or employer of the account holder.\\n\\n5.6 Data deletion requests are routed to Privacy Operations. Agents must not\\ndelete account records directly.\\n\\n---\\n\\n## 6. Discounts and Goodwill\\n\\n6.1 Standing goodwill authority per agent: one 15% discount code per contact.\\n\\n6.2 Stacking goodwill codes with an active promotion is not permitted.\\n\\n6.3 Do not offer a discount as the first response to a defect. Fix the problem\\nfirst; offer goodwill only if the customer remains dissatisfied.\\n\\n6.4 Price adjustments are honored within 14 days of purchase if the item drops\\nin price on our own site. We do not price-match other retailers.\\n\\n---\\n\\n## 7. What Never Goes in a Reply\\n\\n- Internal ticket IDs, queue names, or agent shift schedules.\\n- Estimated engineering fix dates that have not been publicly announced.\\n- Any statement that a defect is \\\"known\\\" unless it is on the public status page.\\n- Promises about future product features.\\n- The words \\\"unfortunately,\\\" \\\"as per our policy,\\\" or \\\"I'm afraid\\\" — they are\\n  filler that signals a decline before the customer reads the substance.\\n\\n---\\n\\n## 8. Category Definitions (used by automated triage)\\n\\nThese definitions are normative. Automated triage and human agents must apply\\nthe same boundaries so that routing metrics stay comparable across channels.\\n\\n**billing** — Any dispute or question about money already charged or about to\\nbe charged: duplicate charges, unexpected renewals, refund status, price\\nadjustments, tax questions, payment-method failures. If the customer's core\\nask is \\\"change what I was charged,\\\" it is billing, even if a defective product\\nprompted it.\\n\\n**shipping** — Anything about the physical movement of goods: tracking that has\\nnot updated, late delivery, wrong address, delivered-not-received, carrier\\ndamage in transit, international customs holds. Damage discovered in an\\nunopened box is shipping; damage discovered after normal use is product_defect.\\n\\n**product_defect** — The item is broken, malfunctioning, or materially not as\\ndescribed: seams failing, zippers separating, waterproofing failing, sizing\\ngrossly inconsistent with the published chart. Cosmetic preference (\\\"I don't\\nlike the color in person\\\") is returns, not product_defect.\\n\\n**returns** — The customer wants to send something back for reasons other than\\na defect: wrong size, changed their mind, gift return, duplicate purchase.\\n\\n**account** — Login problems, password resets, email changes, membership\\nenrollment or cancellation, address book edits, privacy and data requests.\\n\\n**safety** — Any report of injury, illness, allergic reaction, fire, smoke,\\nchoking, or property damage attributed to a product. Safety outranks every\\nother category: if a message could be read as a safety report, it is a safety\\nreport.\\n\\n**other** — Genuine pre-sales questions, partnership inquiries, press requests,\\ncompliments, and anything that does not fit above. Do not use `other` as a\\ndumping ground for ambiguous tickets; pick the closest real category and lower\\nthe confidence score instead.\\n\\n### Urgency Definitions\\n\\n**urgent** — Safety reports, anything in section 5.3, an order that must be\\nintercepted before it ships, or a customer who is currently stranded without a\\nproduct they need (e.g., gear for a trip departing within 48 hours).\\n\\n**high** — Money is wrong right now (duplicate charge, failed refund), a\\npackage is confirmed lost, or the customer has contacted us about this same\\nissue more than twice.\\n\\n**normal** — The standard case: a question, a return request, a delivery that\\nis late but within the window in section 3.2.\\n\\n**low** — Pre-sales curiosity, compliments, feature suggestions, and anything\\nwith no deadline attached.\\n\",\"cache_control\":{\"type\":\"ephemeral\"}}],\"messages\":[{\"role\":\"user\",\"content\":\"How long do I have to return a jacket I've worn once?\"}],\"output_config\":{\"effort\":\"low\"}}"
+     }
+    },
+    {
+     "event": "headers",
+     "data": {
+      "t": 1799,
+      "status": 200,
+      "headers": {
+       "anthropic-ratelimit-input-tokens-limit": "10000000",
+       "anthropic-ratelimit-input-tokens-remaining": "9998000",
+       "anthropic-ratelimit-input-tokens-reset": "2026-09-17T08:44:54Z",
+       "anthropic-ratelimit-output-tokens-limit": "2000000",
+       "anthropic-ratelimit-output-tokens-remaining": "2000000",
+       "anthropic-ratelimit-output-tokens-reset": "2026-09-17T08:44:54Z",
+       "anthropic-ratelimit-requests-limit": "10000",
+       "anthropic-ratelimit-requests-remaining": "9999",
+       "anthropic-ratelimit-requests-reset": "2026-09-17T08:44:54Z",
+       "anthropic-ratelimit-tokens-limit": "12000000",
+       "anthropic-ratelimit-tokens-remaining": "11998000",
+       "anthropic-ratelimit-tokens-reset": "2026-09-17T08:44:54Z",
+       "cache-control": "no-cache",
+       "cf-cache-status": "DYNAMIC",
+       "cf-ray": "a3c6d4ea4b7aaf79-EWR",
+       "content-encoding": "gzip",
+       "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+       "content-type": "text/event-stream; charset=utf-8",
+       "date": "Thu, 17 Sep 2026 08:44:56 GMT",
+       "request-id": "req_011Cf8iavXjUxbD5BRvyKBBL",
+       "server": "cloudflare",
+       "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+       "traceresponse": "00-676837ec954e50fe2c86ca6e49476267-76883457aad5ef7c-01",
+       "vary": "Accept-Encoding",
+       "x-robots-tag": "none"
+      }
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 1800,
+      "chunk": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-opus-5\",\"id\":\"msg_011Cf8iavqbKAZQ7RqWTDabo\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":21,\"cache_creation_input_tokens\":3047,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":3047,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":3,\"service_tier\":\"standard\",\"inference_geo\":\"global\"}}     }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}  }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 2662,
+      "chunk": "event: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"CAIS+AIKjgEIERgCKkBYblDDQGX6qs9kVovIRDBGueg856dqW1VTk6iIvPjZcVeuteLli0jISWj5c3XT3FfJJbQKhsEhiOgAIO6pzDuuMg1jbGF1ZGUtb3B1cy01OAFCCHRoaW5raW5nWiQ2MzhhNDc4YS0yMmVjLTRjY2YtOGEwZC1jMzRiYTZlMWFhMzOoAYnRrtUGEgz3sDBD6irQ7N6EW3oaDEO22GtFKP4paOGxGyIw+4STjiu7PnJfts069QZcTcIo1Mgd6cZbjwO326ESKee4zuspogOMp4sUsvuoJxOpKpYBMFgKsxokAgwLn5yDhWzqgPRl4qrWDI3DC/taQPzWjFeAEopula+O1kkw5ThUDKU5VIVSbzIfEuG0SLZIbUAjXsaKhEQtovmRN37Zd6vLIwJsxvy13vdjxV2z0DOxmzcEasQl0YJF5K0O8JVejs7UzzRBSTJQVyRQALinuQVEO45wk+z0Gw7GTiBOGNavXuJIWvn0xmC6GAE=\"}          }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0            }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"text\",\"text\":\"\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"It\"}         }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 3130,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" depends on why\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" you're s\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ending it back,\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" so\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" here's both\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" pa\"}   }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 3130,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ths:\\n\\n**If the\"}    }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 3139,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" jacket has\"}     }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 3189,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" a def\"}  }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 3255,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ect** — seams gi\"}       }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 3316,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ving way, a zipper separ\"}           }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 3380,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ating, waterproofing that\"}  }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 3664,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" is\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"n't holding up\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" — there's no time limit at\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" all. Our\"}               }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 3672,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" l\"}             }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 3739,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ifetime work\"}          }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 3793,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"manship gu\"}    }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 3848,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"arantee covers man\"}           }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 3907,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ufacturing defects reg\"}     }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 3970,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ardless of how\"}               }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4029,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" old the jacket is, and\"}               }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4081,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" we\"}               }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4238,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"'ll replace or\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" refund it. Return ship\"}     }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4267,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ping is on\"}            }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4331,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" us in that case.\"}  }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4431,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\n\\n**If it's a\"}        }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4445,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" change of he\"}           }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4503,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"art**\"}    }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4557,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" — wrong f\"}               }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4701,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"it, not what\"}           }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4703,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" you p\"}}\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4731,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ictured, didn't love\"} }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4789,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" it\"}              }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4847,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" once\"}              }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4914,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" you\"}    }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4965,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" had\"}         }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5022,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" it on — you have 60 \"} }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5091,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"days from the del\"}      }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5228,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ivery date, as\"}          }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5229,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" long as the j\"}              }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5262,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"acket is in resellable cond\"}          }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5323,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ition. A\"}    }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5390,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" single wear us\"}}\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5435,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ually is\"}           }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5499,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"n't a\"}      }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5559,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" problem, but it should\"}            }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5619,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" be cl\"}}\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5751,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ean and\"}         }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5752,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" free\"}       }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5794,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" of dam\"}         }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5849,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"age or\"}      }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5908,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" od\"}}\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5965,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"or\"}          }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6023,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\".\"} }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6080,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" Return shipping is free\"}     }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6143,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" on or\"} }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6276,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ders over $75\"}        }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6277,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\";\"}             }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6325,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" otherwise a $6.\"}    }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6382,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"95 label fee com\"}}\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6448,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"es out of the refund.\"}      }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6503,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" Refunds go\"}   }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6558,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" back to your original payment method and\"}  }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6616,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" take\"}               }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6675,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" 5–\"}      }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6800,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"7 business days to show\"}      }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6801,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" on your statement.\\n\\nOne th\"}              }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6850,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ing to note\"}               }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6912,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\": j\"}         }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6969,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ackets that\"}          }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7028,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" were personalized or eng\"}             }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7084,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"raved, or marked \\\"\"}     }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7150,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"Final Sale,\\\" can\"}     }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7204,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"'t be returned.\"}               }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7323,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\n\\nIf you can tell me which\"}               }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7332,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" situ\"}              }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7379,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ation f\"}     }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7438,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"its and\"}  }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7493,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" share\"}  }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7566,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" your order number, I can get the\"}        }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7621,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" return started for\"}     }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7701,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" you.\"}    }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7702,
+      "chunk": "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1  }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7702,
+      "chunk": "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":21,\"cache_creation_input_tokens\":3047,\"cache_read_input_tokens\":0,\"output_tokens\":391,\"output_tokens_details\":{\"thinking_tokens\":46}}         }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"              }\n\n"
+     }
+    },
+    {
+     "event": "done",
+     "data": {
+      "t": 7705,
+      "model": "claude-opus-5",
+      "cost_usd": 0.028924
+     }
+    }
+   ]
+  },
+  {
+   "body": {
+    "model": "claude-opus-5",
+    "max_tokens": 400,
+    "stream": true,
+    "system": [
+     {
+      "type": "text",
+      "text": "You answer questions for Northwind Outfitters customers using only this handbook.\n\n# Northwind Outfitters — Customer Support Policy Handbook\n\nVersion 4.2 · Effective 2026-01-01 · Owner: Support Operations\n\nThis handbook is the single source of truth for support agent decisions. When a\ncustomer request conflicts with this document, this document wins. When this\ndocument is silent, escalate rather than improvise.\n\n---\n\n## 1. Tone and Voice\n\n1.1 Address the customer by first name if it is known. Never use a title plus\nsurname unless the customer used one first.\n\n1.2 Lead with the resolution, not with the apology. \"Your replacement ships\ntoday\" outranks \"We're so sorry for the inconvenience.\"\n\n1.3 One apology per message, maximum. Repeated apologies read as insincere and\nmeasurably reduce CSAT in our post-contact surveys.\n\n1.4 Never blame the customer, the carrier, or another department by name. Say\n\"the package was misrouted,\" not \"FedEx lost it.\"\n\n1.5 Never speculate about root cause. If engineering has not confirmed why\nsomething broke, say we are investigating.\n\n1.6 Do not use exclamation marks in messages about money, delays, or defects.\n\n1.7 Plain language. No internal jargon: never write \"RMA,\" \"SKU,\" \"P1,\" or\n\"tier-2\" to a customer. Write \"return,\" \"item,\" \"urgent,\" \"specialist.\"\n\n---\n\n## 2. Refunds and Returns\n\n2.1 **Standard return window is 60 days** from the delivery date, for any\nreason, provided the item is in resellable condition.\n\n2.2 **Defective items have no return window.** If an item fails due to a\nmanufacturing defect, we replace or refund it regardless of age. This is our\nlifetime workmanship guarantee.\n\n2.3 Refunds are issued to the original payment method. Processing takes 5–7\nbusiness days to appear on a customer's statement. Never promise \"immediately.\"\n\n2.4 **Store credit may be offered but never required.** If a customer asks for\na refund to their card, issue it to their card.\n\n2.5 Return shipping is free for defective items, wrong items shipped, and any\norder over $75. For all other returns, a $6.95 return label fee is deducted.\n\n2.6 Items excluded from returns: personalized/engraved goods, opened food and\nnutrition products, and clearance items marked \"Final Sale.\"\n\n2.7 **Agent refund authority is $200.** Refunds above $200 require a\nsupervisor. Do not split a refund into multiple sub-$200 transactions to avoid\napproval — this is a terminable offense.\n\n2.8 If an order was delivered more than 60 days ago and is not defective, the\ncorrect answer is a polite decline plus a one-time 15% goodwill discount code.\n\n---\n\n## 3. Shipping and Delivery\n\n3.1 Standard shipping is 5–7 business days. Expedited is 2 business days.\nOvernight orders placed after 2:00 PM ET ship the following business day.\n\n3.2 A package is not considered lost until **7 business days** past its\nprojected delivery date for domestic orders, or 21 calendar days international.\n\n3.3 For a confirmed lost package, ship a replacement at no cost and do not ask\nthe customer to wait for the carrier investigation to close.\n\n3.4 **\"Delivered but not received\"**: file a carrier trace, then ship a\nreplacement immediately if the order value is under $150. Above $150, a\nsupervisor reviews the account for prior claims first.\n\n3.5 We do not ship to freight forwarders. Orders detected going to a known\nforwarder address are cancelled and refunded in full before shipment.\n\n3.6 Weather and natural-disaster delays are not eligible for shipping refunds,\nbut we will refund expedited shipping upgrades when the upgrade delivered no\nbenefit.\n\n---\n\n## 4. Billing and Subscriptions\n\n4.1 The Trail Club membership is $89/year and auto-renews. We send a renewal\nnotice 14 days before the charge.\n\n4.2 **Cancel any membership on request, no retention script, no exceptions.**\nAsk once if they would like to hear about a cheaper tier; if they decline, cancel.\n\n4.3 A membership charged within the last 30 days is fully refundable on\ncancellation. Older than 30 days, it is prorated by remaining months.\n\n4.4 Duplicate charges: refund the duplicate the same day. Do not ask the\ncustomer to dispute it with their bank.\n\n4.5 We never store full card numbers. If a customer sends card digits in a\nmessage, do not repeat them back, and note that the message needs redaction.\n\n---\n\n## 5. Security, Privacy, and Escalation\n\n5.1 **Never confirm or deny account details to an unverified requester.**\nVerification requires the order number plus either the email on file or the\nlast four digits of the payment method.\n\n5.2 Never send a password, reset link, or one-time code to any address other\nthan the verified email on file.\n\n5.3 Escalate to a supervisor immediately, without attempting resolution, when:\n  - The customer reports a physical injury or property damage from a product.\n  - The customer mentions a lawyer, a lawsuit, or a regulator.\n  - The customer alleges discrimination or harassment by staff.\n  - A single account requests more than $500 in refunds within 30 days.\n  - The customer mentions self-harm.\n\n5.4 Product-safety reports (injury, fire, choking hazard, allergic reaction)\nare logged to the Safety queue within one hour, no exceptions, even if the\ncustomer says it is not a big deal.\n\n5.5 Do not discuss another customer's order, ever, including with a spouse,\nparent, or employer of the account holder.\n\n5.6 Data deletion requests are routed to Privacy Operations. Agents must not\ndelete account records directly.\n\n---\n\n## 6. Discounts and Goodwill\n\n6.1 Standing goodwill authority per agent: one 15% discount code per contact.\n\n6.2 Stacking goodwill codes with an active promotion is not permitted.\n\n6.3 Do not offer a discount as the first response to a defect. Fix the problem\nfirst; offer goodwill only if the customer remains dissatisfied.\n\n6.4 Price adjustments are honored within 14 days of purchase if the item drops\nin price on our own site. We do not price-match other retailers.\n\n---\n\n## 7. What Never Goes in a Reply\n\n- Internal ticket IDs, queue names, or agent shift schedules.\n- Estimated engineering fix dates that have not been publicly announced.\n- Any statement that a defect is \"known\" unless it is on the public status page.\n- Promises about future product features.\n- The words \"unfortunately,\" \"as per our policy,\" or \"I'm afraid\" — they are\n  filler that signals a decline before the customer reads the substance.\n\n---\n\n## 8. Category Definitions (used by automated triage)\n\nThese definitions are normative. Automated triage and human agents must apply\nthe same boundaries so that routing metrics stay comparable across channels.\n\n**billing** — Any dispute or question about money already charged or about to\nbe charged: duplicate charges, unexpected renewals, refund status, price\nadjustments, tax questions, payment-method failures. If the customer's core\nask is \"change what I was charged,\" it is billing, even if a defective product\nprompted it.\n\n**shipping** — Anything about the physical movement of goods: tracking that has\nnot updated, late delivery, wrong address, delivered-not-received, carrier\ndamage in transit, international customs holds. Damage discovered in an\nunopened box is shipping; damage discovered after normal use is product_defect.\n\n**product_defect** — The item is broken, malfunctioning, or materially not as\ndescribed: seams failing, zippers separating, waterproofing failing, sizing\ngrossly inconsistent with the published chart. Cosmetic preference (\"I don't\nlike the color in person\") is returns, not product_defect.\n\n**returns** — The customer wants to send something back for reasons other than\na defect: wrong size, changed their mind, gift return, duplicate purchase.\n\n**account** — Login problems, password resets, email changes, membership\nenrollment or cancellation, address book edits, privacy and data requests.\n\n**safety** — Any report of injury, illness, allergic reaction, fire, smoke,\nchoking, or property damage attributed to a product. Safety outranks every\nother category: if a message could be read as a safety report, it is a safety\nreport.\n\n**other** — Genuine pre-sales questions, partnership inquiries, press requests,\ncompliments, and anything that does not fit above. Do not use `other` as a\ndumping ground for ambiguous tickets; pick the closest real category and lower\nthe confidence score instead.\n\n### Urgency Definitions\n\n**urgent** — Safety reports, anything in section 5.3, an order that must be\nintercepted before it ships, or a customer who is currently stranded without a\nproduct they need (e.g., gear for a trip departing within 48 hours).\n\n**high** — Money is wrong right now (duplicate charge, failed refund), a\npackage is confirmed lost, or the customer has contacted us about this same\nissue more than twice.\n\n**normal** — The standard case: a question, a return request, a delivery that\nis late but within the window in section 3.2.\n\n**low** — Pre-sales curiosity, compliments, feature suggestions, and anything\nwith no deadline attached.\n",
+      "cache_control": {
+       "type": "ephemeral"
+      }
+     }
+    ],
+    "messages": [
+     {
+      "role": "user",
+      "content": "How long do I have to return a jacket I've worn once?"
+     }
+    ],
+    "output_config": {
+     "effort": "low"
+    }
+   },
+   "events": [
+    {
+     "event": "start",
+     "data": {
+      "t": 0,
+      "funding": "house",
+      "sdk": "0.126.0"
+     }
+    },
+    {
+     "event": "attempt",
+     "data": {
+      "t": 1,
+      "n": 1,
+      "method": "POST",
+      "url": "https://api.anthropic.com/v1/messages",
+      "headers": {
+       "accept": "application/json",
+       "anthropic-version": "2023-06-01",
+       "content-type": "application/json",
+       "user-agent": "Anthropic/JS 0.126.0",
+       "x-api-key": "sk-ant-…•••• (Northwind's key)",
+       "x-stainless-arch": "arm64",
+       "x-stainless-lang": "js",
+       "x-stainless-os": "MacOS",
+       "x-stainless-package-version": "0.126.0",
+       "x-stainless-retry-count": "0",
+       "x-stainless-runtime": "node",
+       "x-stainless-runtime-version": "v26.7.0",
+       "x-stainless-timeout": "600"
+      },
+      "body": "{\"model\":\"claude-opus-5\",\"max_tokens\":400,\"stream\":true,\"system\":[{\"type\":\"text\",\"text\":\"You answer questions for Northwind Outfitters customers using only this handbook.\\n\\n# Northwind Outfitters — Customer Support Policy Handbook\\n\\nVersion 4.2 · Effective 2026-01-01 · Owner: Support Operations\\n\\nThis handbook is the single source of truth for support agent decisions. When a\\ncustomer request conflicts with this document, this document wins. When this\\ndocument is silent, escalate rather than improvise.\\n\\n---\\n\\n## 1. Tone and Voice\\n\\n1.1 Address the customer by first name if it is known. Never use a title plus\\nsurname unless the customer used one first.\\n\\n1.2 Lead with the resolution, not with the apology. \\\"Your replacement ships\\ntoday\\\" outranks \\\"We're so sorry for the inconvenience.\\\"\\n\\n1.3 One apology per message, maximum. Repeated apologies read as insincere and\\nmeasurably reduce CSAT in our post-contact surveys.\\n\\n1.4 Never blame the customer, the carrier, or another department by name. Say\\n\\\"the package was misrouted,\\\" not \\\"FedEx lost it.\\\"\\n\\n1.5 Never speculate about root cause. If engineering has not confirmed why\\nsomething broke, say we are investigating.\\n\\n1.6 Do not use exclamation marks in messages about money, delays, or defects.\\n\\n1.7 Plain language. No internal jargon: never write \\\"RMA,\\\" \\\"SKU,\\\" \\\"P1,\\\" or\\n\\\"tier-2\\\" to a customer. Write \\\"return,\\\" \\\"item,\\\" \\\"urgent,\\\" \\\"specialist.\\\"\\n\\n---\\n\\n## 2. Refunds and Returns\\n\\n2.1 **Standard return window is 60 days** from the delivery date, for any\\nreason, provided the item is in resellable condition.\\n\\n2.2 **Defective items have no return window.** If an item fails due to a\\nmanufacturing defect, we replace or refund it regardless of age. This is our\\nlifetime workmanship guarantee.\\n\\n2.3 Refunds are issued to the original payment method. Processing takes 5–7\\nbusiness days to appear on a customer's statement. Never promise \\\"immediately.\\\"\\n\\n2.4 **Store credit may be offered but never required.** If a customer asks for\\na refund to their card, issue it to their card.\\n\\n2.5 Return shipping is free for defective items, wrong items shipped, and any\\norder over $75. For all other returns, a $6.95 return label fee is deducted.\\n\\n2.6 Items excluded from returns: personalized/engraved goods, opened food and\\nnutrition products, and clearance items marked \\\"Final Sale.\\\"\\n\\n2.7 **Agent refund authority is $200.** Refunds above $200 require a\\nsupervisor. Do not split a refund into multiple sub-$200 transactions to avoid\\napproval — this is a terminable offense.\\n\\n2.8 If an order was delivered more than 60 days ago and is not defective, the\\ncorrect answer is a polite decline plus a one-time 15% goodwill discount code.\\n\\n---\\n\\n## 3. Shipping and Delivery\\n\\n3.1 Standard shipping is 5–7 business days. Expedited is 2 business days.\\nOvernight orders placed after 2:00 PM ET ship the following business day.\\n\\n3.2 A package is not considered lost until **7 business days** past its\\nprojected delivery date for domestic orders, or 21 calendar days international.\\n\\n3.3 For a confirmed lost package, ship a replacement at no cost and do not ask\\nthe customer to wait for the carrier investigation to close.\\n\\n3.4 **\\\"Delivered but not received\\\"**: file a carrier trace, then ship a\\nreplacement immediately if the order value is under $150. Above $150, a\\nsupervisor reviews the account for prior claims first.\\n\\n3.5 We do not ship to freight forwarders. Orders detected going to a known\\nforwarder address are cancelled and refunded in full before shipment.\\n\\n3.6 Weather and natural-disaster delays are not eligible for shipping refunds,\\nbut we will refund expedited shipping upgrades when the upgrade delivered no\\nbenefit.\\n\\n---\\n\\n## 4. Billing and Subscriptions\\n\\n4.1 The Trail Club membership is $89/year and auto-renews. We send a renewal\\nnotice 14 days before the charge.\\n\\n4.2 **Cancel any membership on request, no retention script, no exceptions.**\\nAsk once if they would like to hear about a cheaper tier; if they decline, cancel.\\n\\n4.3 A membership charged within the last 30 days is fully refundable on\\ncancellation. Older than 30 days, it is prorated by remaining months.\\n\\n4.4 Duplicate charges: refund the duplicate the same day. Do not ask the\\ncustomer to dispute it with their bank.\\n\\n4.5 We never store full card numbers. If a customer sends card digits in a\\nmessage, do not repeat them back, and note that the message needs redaction.\\n\\n---\\n\\n## 5. Security, Privacy, and Escalation\\n\\n5.1 **Never confirm or deny account details to an unverified requester.**\\nVerification requires the order number plus either the email on file or the\\nlast four digits of the payment method.\\n\\n5.2 Never send a password, reset link, or one-time code to any address other\\nthan the verified email on file.\\n\\n5.3 Escalate to a supervisor immediately, without attempting resolution, when:\\n  - The customer reports a physical injury or property damage from a product.\\n  - The customer mentions a lawyer, a lawsuit, or a regulator.\\n  - The customer alleges discrimination or harassment by staff.\\n  - A single account requests more than $500 in refunds within 30 days.\\n  - The customer mentions self-harm.\\n\\n5.4 Product-safety reports (injury, fire, choking hazard, allergic reaction)\\nare logged to the Safety queue within one hour, no exceptions, even if the\\ncustomer says it is not a big deal.\\n\\n5.5 Do not discuss another customer's order, ever, including with a spouse,\\nparent, or employer of the account holder.\\n\\n5.6 Data deletion requests are routed to Privacy Operations. Agents must not\\ndelete account records directly.\\n\\n---\\n\\n## 6. Discounts and Goodwill\\n\\n6.1 Standing goodwill authority per agent: one 15% discount code per contact.\\n\\n6.2 Stacking goodwill codes with an active promotion is not permitted.\\n\\n6.3 Do not offer a discount as the first response to a defect. Fix the problem\\nfirst; offer goodwill only if the customer remains dissatisfied.\\n\\n6.4 Price adjustments are honored within 14 days of purchase if the item drops\\nin price on our own site. We do not price-match other retailers.\\n\\n---\\n\\n## 7. What Never Goes in a Reply\\n\\n- Internal ticket IDs, queue names, or agent shift schedules.\\n- Estimated engineering fix dates that have not been publicly announced.\\n- Any statement that a defect is \\\"known\\\" unless it is on the public status page.\\n- Promises about future product features.\\n- The words \\\"unfortunately,\\\" \\\"as per our policy,\\\" or \\\"I'm afraid\\\" — they are\\n  filler that signals a decline before the customer reads the substance.\\n\\n---\\n\\n## 8. Category Definitions (used by automated triage)\\n\\nThese definitions are normative. Automated triage and human agents must apply\\nthe same boundaries so that routing metrics stay comparable across channels.\\n\\n**billing** — Any dispute or question about money already charged or about to\\nbe charged: duplicate charges, unexpected renewals, refund status, price\\nadjustments, tax questions, payment-method failures. If the customer's core\\nask is \\\"change what I was charged,\\\" it is billing, even if a defective product\\nprompted it.\\n\\n**shipping** — Anything about the physical movement of goods: tracking that has\\nnot updated, late delivery, wrong address, delivered-not-received, carrier\\ndamage in transit, international customs holds. Damage discovered in an\\nunopened box is shipping; damage discovered after normal use is product_defect.\\n\\n**product_defect** — The item is broken, malfunctioning, or materially not as\\ndescribed: seams failing, zippers separating, waterproofing failing, sizing\\ngrossly inconsistent with the published chart. Cosmetic preference (\\\"I don't\\nlike the color in person\\\") is returns, not product_defect.\\n\\n**returns** — The customer wants to send something back for reasons other than\\na defect: wrong size, changed their mind, gift return, duplicate purchase.\\n\\n**account** — Login problems, password resets, email changes, membership\\nenrollment or cancellation, address book edits, privacy and data requests.\\n\\n**safety** — Any report of injury, illness, allergic reaction, fire, smoke,\\nchoking, or property damage attributed to a product. Safety outranks every\\nother category: if a message could be read as a safety report, it is a safety\\nreport.\\n\\n**other** — Genuine pre-sales questions, partnership inquiries, press requests,\\ncompliments, and anything that does not fit above. Do not use `other` as a\\ndumping ground for ambiguous tickets; pick the closest real category and lower\\nthe confidence score instead.\\n\\n### Urgency Definitions\\n\\n**urgent** — Safety reports, anything in section 5.3, an order that must be\\nintercepted before it ships, or a customer who is currently stranded without a\\nproduct they need (e.g., gear for a trip departing within 48 hours).\\n\\n**high** — Money is wrong right now (duplicate charge, failed refund), a\\npackage is confirmed lost, or the customer has contacted us about this same\\nissue more than twice.\\n\\n**normal** — The standard case: a question, a return request, a delivery that\\nis late but within the window in section 3.2.\\n\\n**low** — Pre-sales curiosity, compliments, feature suggestions, and anything\\nwith no deadline attached.\\n\",\"cache_control\":{\"type\":\"ephemeral\"}}],\"messages\":[{\"role\":\"user\",\"content\":\"How long do I have to return a jacket I've worn once?\"}],\"output_config\":{\"effort\":\"low\"}}"
+     }
+    },
+    {
+     "event": "headers",
+     "data": {
+      "t": 2004,
+      "status": 200,
+      "headers": {
+       "anthropic-ratelimit-input-tokens-limit": "10000000",
+       "anthropic-ratelimit-input-tokens-remaining": "9998000",
+       "anthropic-ratelimit-input-tokens-reset": "2026-09-17T08:45:02Z",
+       "anthropic-ratelimit-output-tokens-limit": "2000000",
+       "anthropic-ratelimit-output-tokens-remaining": "2000000",
+       "anthropic-ratelimit-output-tokens-reset": "2026-09-17T08:45:02Z",
+       "anthropic-ratelimit-requests-limit": "10000",
+       "anthropic-ratelimit-requests-remaining": "9999",
+       "anthropic-ratelimit-requests-reset": "2026-09-17T08:45:02Z",
+       "anthropic-ratelimit-tokens-limit": "12000000",
+       "anthropic-ratelimit-tokens-remaining": "11998000",
+       "anthropic-ratelimit-tokens-reset": "2026-09-17T08:45:02Z",
+       "cache-control": "no-cache",
+       "cf-cache-status": "DYNAMIC",
+       "cf-ray": "a3c6d51a78bbaf79-EWR",
+       "content-encoding": "gzip",
+       "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+       "content-type": "text/event-stream; charset=utf-8",
+       "date": "Thu, 17 Sep 2026 08:45:04 GMT",
+       "request-id": "req_011Cf8ibVW7yQR6HLGcnr5xT",
+       "server": "cloudflare",
+       "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+       "traceresponse": "00-284224e645f91da2ceaa79ec5ca681a5-ce70e215ab891436-01",
+       "vary": "Accept-Encoding",
+       "x-robots-tag": "none"
+      }
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 2005,
+      "chunk": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-opus-5\",\"id\":\"msg_011Cf8ibVpDtXYbisxkWMLck\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":21,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":3047,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":3,\"service_tier\":\"standard\",\"inference_geo\":\"global\"}}             }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}          }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 3154,
+      "chunk": "event: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"CAISnAMKjgEIERgCKkD4WGMdV0VJq6gGH2O7VHMSYMOyvFC5yu+iGODEujxIs5G1exXFLUUbbhCT8qIvj8skScfNqoXzPqalocA9a16sMg1jbGF1ZGUtb3B1cy01OAFCCHRoaW5raW5nWiQ2MzhhNDc4YS0yMmVjLTRjY2YtOGEwZC1jMzRiYTZlMWFhMzOoAZHRrtUGEgxhbOTisYist6j1Zq8aDDMalfZWHKNTvipM4SIwbBRt9KmWm4Bm0OB7wow3QDKxzan9y08zgkG61ryPo+Gx14WQoW9/QZfqPzsLGWpfKroBYT6i+YxeEPcKgHh1bTGs0Idd9ykqdDpYzj0f8dHRhjadkYkdNSaX93vV9v5iuS+32MiRbVScPFX3REFDedfbk5X196nNIz7mDBoCX8CmVPaQ4dKjecI76oju8deC48vYz0iHoxu5m3zERWM7RnlFElpd8fu77K7taryH1zDcEVoMUYXen59vXfBIUMZV11MNgotZURtNZglZG13DNfi3eW2zMoGQUjy3JBW/xwVrbgF4OQFQqU4/1o2YGAE=\"}    }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0              }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"text\",\"text\":\"\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"Short\"}              }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 3804,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" answer: if the\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" jacket is def\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ective, there\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"'s no deadline at all —\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" and\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" if it's not\"}   }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 3840,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\", you\"}}\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 3847,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" have 60 days from the\"} }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 3851,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" delivery date.\"}   }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 3852,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"\\n\\nHere's how\"}        }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 3856,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" that\"}  }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 3867,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" bre\"}            }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4144,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"aks down:\\n\\n- **If\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" something\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" is wrong with the jac\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ket** — a seam let\"}   }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4162,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ting go, a\"}        }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4223,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" zipper separ\"}               }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4327,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ating, waterproofing that\"}}\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4341,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" is\"}         }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4403,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"n't holding — our\"}    }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4461,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" lifetime work\"}     }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4517,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"manship gu\"}        }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4582,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"arantee covers it regard\"}   }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4746,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"less of how old\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" it\"}   }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4754,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" is. We'll replace or\"}         }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4856,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" refund it, and return ship\"}    }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4874,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ping is on\"}     }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4938,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" us.\\n- **If you\"}       }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 4991,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" simply changed your mind or\"}            }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5051,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" the fit is\"}           }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5109,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"n't right**\"}           }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5167,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\", the window\"}     }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5232,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" is 60 days from deliv\"}             }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5375,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ery, as long as the j\"}       }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5456,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"acket is still\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" in resellable condition. A\"}         }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5465,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" single wear is\"}      }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5525,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" often fine, but he\"}        }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5581,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"avy wear, od\"}           }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5645,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ors\"}              }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5703,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\", or damage would put\"}            }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5757,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" it outside that. For\"}             }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5904,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" this\"}             }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5905,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" kind of return, a $6\"}  }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5941,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\".95\"}        }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 5996,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" return label\"}       }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6657,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" fee is deducted unless\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" the order was over $75\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\",\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" in which case return shipping is\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" free.\\n\\nIf your\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" delivery date has already\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" passed 60 days and\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" the\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" jacket isn't defective\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\", I can't process a return\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\", but I can send\"}        }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6704,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" you a one\"}}\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6819,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"-time 15% discount code\"}  }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6821,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" inst\"}          }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6948,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ead.\\n\\nIf\"}      }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6949,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" you tell me which situ\"}               }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 6998,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ation f\"}            }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7054,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"its — and\"}     }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7118,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" your\"}             }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7175,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" order number — I can get it\"}          }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7235,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" mo\"}          }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7287,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"ving.\"}               }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7367,
+      "chunk": "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1       }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 7375,
+      "chunk": "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":21,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":3047,\"output_tokens\":393,\"output_tokens_details\":{\"thinking_tokens\":58}}        }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"              }\n\n"
+     }
+    },
+    {
+     "event": "done",
+     "data": {
+      "t": 7377,
+      "model": "claude-opus-5",
+      "cost_usd": 0.011454
+     }
+    }
+   ]
+  }
+ ]
+}
