@@ -36,7 +36,7 @@ export default function MessagesApiPage() {
         <h1 className="font-display text-2xl font-extrabold tracking-tight text-pine sm:text-3xl">
           The Messages API, in the open
         </h1>
-        <p className="max-w-3xl text-sm text-pine/75">
+        <p className="text-sm text-pine/75">
           Every feature of Claude&apos;s API is an option on one endpoint, <code className="font-mono">POST /v1/messages</code>.
           Set the options, watch the exact request leave, see what can and cannot be observed before the first token,
           then read the answer three ways: the raw bytes, the content blocks they build, and the message they add up to.
