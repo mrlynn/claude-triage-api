@@ -3,6 +3,9 @@ import {
   ASSISTANT_LIMITS,
   ASSISTANT_MAX_ITERATIONS,
   ASSISTANT_MAX_TOKENS,
+  EXPLORER_MAX_BODY_CHARS,
+  EXPLORER_MAX_TOKENS,
+  EXPLORER_MODELS,
   LIVE_MODEL,
   MAX_LIVE_TOKENS,
   MAX_MESSAGE_CHARS,
@@ -194,6 +197,9 @@ export const SURFACE_CEILINGS = {
     TUTOR_MAX_TOKENS.hint,
   ),
   assistant_turn: assistantCeiling(),
+  // The body is visitor text end to end, system prompt and tool definitions included, so all of it is priced at one
+  // token per character. The overhead covers what the API adds around tools and thinking.
+  explorer: once(EXPLORER_MODELS[0], EXPLORER_MAX_BODY_CHARS + OWN_TEXT_TOKENS.perCallOverhead, EXPLORER_MAX_TOKENS),
 } satisfies Record<string, Ceiling>;
 
 export type Surface = keyof typeof SURFACE_CEILINGS;

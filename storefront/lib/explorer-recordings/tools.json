@@ -1,0 +1,734 @@
+{
+ "id": "tools",
+ "recordedAt": "2026-09-17T08:44:54.703Z",
+ "turns": [
+  {
+   "body": {
+    "model": "claude-opus-5",
+    "max_tokens": 1024,
+    "stream": true,
+    "messages": [
+     {
+      "role": "user",
+      "content": "Where is my order NW-52044? And if I wanted a second one of what I ordered, is it in stock?"
+     }
+    ],
+    "tools": [
+     {
+      "name": "lookup_order",
+      "description": "Look up a Northwind order by id (format NW-12345). Returns status, dates, tracking number and line items.",
+      "input_schema": {
+       "type": "object",
+       "properties": {
+        "order_id": {
+         "type": "string",
+         "description": "The order id, e.g. NW-48211."
+        }
+       },
+       "required": [
+        "order_id"
+       ],
+       "additionalProperties": false
+      },
+      "eager_input_streaming": true
+     },
+     {
+      "name": "check_stock",
+      "description": "Check how many units of a Northwind product are in stock. Accepts the product slug or its name as written on the order.",
+      "input_schema": {
+       "type": "object",
+       "properties": {
+        "product": {
+         "type": "string",
+         "description": "Product slug or name."
+        }
+       },
+       "required": [
+        "product"
+       ],
+       "additionalProperties": false
+      },
+      "eager_input_streaming": true
+     }
+    ],
+    "tool_choice": {
+     "type": "auto"
+    },
+    "output_config": {
+     "effort": "low"
+    }
+   },
+   "events": [
+    {
+     "event": "start",
+     "data": {
+      "t": 0,
+      "funding": "house",
+      "sdk": "0.126.0"
+     }
+    },
+    {
+     "event": "attempt",
+     "data": {
+      "t": 1,
+      "n": 1,
+      "method": "POST",
+      "url": "https://api.anthropic.com/v1/messages",
+      "headers": {
+       "accept": "application/json",
+       "anthropic-version": "2023-06-01",
+       "content-type": "application/json",
+       "user-agent": "Anthropic/JS 0.126.0",
+       "x-api-key": "sk-ant-…•••• (Northwind's key)",
+       "x-stainless-arch": "arm64",
+       "x-stainless-lang": "js",
+       "x-stainless-os": "MacOS",
+       "x-stainless-package-version": "0.126.0",
+       "x-stainless-retry-count": "0",
+       "x-stainless-runtime": "node",
+       "x-stainless-runtime-version": "v26.7.0",
+       "x-stainless-timeout": "600"
+      },
+      "body": "{\"model\":\"claude-opus-5\",\"max_tokens\":1024,\"stream\":true,\"messages\":[{\"role\":\"user\",\"content\":\"Where is my order NW-52044? And if I wanted a second one of what I ordered, is it in stock?\"}],\"tools\":[{\"name\":\"lookup_order\",\"description\":\"Look up a Northwind order by id (format NW-12345). Returns status, dates, tracking number and line items.\",\"input_schema\":{\"type\":\"object\",\"properties\":{\"order_id\":{\"type\":\"string\",\"description\":\"The order id, e.g. NW-48211.\"}},\"required\":[\"order_id\"],\"additionalProperties\":false},\"eager_input_streaming\":true},{\"name\":\"check_stock\",\"description\":\"Check how many units of a Northwind product are in stock. Accepts the product slug or its name as written on the order.\",\"input_schema\":{\"type\":\"object\",\"properties\":{\"product\":{\"type\":\"string\",\"description\":\"Product slug or name.\"}},\"required\":[\"product\"],\"additionalProperties\":false},\"eager_input_streaming\":true}],\"tool_choice\":{\"type\":\"auto\"},\"output_config\":{\"effort\":\"low\"}}"
+     }
+    },
+    {
+     "event": "headers",
+     "data": {
+      "t": 944,
+      "status": 200,
+      "headers": {
+       "anthropic-ratelimit-input-tokens-limit": "10000000",
+       "anthropic-ratelimit-input-tokens-remaining": "10000000",
+       "anthropic-ratelimit-input-tokens-reset": "2026-09-17T08:44:47Z",
+       "anthropic-ratelimit-output-tokens-limit": "2000000",
+       "anthropic-ratelimit-output-tokens-remaining": "2000000",
+       "anthropic-ratelimit-output-tokens-reset": "2026-09-17T08:44:47Z",
+       "anthropic-ratelimit-requests-limit": "10000",
+       "anthropic-ratelimit-requests-remaining": "9999",
+       "anthropic-ratelimit-requests-reset": "2026-09-17T08:44:47Z",
+       "anthropic-ratelimit-tokens-limit": "12000000",
+       "anthropic-ratelimit-tokens-remaining": "12000000",
+       "anthropic-ratelimit-tokens-reset": "2026-09-17T08:44:47Z",
+       "cache-control": "no-cache",
+       "cf-cache-status": "DYNAMIC",
+       "cf-ray": "a3c6d4bb6b38af79-EWR",
+       "content-encoding": "gzip",
+       "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+       "content-type": "text/event-stream; charset=utf-8",
+       "date": "Thu, 17 Sep 2026 08:44:48 GMT",
+       "request-id": "req_011Cf8iaNMEJkEevuQMSTNKs",
+       "server": "cloudflare",
+       "server-timing": "x-originResponse;dur=892",
+       "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+       "traceresponse": "00-32915e422dcedeac8f97e5986ab159b8-8270b35160be64a1-01",
+       "vary": "Accept-Encoding",
+       "x-robots-tag": "none"
+      }
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 945,
+      "chunk": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-opus-5\",\"id\":\"msg_011Cf8iaNZ8uNZKNdfmgZ3XA\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":574,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":1,\"service_tier\":\"standard\",\"inference_geo\":\"global\"}}           }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}            }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"I\"}         }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 2129,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"'ll look up your\"}              }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 2137,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" order first,\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" then check st\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ock on what\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"'s in it.\"}              }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0  }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_014gJsJqgVvAAFbP8iq6zq8n\",\"name\":\"lookup_order\",\"input\":{},\"caller\":{\"type\":\"direct\"}}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"order_id\\\": \\\"NW-52\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"044\"}           }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 2140,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\"}\"}      }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1      }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 2144,
+      "chunk": "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":574,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":75,\"output_tokens_details\":{\"thinking_tokens\":0}}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"               }\n\n"
+     }
+    },
+    {
+     "event": "done",
+     "data": {
+      "t": 2145,
+      "model": "claude-opus-5",
+      "cost_usd": 0.004745
+     }
+    }
+   ]
+  },
+  {
+   "body": {
+    "model": "claude-opus-5",
+    "max_tokens": 1024,
+    "stream": true,
+    "messages": [
+     {
+      "role": "user",
+      "content": "Where is my order NW-52044? And if I wanted a second one of what I ordered, is it in stock?"
+     },
+     {
+      "role": "assistant",
+      "content": [
+       {
+        "type": "text",
+        "text": "I'll look up your order first, then check stock on what's in it."
+       },
+       {
+        "type": "tool_use",
+        "id": "toolu_014gJsJqgVvAAFbP8iq6zq8n",
+        "name": "lookup_order",
+        "input": {
+         "order_id": "NW-52044"
+        },
+        "caller": {
+         "type": "direct"
+        }
+       }
+      ]
+     },
+     {
+      "role": "user",
+      "content": [
+       {
+        "type": "tool_result",
+        "tool_use_id": "toolu_014gJsJqgVvAAFbP8iq6zq8n",
+        "content": "{\n  \"order_id\": \"NW-52044\",\n  \"placed_at\": \"2026-08-15\",\n  \"delivered_at\": null,\n  \"status\": \"processing\",\n  \"total_usd\": 640,\n  \"tracking\": null,\n  \"items\": [\n    {\n      \"name\": \"Summit Expedition Tent 4P\",\n      \"slug\": \"summit-expedition-tent-4p\",\n      \"qty\": 1,\n      \"price_usd\": 640\n    }\n  ]\n}"
+       }
+      ]
+     }
+    ],
+    "tools": [
+     {
+      "name": "lookup_order",
+      "description": "Look up a Northwind order by id (format NW-12345). Returns status, dates, tracking number and line items.",
+      "input_schema": {
+       "type": "object",
+       "properties": {
+        "order_id": {
+         "type": "string",
+         "description": "The order id, e.g. NW-48211."
+        }
+       },
+       "required": [
+        "order_id"
+       ],
+       "additionalProperties": false
+      },
+      "eager_input_streaming": true
+     },
+     {
+      "name": "check_stock",
+      "description": "Check how many units of a Northwind product are in stock. Accepts the product slug or its name as written on the order.",
+      "input_schema": {
+       "type": "object",
+       "properties": {
+        "product": {
+         "type": "string",
+         "description": "Product slug or name."
+        }
+       },
+       "required": [
+        "product"
+       ],
+       "additionalProperties": false
+      },
+      "eager_input_streaming": true
+     }
+    ],
+    "tool_choice": {
+     "type": "auto"
+    },
+    "output_config": {
+     "effort": "low"
+    }
+   },
+   "events": [
+    {
+     "event": "start",
+     "data": {
+      "t": 0,
+      "funding": "house",
+      "sdk": "0.126.0"
+     }
+    },
+    {
+     "event": "attempt",
+     "data": {
+      "t": 1,
+      "n": 1,
+      "method": "POST",
+      "url": "https://api.anthropic.com/v1/messages",
+      "headers": {
+       "accept": "application/json",
+       "anthropic-version": "2023-06-01",
+       "content-type": "application/json",
+       "user-agent": "Anthropic/JS 0.126.0",
+       "x-api-key": "sk-ant-…•••• (Northwind's key)",
+       "x-stainless-arch": "arm64",
+       "x-stainless-lang": "js",
+       "x-stainless-os": "MacOS",
+       "x-stainless-package-version": "0.126.0",
+       "x-stainless-retry-count": "0",
+       "x-stainless-runtime": "node",
+       "x-stainless-runtime-version": "v26.7.0",
+       "x-stainless-timeout": "600"
+      },
+      "body": "{\"model\":\"claude-opus-5\",\"max_tokens\":1024,\"stream\":true,\"messages\":[{\"role\":\"user\",\"content\":\"Where is my order NW-52044? And if I wanted a second one of what I ordered, is it in stock?\"},{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"I'll look up your order first, then check stock on what's in it.\"},{\"type\":\"tool_use\",\"id\":\"toolu_014gJsJqgVvAAFbP8iq6zq8n\",\"name\":\"lookup_order\",\"input\":{\"order_id\":\"NW-52044\"},\"caller\":{\"type\":\"direct\"}}]},{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"toolu_014gJsJqgVvAAFbP8iq6zq8n\",\"content\":\"{\\n  \\\"order_id\\\": \\\"NW-52044\\\",\\n  \\\"placed_at\\\": \\\"2026-08-15\\\",\\n  \\\"delivered_at\\\": null,\\n  \\\"status\\\": \\\"processing\\\",\\n  \\\"total_usd\\\": 640,\\n  \\\"tracking\\\": null,\\n  \\\"items\\\": [\\n    {\\n      \\\"name\\\": \\\"Summit Expedition Tent 4P\\\",\\n      \\\"slug\\\": \\\"summit-expedition-tent-4p\\\",\\n      \\\"qty\\\": 1,\\n      \\\"price_usd\\\": 640\\n    }\\n  ]\\n}\"}]}],\"tools\":[{\"name\":\"lookup_order\",\"description\":\"Look up a Northwind order by id (format NW-12345). Returns status, dates, tracking number and line items.\",\"input_schema\":{\"type\":\"object\",\"properties\":{\"order_id\":{\"type\":\"string\",\"description\":\"The order id, e.g. NW-48211.\"}},\"required\":[\"order_id\"],\"additionalProperties\":false},\"eager_input_streaming\":true},{\"name\":\"check_stock\",\"description\":\"Check how many units of a Northwind product are in stock. Accepts the product slug or its name as written on the order.\",\"input_schema\":{\"type\":\"object\",\"properties\":{\"product\":{\"type\":\"string\",\"description\":\"Product slug or name.\"}},\"required\":[\"product\"],\"additionalProperties\":false},\"eager_input_streaming\":true}],\"tool_choice\":{\"type\":\"auto\"},\"output_config\":{\"effort\":\"low\"}}"
+     }
+    },
+    {
+     "event": "headers",
+     "data": {
+      "t": 1826,
+      "status": 200,
+      "headers": {
+       "anthropic-ratelimit-input-tokens-limit": "10000000",
+       "anthropic-ratelimit-input-tokens-remaining": "10000000",
+       "anthropic-ratelimit-input-tokens-reset": "2026-09-17T08:44:49Z",
+       "anthropic-ratelimit-output-tokens-limit": "2000000",
+       "anthropic-ratelimit-output-tokens-remaining": "2000000",
+       "anthropic-ratelimit-output-tokens-reset": "2026-09-17T08:44:49Z",
+       "anthropic-ratelimit-requests-limit": "10000",
+       "anthropic-ratelimit-requests-remaining": "9999",
+       "anthropic-ratelimit-requests-reset": "2026-09-17T08:44:49Z",
+       "anthropic-ratelimit-tokens-limit": "12000000",
+       "anthropic-ratelimit-tokens-remaining": "12000000",
+       "anthropic-ratelimit-tokens-reset": "2026-09-17T08:44:49Z",
+       "cache-control": "no-cache",
+       "cf-cache-status": "DYNAMIC",
+       "cf-ray": "a3c6d4c959fdaf79-EWR",
+       "content-encoding": "gzip",
+       "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+       "content-type": "text/event-stream; charset=utf-8",
+       "date": "Thu, 17 Sep 2026 08:44:51 GMT",
+       "request-id": "req_011Cf8iaY1QF52oX5VjvAusR",
+       "server": "cloudflare",
+       "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+       "traceresponse": "00-7ca388cc1e575233c390279abf1281bc-c36d2e110ec5f260-01",
+       "vary": "Accept-Encoding",
+       "x-robots-tag": "none"
+      }
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 1828,
+      "chunk": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-opus-5\",\"id\":\"msg_011Cf8iaYLVt9GeJhPM3ufAY\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":802,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":16,\"service_tier\":\"standard\",\"inference_geo\":\"global\"}}             }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_012vbGx67uqihZhKXecgjTeA\",\"name\":\"check_stock\",\"input\":{},\"caller\":{\"type\":\"direct\"}}           }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\"}}\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 1836,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"product\\\": \\\"summit-exp\"}   }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 1887,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"edition-tent-4p\"}   }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 2075,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\\\"}\"} }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0            }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 2078,
+      "chunk": "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":802,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":59,\"output_tokens_details\":{\"thinking_tokens\":0}}          }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"    }\n\n"
+     }
+    },
+    {
+     "event": "done",
+     "data": {
+      "t": 2083,
+      "model": "claude-opus-5",
+      "cost_usd": 0.005485
+     }
+    }
+   ]
+  },
+  {
+   "body": {
+    "model": "claude-opus-5",
+    "max_tokens": 1024,
+    "stream": true,
+    "messages": [
+     {
+      "role": "user",
+      "content": "Where is my order NW-52044? And if I wanted a second one of what I ordered, is it in stock?"
+     },
+     {
+      "role": "assistant",
+      "content": [
+       {
+        "type": "text",
+        "text": "I'll look up your order first, then check stock on what's in it."
+       },
+       {
+        "type": "tool_use",
+        "id": "toolu_014gJsJqgVvAAFbP8iq6zq8n",
+        "name": "lookup_order",
+        "input": {
+         "order_id": "NW-52044"
+        },
+        "caller": {
+         "type": "direct"
+        }
+       }
+      ]
+     },
+     {
+      "role": "user",
+      "content": [
+       {
+        "type": "tool_result",
+        "tool_use_id": "toolu_014gJsJqgVvAAFbP8iq6zq8n",
+        "content": "{\n  \"order_id\": \"NW-52044\",\n  \"placed_at\": \"2026-08-15\",\n  \"delivered_at\": null,\n  \"status\": \"processing\",\n  \"total_usd\": 640,\n  \"tracking\": null,\n  \"items\": [\n    {\n      \"name\": \"Summit Expedition Tent 4P\",\n      \"slug\": \"summit-expedition-tent-4p\",\n      \"qty\": 1,\n      \"price_usd\": 640\n    }\n  ]\n}"
+       }
+      ]
+     },
+     {
+      "role": "assistant",
+      "content": [
+       {
+        "type": "tool_use",
+        "id": "toolu_012vbGx67uqihZhKXecgjTeA",
+        "name": "check_stock",
+        "input": {
+         "product": "summit-expedition-tent-4p"
+        },
+        "caller": {
+         "type": "direct"
+        }
+       }
+      ]
+     },
+     {
+      "role": "user",
+      "content": [
+       {
+        "type": "tool_result",
+        "tool_use_id": "toolu_012vbGx67uqihZhKXecgjTeA",
+        "content": "{\"slug\":\"summit-expedition-tent-4p\",\"name\":\"Summit Expedition Tent 4P\",\"in_stock\":12}"
+       }
+      ]
+     }
+    ],
+    "tools": [
+     {
+      "name": "lookup_order",
+      "description": "Look up a Northwind order by id (format NW-12345). Returns status, dates, tracking number and line items.",
+      "input_schema": {
+       "type": "object",
+       "properties": {
+        "order_id": {
+         "type": "string",
+         "description": "The order id, e.g. NW-48211."
+        }
+       },
+       "required": [
+        "order_id"
+       ],
+       "additionalProperties": false
+      },
+      "eager_input_streaming": true
+     },
+     {
+      "name": "check_stock",
+      "description": "Check how many units of a Northwind product are in stock. Accepts the product slug or its name as written on the order.",
+      "input_schema": {
+       "type": "object",
+       "properties": {
+        "product": {
+         "type": "string",
+         "description": "Product slug or name."
+        }
+       },
+       "required": [
+        "product"
+       ],
+       "additionalProperties": false
+      },
+      "eager_input_streaming": true
+     }
+    ],
+    "tool_choice": {
+     "type": "auto"
+    },
+    "output_config": {
+     "effort": "low"
+    }
+   },
+   "events": [
+    {
+     "event": "start",
+     "data": {
+      "t": 0,
+      "funding": "house",
+      "sdk": "0.126.0"
+     }
+    },
+    {
+     "event": "attempt",
+     "data": {
+      "t": 1,
+      "n": 1,
+      "method": "POST",
+      "url": "https://api.anthropic.com/v1/messages",
+      "headers": {
+       "accept": "application/json",
+       "anthropic-version": "2023-06-01",
+       "content-type": "application/json",
+       "user-agent": "Anthropic/JS 0.126.0",
+       "x-api-key": "sk-ant-…•••• (Northwind's key)",
+       "x-stainless-arch": "arm64",
+       "x-stainless-lang": "js",
+       "x-stainless-os": "MacOS",
+       "x-stainless-package-version": "0.126.0",
+       "x-stainless-retry-count": "0",
+       "x-stainless-runtime": "node",
+       "x-stainless-runtime-version": "v26.7.0",
+       "x-stainless-timeout": "600"
+      },
+      "body": "{\"model\":\"claude-opus-5\",\"max_tokens\":1024,\"stream\":true,\"messages\":[{\"role\":\"user\",\"content\":\"Where is my order NW-52044? And if I wanted a second one of what I ordered, is it in stock?\"},{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"I'll look up your order first, then check stock on what's in it.\"},{\"type\":\"tool_use\",\"id\":\"toolu_014gJsJqgVvAAFbP8iq6zq8n\",\"name\":\"lookup_order\",\"input\":{\"order_id\":\"NW-52044\"},\"caller\":{\"type\":\"direct\"}}]},{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"toolu_014gJsJqgVvAAFbP8iq6zq8n\",\"content\":\"{\\n  \\\"order_id\\\": \\\"NW-52044\\\",\\n  \\\"placed_at\\\": \\\"2026-08-15\\\",\\n  \\\"delivered_at\\\": null,\\n  \\\"status\\\": \\\"processing\\\",\\n  \\\"total_usd\\\": 640,\\n  \\\"tracking\\\": null,\\n  \\\"items\\\": [\\n    {\\n      \\\"name\\\": \\\"Summit Expedition Tent 4P\\\",\\n      \\\"slug\\\": \\\"summit-expedition-tent-4p\\\",\\n      \\\"qty\\\": 1,\\n      \\\"price_usd\\\": 640\\n    }\\n  ]\\n}\"}]},{\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_012vbGx67uqihZhKXecgjTeA\",\"name\":\"check_stock\",\"input\":{\"product\":\"summit-expedition-tent-4p\"},\"caller\":{\"type\":\"direct\"}}]},{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"toolu_012vbGx67uqihZhKXecgjTeA\",\"content\":\"{\\\"slug\\\":\\\"summit-expedition-tent-4p\\\",\\\"name\\\":\\\"Summit Expedition Tent 4P\\\",\\\"in_stock\\\":12}\"}]}],\"tools\":[{\"name\":\"lookup_order\",\"description\":\"Look up a Northwind order by id (format NW-12345). Returns status, dates, tracking number and line items.\",\"input_schema\":{\"type\":\"object\",\"properties\":{\"order_id\":{\"type\":\"string\",\"description\":\"The order id, e.g. NW-48211.\"}},\"required\":[\"order_id\"],\"additionalProperties\":false},\"eager_input_streaming\":true},{\"name\":\"check_stock\",\"description\":\"Check how many units of a Northwind product are in stock. Accepts the product slug or its name as written on the order.\",\"input_schema\":{\"type\":\"object\",\"properties\":{\"product\":{\"type\":\"string\",\"description\":\"Product slug or name.\"}},\"required\":[\"product\"],\"additionalProperties\":false},\"eager_input_streaming\":true}],\"tool_choice\":{\"type\":\"auto\"},\"output_config\":{\"effort\":\"low\"}}"
+     }
+    },
+    {
+     "event": "headers",
+     "data": {
+      "t": 1657,
+      "status": 200,
+      "headers": {
+       "anthropic-ratelimit-input-tokens-limit": "10000000",
+       "anthropic-ratelimit-input-tokens-remaining": "10000000",
+       "anthropic-ratelimit-input-tokens-reset": "2026-09-17T08:44:51Z",
+       "anthropic-ratelimit-output-tokens-limit": "2000000",
+       "anthropic-ratelimit-output-tokens-remaining": "2000000",
+       "anthropic-ratelimit-output-tokens-reset": "2026-09-17T08:44:51Z",
+       "anthropic-ratelimit-requests-limit": "10000",
+       "anthropic-ratelimit-requests-remaining": "9999",
+       "anthropic-ratelimit-requests-reset": "2026-09-17T08:44:51Z",
+       "anthropic-ratelimit-tokens-limit": "12000000",
+       "anthropic-ratelimit-tokens-remaining": "12000000",
+       "anthropic-ratelimit-tokens-reset": "2026-09-17T08:44:51Z",
+       "cache-control": "no-cache",
+       "cf-cache-status": "DYNAMIC",
+       "cf-ray": "a3c6d4d66974af79-EWR",
+       "content-encoding": "gzip",
+       "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+       "content-type": "text/event-stream; charset=utf-8",
+       "date": "Thu, 17 Sep 2026 08:44:53 GMT",
+       "request-id": "req_011Cf8iagpjPYZfM8dQn3bLZ",
+       "server": "cloudflare",
+       "server-timing": "x-originResponse;dur=1486",
+       "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+       "traceresponse": "00-b2aa482137a4646a1abaf9d590d31f87-7e85c92576e29a5e-01",
+       "vary": "Accept-Encoding",
+       "x-robots-tag": "none"
+      }
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 1658,
+      "chunk": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-opus-5\",\"id\":\"msg_011Cf8iah1tNHs26YN9dcHGG\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":909,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":3,\"service_tier\":\"standard\",\"inference_geo\":\"global\"}}             }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}           }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Here's\"}       }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 1672,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" where things\"}    }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 1782,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" stand:\\n\\n**Order N\"}     }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 1861,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"W-52044** — still\"}}\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 1917,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" **processing**, plac\"}         }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 1974,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ed 2026-08-15\"}           }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 2032,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\". No tracking number has\"} }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 2182,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" been assigned yet and\"}              }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 2183,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" it\"}     }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 2209,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" hasn't shipped,\"}   }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 2566,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" so there\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"'s nothing to\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" track just\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" yet. It contains \"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"1×\"}   }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 2567,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" Summit Expedition\"}     }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 2704,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" Tent 4P \"}    }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 2705,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"($640 \"}}\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 2742,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"total).\\n\\n**Second one?\"}}\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 2799,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"** Yes — the Summ\"}           }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 2858,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"it Expedition Tent\"}            }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 2917,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" 4P has **12 units\"}    }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 2988,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" in stock**, so you're\"}            }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 3032,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\" cl\"}          }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 3093,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"ear to order another\"}    }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 3233,
+      "chunk": "event: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\".\"}            }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 3233,
+      "chunk": "event: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0   }\n\n"
+     }
+    },
+    {
+     "event": "wire",
+     "data": {
+      "t": 3235,
+      "chunk": "event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":909,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":140,\"output_tokens_details\":{\"thinking_tokens\":0}}          }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"          }\n\n"
+     }
+    },
+    {
+     "event": "done",
+     "data": {
+      "t": 3237,
+      "model": "claude-opus-5",
+      "cost_usd": 0.008045
+     }
+    }
+   ]
+  }
+ ]
+}
