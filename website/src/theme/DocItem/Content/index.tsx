@@ -3,6 +3,8 @@ import type ContentType from "@theme/DocItem/Content";
 import type { WrapperProps } from "@docusaurus/types";
 import type { ReactNode } from "react";
 import { useDoc } from "@docusaurus/plugin-content-docs/client";
+import Head from "@docusaurus/Head";
+import useBaseUrl from "@docusaurus/useBaseUrl";
 import AudioPlayer from "@site/src/components/AudioPlayer";
 import LabVideo from "@site/src/components/LabVideo";
 import Thumbs from "@site/src/components/Feedback/Thumbs";
@@ -24,7 +26,11 @@ type Props = WrapperProps<typeof ContentType>;
  * works out which lab a page is from its path, so nothing here needs to know.
  */
 export default function ContentWrapper(props: Props): ReactNode {
-  const { frontMatter } = useDoc();
+  const { frontMatter, metadata } = useDoc();
+  // sync-docs writes a plain-markdown copy of every doc at /docs/<id>.md.
+  // Advertising it lets an agent that landed on the HTML find the version it
+  // can actually read.
+  const markdownHref = useBaseUrl(`/docs/${metadata.id}.md`);
   const { audio_src: audioSrc, video_id: videoId, video_poster: videoPoster, title } =
     frontMatter as {
       audio_src?: string;
@@ -34,6 +40,9 @@ export default function ContentWrapper(props: Props): ReactNode {
     };
   return (
     <>
+      <Head>
+        <link rel="alternate" type="text/markdown" href={markdownHref} />
+      </Head>
       {typeof videoId === "string" && (
         <LabVideo videoId={videoId} title={title} poster={videoPoster} />
       )}

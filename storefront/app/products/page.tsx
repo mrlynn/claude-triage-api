@@ -1,8 +1,14 @@
 import Link from "next/link";
 import { PRODUCTS, usd } from "@/lib/products";
 import ProductArt from "@/components/ProductArt";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata = { title: "Shop | Northwind Outfitters" };
+export const metadata = pageMetadata({
+  title: "Shop | Northwind Outfitters",
+  description: "The catalogue of a fictional gear shop. Nothing here is for sale.",
+  path: "/products",
+  index: false,
+});
 
 export default function ProductsPage() {
   return (

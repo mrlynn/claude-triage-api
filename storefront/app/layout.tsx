@@ -5,6 +5,7 @@ import SiteHeader from "@/components/SiteHeader";
 import { LABS_URL, SITE_URL, labs } from "@/lib/links";
 import AssistantChat from "@/components/AssistantChat";
 import AccountMeter from "@/components/AccountMeter";
+import { OG_IMAGE, SITE_JSON_LD } from "@/lib/seo";
 
 /*
   Most arrivals here are cold — a link in a feed, no context. The card the
@@ -16,6 +17,8 @@ import AccountMeter from "@/components/AccountMeter";
   real and the description says what actually happens if you click. The page
   itself can then keep its in-world voice, because the framing already landed.
 */
+const HOME_SOCIAL_TITLE = "A shop that isn't real. Its support desk is.";
+
 const DESCRIPTION =
   "A fictional gear shop with a real support desk behind it. File a complaint and watch Claude read it, rank it, and decide whether a human sees it.";
 
@@ -31,30 +34,27 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
+/*
+  No `url` and no canonical here. Both would be inherited by every page that
+  does not set its own, and a page claiming to be the home page is worse than
+  one that makes no claim. Pages build theirs with `pageMetadata` in lib/seo.
+*/
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: "Northwind Outfitters",
   description: DESCRIPTION,
   openGraph: {
-    title: "A shop that isn't real. Its support desk is.",
+    title: HOME_SOCIAL_TITLE,
     description: DESCRIPTION,
-    url: "/",
     siteName: "Northwind Outfitters",
     type: "website",
-    images: [
-      {
-        url: "/og.png",
-        width: 1200,
-        height: 630,
-        alt: "Northwind Outfitters — a fictional shop whose support desk runs a live Claude classifier.",
-      },
-    ],
+    images: [OG_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
-    title: "A shop that isn't real. Its support desk is.",
+    title: HOME_SOCIAL_TITLE,
     description: DESCRIPTION,
-    images: ["/og.png"],
+    images: [OG_IMAGE.url],
   },
 };
 
@@ -64,6 +64,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-bone text-pine antialiased">
+        <script
+          type="application/ld+json"
+          // Static object from lib/seo — no user input reaches this string.
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(SITE_JSON_LD) }}
+        />
         {/*
           Two sentences on a phone wrap to two lines and cost ~90px before the
           logo even appears — a tenth of the first viewport spent on a

@@ -1,13 +1,15 @@
 import { Suspense } from "react";
-import type { Metadata } from "next";
 import OpsDashboard from "./OpsDashboard";
 import LiveQueue from "./LiveQueue";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Support operations | Northwind Outfitters",
   description:
     "Operating dashboard for Northwind support: human intervention, response time, mis-routing and safety SLA across a staged triage rollout.",
-};
+  path: "/ops",
+  index: false,
+});
 
 /**
  * The live section renders above the dashboard on purpose. Everything below it

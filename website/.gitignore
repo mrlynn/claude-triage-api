@@ -13,3 +13,7 @@ static/img/readme/
 
 # Rendered lab videos (npm run video). YouTube uploads, not site assets.
 video-out/
+
+# Markdown copies of the docs and llms.txt / llms-full.txt, written by
+# scripts/sync-docs.mjs. The hand-written part of llms.txt is src/data/llms-intro.md.
+llms/

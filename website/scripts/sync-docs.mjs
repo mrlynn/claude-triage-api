@@ -27,6 +27,14 @@ const here = dirname(fileURLToPath(import.meta.url));
 const websiteDir = resolve(here, "..");
 const repoRoot = resolve(websiteDir, "..");
 const outDir = join(websiteDir, "docs");
+// Plain-markdown copies for AI crawlers and agents. A second static directory
+// (see staticDirectories in docusaurus.config.ts) rather than static/ itself,
+// so the generated files can be gitignored as a whole.
+const llmsDir = join(websiteDir, "llms");
+
+// Absolute URLs in the markdown copies: an agent that fetched one .md file has
+// no page to resolve "/docs/setup" against. Same default host as llms.txt.
+const SITE_URL = (process.env.DOCS_SITE_URL ?? "https://triage.mlynn.dev").replace(/\/$/, "");
 
 // Kept in sync with docusaurus.config.ts, which reads the same two env vars.
 const GITHUB_ORG = process.env.DOCS_GITHUB_ORG ?? "mrlynn";
@@ -334,6 +342,50 @@ function transform(page) {
 }
 
 /**
+ * The page as an agent should read it: the repo markdown with links resolved
+ * to absolute URLs, and none of the site-only additions (glossary links, card
+ * wrappers, frontmatter). Quiz and try blocks stay as the fenced JSON they are
+ * in the source, which is what GitHub shows too.
+ */
+function plainMarkdown(page) {
+  let body = readFileSync(join(repoRoot, page.source), "utf8");
+
+  const fences = [];
+  body = body.replace(/```[\s\S]*?```/g, (m) => {
+    fences.push(m);
+    return `@@FENCE${fences.length - 1}@@`;
+  });
+  body = body.replace(/\[([^\]]*)\]\(([^)]+)\)/g, (whole, text, href) => {
+    if (/^(https?:|mailto:)/.test(href)) return whole;
+    const resolved = href.startsWith("/") ? href : rewriteLink(href, page.source);
+    return `[${text}](${resolved.startsWith("/") ? SITE_URL + resolved : resolved})`;
+  });
+  body = body.replace(/@@FENCE(\d+)@@/g, (_, i) => fences[Number(i)]);
+
+  // Pages whose title comes from PAGES have no H1 of their own, or one that
+  // reads differently from the sidebar. Lead with the title the site uses.
+  const h1 = body.match(/^#\s+(.+)$/m);
+  if (page.title && h1) body = body.replace(`${h1[0]}\n`, "");
+  const title = page.title ?? (h1 ? h1[1].trim() : page.out);
+  const header = page.title || !h1 ? `# ${title}\n\n` : "";
+
+  return {
+    title,
+    text: `${header}${body.trim()}\n\nSource: ${SITE_URL}/docs/${page.out}\n`,
+  };
+}
+
+/**
+ * What goes into llms-full.txt: the material a learner reads. Answers,
+ * facilitator logistics and the assessment are still published as .md, but
+ * putting them in the one file an assistant loads whole would spend most of
+ * its context on run-of-show timings and hand it the answer key.
+ */
+function inFullText(page) {
+  return !/^(solutions\/|instructor-guide|run-of-show|facilitator-|assessment)/.test(page.out);
+}
+
+/**
  * Images that markdown in the repo points at.
  *
  * They are canonical under assets/ so they also render on GitHub, where the
@@ -375,4 +427,36 @@ writeFileSync(
   )}\n`,
 );
 
-console.log(`synced ${PAGES.length} pages into website/docs`);
+rmSync(llmsDir, { recursive: true, force: true });
+const plain = PAGES.map((page) => ({ page, ...plainMarkdown(page) }));
+for (const { page, text } of plain) {
+  const target = join(llmsDir, "docs", `${page.out}.md`);
+  mkdirSync(dirname(target), { recursive: true });
+  writeFileSync(target, text);
+}
+
+// llms.txt: the hand-written overview, then an index generated from PAGES so
+// a new page cannot be published without also being listed here.
+const intro = readFileSync(join(websiteDir, "src", "data", "llms-intro.md"), "utf8").trim();
+writeFileSync(
+  join(llmsDir, "llms.txt"),
+  [
+    intro,
+    "",
+    "## Every page as markdown",
+    "",
+    `- [Full course text](${SITE_URL}/llms-full.txt) — every learner-facing page below, in one file.`,
+    ...plain.map(({ page, title }) => `- [${title}](${SITE_URL}/docs/${page.out}.md)`),
+    "",
+  ].join("\n"),
+);
+
+writeFileSync(
+  join(llmsDir, "llms-full.txt"),
+  [
+    intro,
+    ...plain.filter(({ page }) => inFullText(page)).map(({ text }) => `\n---\n\n${text}`),
+  ].join("\n"),
+);
+
+console.log(`synced ${PAGES.length} pages into website/docs and website/llms`);

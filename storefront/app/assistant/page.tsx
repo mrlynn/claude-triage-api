@@ -1,7 +1,13 @@
 import AssistantChat from "@/components/AssistantChat";
 import NorthwindAssistantMark from "@/components/NorthwindAssistantMark";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata = { title: "Ask Northwind | Northwind Outfitters" };
+export const metadata = pageMetadata({
+  title: "Ask Northwind | Northwind Outfitters",
+  description:
+    "The workshop assistant for the Claude API course: get unstuck in a lab, or ask the fictional Northwind support desk about an order.",
+  path: "/assistant",
+});
 
 export default function AssistantPage() {
   return (
