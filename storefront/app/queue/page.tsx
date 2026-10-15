@@ -1,12 +1,14 @@
-import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { hasQueueCookie } from "@/lib/queueAuth";
 import QueueBoard from "./QueueBoard";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Escalation queue — Northwind Outfitters",
   description: "Tickets the classifier flagged for a human.",
-};
+  path: "/queue",
+  index: false,
+});
 
 /**
  * Public and read-only by default; the token unlocks the real submissions and

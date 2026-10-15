@@ -1,11 +1,12 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { GEAR_IMAGES, credits } from "@/lib/gear-images";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Photo credits — Northwind Outfitters",
   description: "The photographers whose work makes this fictional shop look real.",
-};
+  path: "/credits",
+});
 
 /**
  * Attribution.

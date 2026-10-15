@@ -1,9 +1,12 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { PRODUCTS, usd } from "@/lib/products";
 import ProductArt from "@/components/ProductArt";
 import TryClassifier from "@/components/TryClassifier";
 import { gearImage } from "@/lib/gear-images";
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default function Home() {
   const featured = PRODUCTS.slice(0, 3);

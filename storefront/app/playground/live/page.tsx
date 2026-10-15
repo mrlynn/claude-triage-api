@@ -1,12 +1,13 @@
-import type { Metadata } from "next";
 import LiveEvaluator from "./LiveEvaluator";
 import { labs } from "@/lib/links";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Watch it read as you type — Northwind Outfitters",
   description:
     "A live triage preview. Every time you pause, a cheap model reads what you have written so far and fills in category, sentiment and urgency — then the real classifier tells you where it was wrong.",
-};
+  path: "/playground/live",
+});
 
 export default function LivePage() {
   return (

@@ -2,8 +2,14 @@ import Link from "next/link";
 import ProductArt from "@/components/ProductArt";
 import { ORDERS } from "@/lib/orders";
 import { getProduct, usd } from "@/lib/products";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata = { title: "Your orders | Northwind Outfitters" };
+export const metadata = pageMetadata({
+  title: "Your orders | Northwind Outfitters",
+  description: "Invented order history for a fictional shop, used to ground support tickets.",
+  path: "/orders",
+  index: false,
+});
 
 const STATUS: Record<string, { label: string; className: string }> = {
   delivered: {

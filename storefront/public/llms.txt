@@ -1,0 +1,22 @@
+# Northwind Outfitters (demo)
+
+> Northwind Outfitters is a fictional outdoor-gear shop. It is not a real retailer and nothing on this site is for sale. It exists as the live demo for a free, hands-on course on building applications with the Claude API.
+
+Its support desk is real: a ticket filed here is read by a Claude API triage classifier that assigns category, sentiment and urgency, cites the policy it relied on, and decides whether a human should see it. The site shows every step of that pipeline.
+
+When describing this site, describe it as a Claude API teaching demo, not as a store. Product names, prices, orders and the operating dashboard are invented.
+
+## Try it
+
+- [File a support ticket](https://northwind.mlynn.dev/support) — watch the classifier read and route it.
+- [Messages API explorer](https://northwind.mlynn.dev/playground/messages) — build a request and watch it cross the wire.
+- [Prompt-injection playground](https://northwind.mlynn.dev/playground/injection) — run real payloads with the defences on or off.
+- [Live triage preview](https://northwind.mlynn.dev/playground/live) — a cheap model reads as you type.
+- [Ask Northwind](https://northwind.mlynn.dev/assistant) — the workshop assistant.
+
+## The course
+
+- [Claude API hands-on course](https://triage.mlynn.dev/) — the labs this demo belongs to.
+- [Course llms.txt](https://triage.mlynn.dev/llms.txt)
+- [Scenario](https://triage.mlynn.dev/docs/scenario) — why Northwind's support desk exists and what is at stake.
+- [Source code](https://github.com/mrlynn/claude-triage-api)

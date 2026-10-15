@@ -1,15 +1,16 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import type { Metadata } from "next";
 import { labs } from "@/lib/links";
 import type { Recording } from "@/lib/explorerWire";
 import MessagesExplorer from "./MessagesExplorer";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "The Messages API, in the open — Northwind Outfitters",
   description:
     "Build a Messages API request option by option, watch the exact bytes go out, see what happens before the first token, and read the stream as it arrives: raw SSE, content blocks, and the assembled message.",
-};
+  path: "/playground/messages",
+});
 
 /**
  * Read on the server: the handbook the cache preset needs to be long enough to cache, and the recorded exchanges

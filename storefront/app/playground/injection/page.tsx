@@ -1,11 +1,12 @@
-import type { Metadata } from "next";
 import InjectionPlayground from "./InjectionPlayground";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Try to break the classifier — Northwind Outfitters",
   description:
     "A live prompt-injection playground. Run real payloads against the classifier with the defences on or off, and see exactly what the model was shown.",
-};
+  path: "/playground/injection",
+});
 
 export default function InjectionPage() {
   return (

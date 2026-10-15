@@ -2,9 +2,25 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PRODUCTS, getProduct, usd } from "@/lib/products";
 import ProductArt from "@/components/ProductArt";
+import { pageMetadata } from "@/lib/seo";
 
 export function generateStaticParams() {
   return PRODUCTS.map((p) => ({ slug: p.slug }));
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const product = getProduct(slug);
+  return pageMetadata({
+    title: `${product?.name ?? "Product"} | Northwind Outfitters`,
+    description: "A product from a fictional gear shop. Nothing here is for sale.",
+    path: `/products/${slug}`,
+    index: false,
+  });
 }
 
 export default async function ProductPage({

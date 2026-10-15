@@ -1,8 +1,14 @@
 import { Suspense } from "react";
 import SupportForm from "./SupportForm";
 import { labs } from "@/lib/links";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata = { title: "Support | Northwind Outfitters" };
+export const metadata = pageMetadata({
+  title: "Support | Northwind Outfitters",
+  description:
+    "File a support ticket with a fictional shop and watch a Claude API classifier read it, assign category and urgency, cite policy, and decide whether a human sees it.",
+  path: "/support",
+});
 
 export default function SupportPage() {
   return (
