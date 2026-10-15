@@ -4,32 +4,54 @@
   "installCommand": "npm ci --prefix website",
   "buildCommand": "cd website && npm run build",
   "outputDirectory": "website/build",
-  "cleanUrls": true,
-  "trailingSlash": false,
   "ignoreCommand": "bash -c 'cd \"$(git rev-parse --show-toplevel)\" && bash website/scripts/vercel-ignore.sh'",
-  "github": { "silent": true },
-  "headers": [
+  "github": {
+    "silent": true
+  },
+  "routes": [
     {
-      "source": "/assets/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
-      ]
+      "src": "^/assets/(.*)$",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      },
+      "continue": true
     },
     {
-      "source": "/video/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=604800, stale-while-revalidate=2592000"
-        }
-      ]
+      "src": "^/video/(.*)$",
+      "headers": {
+        "Cache-Control": "public, max-age=604800, stale-while-revalidate=2592000"
+      },
+      "continue": true
     },
     {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
-      ]
+      "src": "^/(.*)$",
+      "headers": {
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "strict-origin-when-cross-origin"
+      },
+      "continue": true
+    },
+    {
+      "src": "^/(?:(.*)/)?index(?:\\.html)?$",
+      "status": 308,
+      "headers": {
+        "Location": "/$1"
+      }
+    },
+    {
+      "src": "^/(.+)/$",
+      "status": 308,
+      "headers": {
+        "Location": "/$1"
+      }
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "^/(.*)$",
+      "status": 404,
+      "dest": "/404.html"
     }
   ]
 }
